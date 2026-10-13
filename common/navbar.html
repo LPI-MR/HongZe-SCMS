@@ -1,0 +1,76 @@
+<!-- 一级导航栏（公共组件） -->
+<!-- 来源：index.html 左侧导航栏 -->
+<nav class="nav">
+  <a class="nav-item active" data-path="首页">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+    <span class="label">首页</span>
+  </a>
+
+  <a class="nav-item" data-path="客户管理">
+    <svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.1.7 3.5 2.4 3.5 5"/></svg>
+    <span class="label">客户管理</span>
+  </a>
+
+  <!-- 价格指数管理（含二级菜单） -->
+  <div class="nav-group">
+    <a class="nav-item has-children">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+      <span class="label">价格指数管理</span>
+      <svg class="arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+    <div class="subnav">
+      <div class="subnav-inner">
+        <div class="subnav-list">
+          <a class="nav-sub-item" data-path="价格指数管理 / 汽运价格指数">汽运价格指数</a>
+          <a class="nav-sub-item" data-path="价格指数管理 / 火运价格指数">火运价格指数</a>
+          <a class="nav-sub-item" data-path="价格指数管理 / 铁矿石价格指数">铁矿石价格指数</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a class="nav-item" data-path="订单管理">
+    <svg class="icon" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+    <span class="label">订单管理</span>
+  </a>
+
+  <!-- 合同管理（含二级菜单） -->
+  <div class="nav-group">
+    <a class="nav-item has-children">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M8 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>
+      <span class="label">合同管理</span>
+      <svg class="arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+    <div class="subnav">
+      <div class="subnav-inner">
+        <div class="subnav-list">
+          <a class="nav-sub-item" data-path="合同管理 / 数据看板">数据看板</a>
+          <a class="nav-sub-item" data-path="合同管理 / 合同台账">合同台账</a>
+          <a class="nav-sub-item" data-path="合同管理 / 合同模板">合同模板</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a class="nav-item" data-path="运输调度管理">
+    <svg class="icon" viewBox="0 0 24 24"><path d="M2 6h12v11H2z"/><path d="M14 10h4l3 3.5V17h-7"/><circle cx="6.5" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>
+    <span class="label">运输调度管理</span>
+  </a>
+
+  <!-- 数据分析（含二级菜单） -->
+  <div class="nav-group">
+    <a class="nav-item has-children">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M2 20h20"/></svg>
+      <span class="label">数据分析</span>
+      <svg class="arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+    <div class="subnav">
+      <div class="subnav-inner">
+        <div class="subnav-list">
+          <a class="nav-sub-item" data-path="数据分析 / 调度数据分析">调度数据分析</a>
+          <a class="nav-sub-item" data-path="数据分析 / 财务数据分析">财务数据分析</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>

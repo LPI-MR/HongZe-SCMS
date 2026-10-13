@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>运输调度管理 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="transport.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <section class="module-hero">
+        <div class="hero-title">运输调度管理</div>
+        <div class="hero-desc">车辆调度与运输任务管理</div>
+      </section>
+
+      <div class="placeholder-card">
+        <div class="page-title">运输调度管理</div>
+        <div class="page-body">本模块内容区域（待开发）</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="transport.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+/* ============================================================
+   price-index 模块独立样式（仅 price-index 模块生效）
+   公共变量 / 布局 / 导航 / 卡片等风格由 /css/common.css 统一提供
+   ============================================================ */
+
+/* 模块头图 */
+.module-hero {
+  background: linear-gradient(135deg, #FF7D00, #E8680A);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-xl);
+  color: var(--gray-100);
+  margin-bottom: var(--space-lg);
+}
+
+.module-hero .hero-title {
+  font-size: 20px;        /* H2 */
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.module-hero .hero-desc {
+  margin-top: var(--space-sm);
+  font-size: 14px;        /* Body2 */
+  opacity: 0.85;
+}
