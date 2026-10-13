@@ -1,0 +1,344 @@
+/* ============================================================
+   公共样式（ui-standard.md 设计规范）
+   包含：设计变量、基础样式、布局、左侧导航栏、主内容区、KPI 卡片
+   ============================================================ */
+
+/* ===== 设计规范变量（ui-standard.md 第 8 节：CSS 变量汇总）===== */
+:root {
+  --color-primary: #4080FF;
+  --color-primary-light: #E8F0FF;
+  --color-primary-dark: #2B68D9;
+  --color-success: #00B42A;
+  --color-warning: #FF7D00;
+  --color-danger: #F53F3F;
+  --color-info: #86909C;
+
+  --assist-bg-orange: #FFF4E8;
+  --assist-bg-purple: #F3EEFF;
+  --assist-bg-red: #FFECEC;
+  --assist-bg-green: #E8F9F2;
+
+  --gray-100: #FFFFFF;
+  --gray-200: #F2F3F5;
+  --gray-300: #E5E6EB;
+  --gray-400: #C9CDD4;
+  --gray-500: #86909C;
+  --gray-600: #4E5969;
+  --gray-700: #272E3B;
+  --gray-800: #1D2129;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+/* ===== 基础样式 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  color: var(--gray-600);
+  background: var(--gray-200);
+}
+
+/* ===== 布局 ===== */
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== 左侧导航栏 ===== */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--gray-100);
+  border-right: 1px solid var(--gray-300);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* 系统名称区 */
+.brand {
+  padding: var(--space-lg) var(--space-md) var(--space-md);
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.brand-name {
+  font-size: 24px;        /* H1 */
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+  letter-spacing: 2px;
+}
+
+.brand-sub {
+  margin-top: var(--space-xs);
+  font-size: 12px;        /* Caption */
+  font-weight: 400;
+  color: var(--gray-500);
+  letter-spacing: 1px;
+}
+
+/* ===== 一级导航 ===== */
+/* 动态加载容器：承接 sidebar 的弹性布局，让内部 .nav 正常伸展 */
+#navbar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nav {
+  flex: 1;
+  padding: var(--space-md) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  height: 40px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: 14px;        /* Body2 */
+  color: var(--gray-600);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-item .icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-item .label { flex: 1; }
+
+/* 展开箭头 */
+.nav-item .arrow {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s;
+}
+
+.nav-group.open > .nav-item .arrow { transform: rotate(90deg); }
+
+.nav-item:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.nav-item.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* 含展开子菜单时父级文字加重 */
+.nav-group.open > .nav-item:not(.active) { color: var(--gray-800); font-weight: 500; }
+
+/* ===== 二级菜单 ===== */
+.subnav {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.nav-group.open .subnav { grid-template-rows: 1fr; }
+
+.subnav-inner { overflow: hidden; }
+
+.subnav-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0 var(--space-sm);
+}
+
+.nav-sub-item {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  margin: 0 var(--space-sm);
+  padding: 0 var(--space-sm) 0 40px; /* 与父级文字对齐：16(内边距)+16(图标)+8(间距) */
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--gray-600);
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* 子项左侧指示点 */
+.nav-sub-item::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--gray-400);
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: background-color 0.2s;
+}
+
+.nav-sub-item:hover {
+  background: var(--gray-200);
+  color: var(--gray-700);
+}
+
+.nav-sub-item.active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.nav-sub-item.active::before { background: var(--color-primary); }
+
+/* ===== 主内容区 ===== */
+.main {
+  flex: 1;
+  padding: var(--space-lg);
+}
+
+/* ===== 首页 KPI 数据面板 ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+}
+
+.kpi-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  transition: box-shadow 0.2s;
+}
+
+.kpi-card:hover { box-shadow: var(--shadow-hover); }
+
+.kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpi-icon svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--color-primary);
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 指标卡片浅辅助底色变体 */
+.kpi-icon.orange { background: var(--assist-bg-orange); }
+.kpi-icon.orange svg { stroke: var(--color-warning); }
+
+.kpi-icon.green { background: var(--assist-bg-green); }
+.kpi-icon.green svg { stroke: var(--color-success); }
+
+/* 概览指标卡片：浅橙整卡底色 */
+.kpi-card.orange { background: var(--assist-bg-orange); }
+.kpi-card.orange .kpi-icon { background: var(--gray-100); }
+
+.kpi-card.blue { background: var(--color-primary-light); }
+.kpi-card.blue .kpi-icon { background: var(--gray-100); }
+
+.kpi-card.green { background: var(--assist-bg-green); }
+.kpi-card.green .kpi-icon { background: var(--gray-100); }
+
+.kpi-info { flex: 1; min-width: 0; }
+
+.kpi-label {
+  font-size: 14px;        /* Body2 */
+  color: var(--gray-500);
+}
+
+.kpi-value {
+  margin-top: var(--space-xs);
+  font-size: 24px;        /* H1 */
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.kpi-trend {
+  margin-top: var(--space-xs);
+  font-size: 12px;        /* Caption */
+  color: var(--gray-500);
+}
+
+.kpi-trend.up   { color: var(--color-success); }
+.kpi-trend.down { color: var(--color-danger); }
+
+.placeholder-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+  min-height: 200px;
+}
+
+.page-path {
+  font-size: 12px;        /* Caption */
+  color: var(--gray-500);
+  margin-bottom: var(--space-sm);
+}
+
+.page-title {
+  font-size: 20px;        /* H2 */
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.3;
+}
+
+.page-body {
+  margin-top: var(--space-md);
+  font-size: 14px;
+  color: var(--gray-500);
+}
