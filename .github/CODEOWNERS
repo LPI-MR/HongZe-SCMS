@@ -1,0 +1,35 @@
+# 供应链管理系统 - CODEOWNERS
+# 格式：路径模式 + 负责人GitHub用户名
+# 文档：https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ============ 默认规则 ============
+# 所有代码变更至少需要一人审查，防止漏审
+* @LPI-MR @Caesar_YE @WBH223946
+
+# ============ 客户管理模块 - Caesar_YE ============
+src/customers/** @Caesar_YE @LPI-MR
+
+# ============ 订单管理模块 - Caesar_YE ============
+src/orders/** @Caesar_YE @LPI-MR
+
+# ============ 价格指数模块 - LPI-MR（你） ============
+src/price-index/** @LPI-MR @Caesar_YE
+
+# ============ 合同管理模块 - LPI-MR（你） ============
+src/contracts/** @LPI-MR @WBH223946
+
+# ============ 运输调度管理模块 - WBH223946 ============
+src/transport/** @WBH223946 @LPI-MR
+
+# ============ 数据分析模块 - WBH223946 ============
+src/analytics/** @WBH223946 @Caesar_YE
+
+# ============ 公共部分 - 所有人共同审查 ============
+# 公共组件、样式、工具函数等，建议全员审查
+src/components/** @LPI-MR @Caesar_YE @WBH223946
+src/styles/** @LPI-MR @Caesar_YE @WBH223946
+src/utils/** @LPI-MR @Caesar_YE @WBH223946
+
+# 配置文件和核心入口文件，建议全员审查
+*.json @LPI-MR @Caesar_YE @WBH223946
+*.html @LPI-MR @Caesar_YE @WBH223946
