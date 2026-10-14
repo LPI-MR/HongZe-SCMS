@@ -23,17 +23,269 @@
 
     <!-- 主内容区：本模块独立设计 -->
     <main class="main">
-      <section class="module-hero">
-        <div class="hero-title">合同管理</div>
-        <div class="hero-desc">数据看板、合同台账与合同模板</div>
-      </section>
+      <!-- 合同台账 -->
+      <section class="ledger">
+        <!-- 页面标题 -->
+        <div class="ledger-header">
+          <div>
+            <div class="page-title">合同台账</div>
+            <div class="page-desc">登记与管理全部合同信息</div>
+          </div>
+        </div>
 
-      <div class="placeholder-card">
-        <div class="page-title">合同管理</div>
-        <div class="page-body">本模块内容区域（待开发）</div>
-      </div>
+        <!-- 台账统计卡（实时汇总全部合同数据） -->
+        <div class="ledger-kpis">
+          <div class="stat-card">
+            <div class="stat-label">履行中合同数</div>
+            <div class="stat-value" id="tExecuting">0</div>
+            <div class="stat-note">状态为履行中</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">已终止 / 已完成数</div>
+            <div class="stat-value" id="tClosed">0</div>
+            <div class="stat-note">已完成 + 已终止</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">累计执行货量</div>
+            <div class="stat-value" id="tExecuted">0</div>
+            <div class="stat-note">已执行货量合计（吨）</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">已结算金额</div>
+            <div class="stat-value" id="tSettled">¥0</div>
+            <div class="stat-note">已收款 + 已付款合计</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">应收未收</div>
+            <div class="stat-value" id="tDue">¥0</div>
+            <div class="stat-note">合同金额 − 已收款</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">应付未付</div>
+            <div class="stat-value" id="tPayable">¥0</div>
+            <div class="stat-note">合同金额 − 已付款</div>
+          </div>
+        </div>
+
+        <!-- 合同检索 -->
+        <div class="search-card">
+          <!-- 检索小标题 -->
+          <div class="search-banner">
+            <span class="banner-title">合同检索</span>
+          </div>
+
+          <!-- 检索表单 -->
+          <form class="search-form" id="searchForm">
+            <div class="search-field">
+              <label class="field-label" for="searchName">关键词</label>
+              <input class="field-input" type="text" id="searchName" placeholder="不限字段，空格分隔多个关键词" />
+            </div>
+
+            <div class="search-field">
+              <label class="field-label" for="searchType">合同类型</label>
+              <select class="field-input" id="searchType">
+                <option value="">全部</option>
+                <option value="采购合同">采购合同</option>
+                <option value="销售合同">销售合同</option>
+                <option value="运输合同">运输合同</option>
+                <option value="服务合同">服务合同</option>
+              </select>
+            </div>
+
+            <div class="search-field">
+              <label class="field-label" for="searchStatus">合同状态</label>
+              <select class="field-input" id="searchStatus">
+                <option value="">全部</option>
+                <option value="履行中">履行中</option>
+                <option value="已完成">已完成</option>
+                <option value="已终止">已终止</option>
+              </select>
+            </div>
+
+            <div class="search-field">
+              <label class="field-label">签订日期</label>
+              <div class="field-date-range">
+                <input class="field-input" type="date" id="searchDateStart" />
+                <span class="date-sep">至</span>
+                <input class="field-input" type="date" id="searchDateEnd" />
+              </div>
+            </div>
+
+            <div class="search-actions">
+              <button class="btn btn-primary" type="submit">查询</button>
+              <button class="btn btn-ghost" type="reset" id="searchReset">重置</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 台账列表 -->
+        <div class="ledger-card">
+          <!-- 列表小标题 -->
+          <div class="ledger-banner">
+            <span class="banner-title">合同列表</span>
+            <span class="banner-stat">共 <em id="contractCount">0</em> 份，合计 <em id="contractAmount">0.00</em> 元</span>
+            <button class="btn btn-ghost banner-action" id="exportBtn" type="button">导出 Excel</button>
+            <button class="btn btn-primary banner-action" id="addContractBtn" type="button">添加合同</button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th class="col-check"><input type="checkbox" id="checkAll" title="全选" /></th>
+                  <th class="col-index">序号</th>
+                  <th>合同编号</th>
+                  <th>合同名称</th>
+                  <th>合同类型</th>
+                  <th>甲方单位</th>
+                  <th>乙方单位</th>
+                  <th>丙方单位</th>
+                  <th class="col-num">合同金额</th>
+                  <th class="col-date">签订时间</th>
+                  <th class="col-date">合同终止时间</th>
+                  <th>合同状态</th>
+                  <th class="col-detail">合同详情</th>
+                  <th class="col-action">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 暂无数据，待后续接入 -->
+                <tr class="empty-row">
+                  <td colspan="14">暂无合同数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页控制 -->
+          <div class="pager">
+            <div class="pager-left">
+              <select class="pager-size" id="pageSize">
+                <option value="10" selected>10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+              <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
+            </div>
+            <div class="pager-right">
+              <button type="button" class="pager-btn" id="pgFirst">首页</button>
+              <button type="button" class="pager-btn" id="pgPrev">上一页</button>
+              <span class="pager-info">
+                第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
+                / <span id="pgPages">1</span> 页
+              </span>
+              <button type="button" class="pager-btn" id="pgNext">下一页</button>
+              <button type="button" class="pager-btn" id="pgLast">末页</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
+
+  <!-- 合同详情抽屉 -->
+  <div class="drawer-mask" id="drawerMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title">合同详情</span>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- 基本信息 -->
+        <div class="drawer-section">
+          <div class="section-title">基本信息</div>
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">合同编号</span><span class="info-value" id="dCode">—</span></div>
+            <div class="info-item"><span class="info-label">合同名称</span><span class="info-value" id="dName">—</span></div>
+            <div class="info-item"><span class="info-label">合同类型</span><span class="info-value" id="dType">—</span></div>
+            <div class="info-item"><span class="info-label">合同状态</span><span class="info-value" id="dStatus">—</span></div>
+            <div class="info-item"><span class="info-label">甲方单位</span><span class="info-value" id="dPartyA">—</span></div>
+            <div class="info-item"><span class="info-label">乙方单位</span><span class="info-value" id="dPartyB">—</span></div>
+            <div class="info-item"><span class="info-label">丙方单位</span><span class="info-value" id="dPartyC">—</span></div>
+            <div class="info-item"><span class="info-label">签订时间</span><span class="info-value" id="dSignDate">—</span></div>
+            <div class="info-item"><span class="info-label">合同终止时间</span><span class="info-value" id="dEndDate">—</span></div>
+          </div>
+        </div>
+
+        <!-- 收付金额（可编辑） -->
+        <div class="drawer-section">
+          <div class="section-title">收款付款</div>
+          <div class="pay-grid">
+            <div class="pay-item">
+              <label class="info-label" for="dReceived">已收金额（元）</label>
+              <input class="field-input" type="number" min="0" step="0.01" id="dReceived" placeholder="0.00" />
+            </div>
+            <div class="pay-item">
+              <label class="info-label" for="dPaid">已付金额（元）</label>
+              <input class="field-input" type="number" min="0" step="0.01" id="dPaid" placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 货量信息（可编辑） -->
+        <div class="drawer-section">
+          <div class="section-title">货量信息</div>
+          <div class="pay-grid">
+            <div class="pay-item">
+              <label class="info-label" for="dQuantity">合同货量（吨）</label>
+              <input class="field-input" type="number" min="0" step="0.01" id="dQuantity" placeholder="0.00" />
+            </div>
+            <div class="pay-item">
+              <label class="info-label" for="dExecuted">已执行货量（吨）</label>
+              <input class="field-input" type="number" min="0" step="0.01" id="dExecuted" placeholder="0.00" />
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" id="drawerSave" type="button">保存</button>
+        </div>
+
+        <!-- 合同材料：四类材料各自独立上传，PDF 可查看 / 下载 -->
+        <div class="drawer-section">
+          <div class="section-title">合同材料</div>
+          <div class="material-list">
+            <div class="material-panel" data-mat="approval">
+              <div class="material-head">
+                <span class="material-name">审批单</span>
+                <button class="material-upload" type="button">上传 PDF</button>
+              </div>
+              <div class="material-file" hidden></div>
+              <input class="material-input" type="file" accept="application/pdf" hidden />
+            </div>
+
+            <div class="material-panel" data-mat="legal">
+              <div class="material-head">
+                <span class="material-name">法律意见书</span>
+                <button class="material-upload" type="button">上传 PDF</button>
+              </div>
+              <div class="material-file" hidden></div>
+              <input class="material-input" type="file" accept="application/pdf" hidden />
+            </div>
+
+            <div class="material-panel" data-mat="contract">
+              <div class="material-head">
+                <span class="material-name">合同扫描件</span>
+                <button class="material-upload" type="button">上传 PDF</button>
+              </div>
+              <div class="material-file" hidden></div>
+              <input class="material-input" type="file" accept="application/pdf" hidden />
+            </div>
+
+            <div class="material-panel" data-mat="other">
+              <div class="material-head">
+                <span class="material-name">其他材料</span>
+                <button class="material-upload" type="button">上传 PDF</button>
+              </div>
+              <div class="material-file" hidden></div>
+              <input class="material-input" type="file" accept="application/pdf" hidden />
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 导出 Excel 依赖库（本地离线） -->
+  <script src="vendor/xlsx.full.min.js"></script>
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>

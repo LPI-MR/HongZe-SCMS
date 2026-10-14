@@ -3,24 +3,755 @@
    公共变量 / 布局 / 导航 / 卡片等风格由 /css/common.css 统一提供
    ============================================================ */
 
-/* 模块头图 */
-.module-hero {
-  background: linear-gradient(135deg, #722ED1, #551DB0);
+/* ===== 合同检索 ===== */
+.search-card {
+  background: var(--gray-100);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: var(--space-xl);
-  color: var(--gray-100);
+  padding: var(--space-md);
   margin-bottom: var(--space-lg);
 }
 
-.module-hero .hero-title {
-  font-size: 20px;        /* H2 */
-  font-weight: 600;
-  line-height: 1.3;
+.search-banner {
+  padding: var(--space-xs) var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: var(--space-md);
 }
 
-.module-hero .hero-desc {
-  margin-top: var(--space-sm);
+.search-banner .banner-title {
+  font-size: 16px;        /* H3：与列表小标题同级 */
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+}
+
+/* 表单：字段栅格布局，窄屏自动换行 */
+.search-form {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.4fr) minmax(140px, 1fr) minmax(140px, 1fr) minmax(260px, 1.6fr) auto;
+  gap: var(--space-md);
+  align-items: end;
+  padding: 0 var(--space-sm);
+}
+
+.search-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.field-label {
+  font-size: 13px;        /* Caption */
+  color: var(--gray-600);
+}
+
+.field-input {
+  height: 36px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
   font-size: 14px;        /* Body2 */
-  opacity: 0.85;
+  font-family: inherit;
+  color: var(--gray-700);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.field-input::placeholder { color: var(--gray-400); }
+
+.field-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+select.field-input { cursor: pointer; }
+
+/* 签订日期：起止区间 */
+.field-date-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.field-date-range .field-input { flex: 1; min-width: 0; }
+
+.field-date-range .date-sep {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* 操作按钮 */
+.search-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.btn {
+  height: 36px;
+  padding: 0 var(--space-lg);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 14px;        /* Body2 */
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--gray-100);
+}
+
+.btn-primary:hover { background: var(--color-primary-dark); }
+
+.btn-ghost {
+  background: var(--gray-100);
+  border-color: var(--gray-300);
+  color: var(--gray-600);
+}
+
+.btn-ghost:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 窄屏：检索表单换行 */
+@media (max-width: 1100px) {
+  .search-form { grid-template-columns: 1fr 1fr; }
+  .search-actions { grid-column: -2 / -1; justify-content: flex-end; }
+}
+
+@media (max-width: 640px) {
+  .search-form { grid-template-columns: 1fr; }
+  .search-actions { grid-column: auto; }
+}
+
+/* ===== 合同台账 ===== */
+/* 列表小标题：位于列表卡片内部、表格上方 */
+.ledger-banner {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: var(--space-md);
+}
+
+.ledger-banner .banner-title {
+  font-size: 16px;        /* H3：小于页面主标题，作为列表小标题 */
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+}
+
+.ledger-banner .banner-stat {
+  font-size: 13px;        /* Caption */
+  color: var(--gray-500);
+}
+
+.ledger-banner .banner-stat em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 小标题右侧操作按钮：第一个按钮推到最右，后续按钮紧凑排列 */
+.ledger-banner .banner-action { margin-left: var(--space-sm); }
+.ledger-banner .banner-action:first-of-type { margin-left: auto; }
+
+/* ===== 行内编辑行（添加合同）===== */
+/* 编辑行：浅蓝底色与数据行区分 */
+.ledger-table tr.edit-row td {
+  background: var(--color-primary-light);
+  border-bottom: 1px solid var(--gray-300);
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* 行内输入控件：紧凑单元格输入框 */
+.cell-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 var(--space-xs);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  font-size: 13px;        /* Caption */
+  font-family: inherit;
+  color: var(--gray-700);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cell-input::placeholder { color: var(--gray-400); }
+
+.cell-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* 金额输入右对齐，与数据列一致 */
+.cell-input.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 日期输入 */
+.cell-input.date { min-width: 118px; }
+
+/* 操作列：保存/取消按钮组 */
+.cell-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.btn-mini {
+  height: 26px;
+  padding: 0 var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 12px;        /* Caption */
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.btn-mini.primary {
+  background: var(--color-primary);
+  color: var(--gray-100);
+}
+
+.btn-mini.primary:hover { background: var(--color-primary-dark); }
+
+.btn-mini.ghost {
+  background: var(--gray-100);
+  border-color: var(--gray-300);
+  color: var(--gray-600);
+}
+
+.btn-mini.ghost:hover {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.ledger-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.ledger-header .page-desc {
+  margin-top: var(--space-xs);
+  font-size: 14px;        /* Body2 */
+  color: var(--gray-500);
+}
+
+.ledger-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+}
+
+/* 横向滚动容器：列较多时保证可读性 */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.ledger-table {
+  width: 100%;
+  min-width: 1440px;      /* 14 列最小宽度，窄屏时在 .table-wrap 内横向滚动 */
+  border-collapse: collapse;
+  font-size: 14px;        /* Body2 */
+}
+
+.ledger-table th,
+.ledger-table td {
+  padding: 12px var(--space-md);
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* 表头 */
+.ledger-table thead th {
+  background: var(--gray-200);
+  color: var(--gray-600);
+  font-size: 13px;        /* Caption */
+  font-weight: 500;
+}
+
+.ledger-table thead th:first-child { border-top-left-radius: var(--radius-md); }
+.ledger-table thead th:last-child  { border-top-right-radius: var(--radius-md); }
+
+/* 列对齐：勾选居中、序号居中、金额右对齐、时间居中、操作列居中 */
+.ledger-table .col-check { width: 48px; text-align: center; }
+.ledger-table .col-check input { cursor: pointer; vertical-align: middle; }
+.ledger-table .col-index { width: 64px; text-align: center; }
+.ledger-table .col-num   { text-align: right; font-variant-numeric: tabular-nums; }
+.ledger-table .col-date  { text-align: center; }
+.ledger-table .col-action { width: 116px; text-align: center; }
+
+/* 行内编辑 / 删除按钮 */
+.row-edit {
+  height: 26px;
+  padding: 0 var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 13px;        /* Caption */
+  font-family: inherit;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.row-edit:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.row-del {
+  height: 26px;
+  padding: 0 var(--space-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 13px;        /* Caption */
+  font-family: inherit;
+  color: var(--color-danger);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.row-del:hover {
+  background: var(--assist-bg-red);
+  border-color: var(--color-danger);
+}
+
+/* 数据行 */
+.ledger-table tbody td {
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-200);
+  transition: background-color 0.2s;
+}
+
+.ledger-table tbody tr:hover td { background: var(--gray-200); }
+
+/* 空状态行 */
+.ledger-table .empty-row td {
+  padding: var(--space-xl) 0;
+  text-align: center;
+  color: var(--gray-500);
+}
+
+/* ===== 合同详情列与抽屉 ===== */
+/* 详情列居中，详情为可点击链接 */
+.ledger-table .col-detail { text-align: center; }
+
+.detail-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.detail-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+
+/* 小号主按钮（抽屉保存金额） */
+.btn-sm { height: 32px; padding: 0 var(--space-md); font-size: 13px; }
+
+/* 遮罩：覆盖全屏，抽屉靠右滑入 */
+.drawer-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(29, 33, 41, 0.45);
+  z-index: 100;
+}
+
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 480px;
+  max-width: 92vw;
+  background: var(--gray-100);
+  box-shadow: var(--shadow-hover);
+  display: flex;
+  flex-direction: column;
+  animation: drawer-in 0.25s ease;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.drawer-title {
+  font-size: 16px;        /* H3 */
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.drawer-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 18px;
+  line-height: 1;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.drawer-close:hover {
+  background: var(--gray-200);
+  color: var(--gray-800);
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+}
+
+.drawer-section { margin-bottom: var(--space-lg); }
+.drawer-section:last-child { margin-bottom: 0; }
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: var(--space-md);
+}
+
+/* 基本信息：两列信息栅格 */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.info-label { font-size: 12px; color: var(--gray-500); }
+
+.info-value {
+  font-size: 14px;
+  color: var(--gray-700);
+  word-break: break-all;
+}
+
+/* 收付金额：两个并排输入 */
+.pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.pay-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ===== 合同材料上传面板 ===== */
+/* 四类材料各一个面板：标题 + 上传按钮；上传后显示文件行（查看 / 下载 / 删除） */
+.material-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.material-panel {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--gray-100);
+}
+
+.material-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.material-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.material-upload {
+  height: 26px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.material-upload:hover { border-color: var(--color-primary); }
+
+/* 已上传文件行：文件名可点击打开 PDF，右侧下载 / 删除 */
+.material-file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--gray-200);
+  border-radius: var(--radius-sm);
+}
+
+.material-link {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--color-primary);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-link:hover { text-decoration: underline; }
+
+.material-ops {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.material-btn {
+  padding: 2px var(--space-xs);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.material-btn:hover { background: var(--gray-300); text-decoration: none; }
+.material-btn.del { color: var(--color-danger); }
+
+/* ===== 导出 PDF：打印样式 ===== */
+/* 点「导出 PDF」→ 浏览器打印对话框 → 选「另存为 PDF」，仅输出台账 */
+@media print {
+  @page { size: A4 landscape; margin: 12mm; }
+
+  /* 页面骨架：去掉侧边栏与灰底，内容通栏 */
+  body { background: #fff; }
+  .layout { display: block; min-height: auto; }
+  .sidebar, .search-card { display: none !important; }
+  .main { padding: 0; }
+
+  /* 列表卡片：去阴影加边框；按钮不打印 */
+  .ledger-card {
+    box-shadow: none;
+    border: 1px solid #333;
+    border-radius: 0;
+  }
+  .ledger-banner .banner-action { display: none !important; }
+  .ledger-banner {
+    border-bottom: 1px solid #333;
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+  .banner-stat em { color: #000 !important; }
+
+  /* 表格：隐藏勾选/操作/详情列、编辑行、空状态行 */
+  .edit-row, .empty-row,
+  .ledger-table .col-check, .ledger-table .col-action, .ledger-table .col-detail { display: none !important; }
+
+  .table-wrap { overflow: visible; }
+  .ledger-table { min-width: 0 !important; width: 100%; font-size: 12px; }
+  .ledger-table th,
+  .ledger-table td {
+    border: 1px solid #333;
+    color: #000;
+  }
+  .ledger-table thead th {
+    background: var(--gray-200) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ===== 台账统计卡（页面标题下方，实时汇总）===== */
+.ledger-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+@media (max-width: 1400px) {
+  .ledger-kpis { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 720px) {
+  .ledger-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+
+.stat-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.stat-value {
+  margin-top: var(--space-xs);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-note {
+  margin-top: var(--space-xs);
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* 打印时隐藏统计卡区（导出 PDF 只保留表格） */
+@media print {
+  .ledger-kpis { display: none; }
+}
+
+/* ===== 分页控制（列表底部）===== */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--gray-200);
+  flex-wrap: wrap;
+}
+
+.pager-left,
+.pager-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pager-size {
+  height: 30px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  font-size: 13px;
+  color: var(--gray-600);
+  cursor: pointer;
+}
+
+.pager-total { font-size: 13px; color: var(--gray-500); }
+.pager-total b { color: var(--color-primary); font-weight: 600; }
+
+.pager-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  font-size: 13px;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+
+.pager-btn:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.pager-btn:disabled {
+  color: var(--gray-400);
+  background: var(--gray-200);
+  border-color: var(--gray-200);
+  cursor: not-allowed;
+}
+
+.pager-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.pager-input {
+  width: 56px;
+  height: 30px;
+  text-align: center;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.pager-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+/* 隐藏页码输入框的上下箭头 */
+.pager-input::-webkit-outer-spin-button,
+.pager-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.pager-input[type='number'] { appearance: textfield; -moz-appearance: textfield; }
+
+/* 打印时隐藏分页栏 */
+@media print {
+  .pager { display: none; }
 }
