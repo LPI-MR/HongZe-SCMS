@@ -23,20 +23,59 @@
 
     <!-- 主内容区：本模块独立设计 -->
     <main class="main">
+      <!-- 模块头图：标题 + 实时监控状态 -->
       <section class="module-hero">
-        <div class="hero-title">运输调度管理</div>
-        <div class="hero-desc">车辆调度与运输任务管理</div>
+        <div class="hero-text">
+          <div class="hero-title">运输调度管理</div>
+          <div class="hero-desc">车次总览 · 通道模式 · 实时进度跟踪</div>
+        </div>
+        <div class="hero-right">
+          <a class="hero-entry" href="/transport/transport-entry.html">＋ 信息录入</a>
+          <div class="hero-live">
+            <span class="live-dot"></span>
+            <span>实时监控中</span>
+            <span class="live-sep">·</span>
+            <span>最后更新 <span id="last-update">--:--:--</span></span>
+          </div>
+        </div>
       </section>
 
-      <div class="placeholder-card">
-        <div class="page-title">运输调度管理</div>
-        <div class="page-body">本模块内容区域（待开发）</div>
-      </div>
+      <!-- 车次总览 KPI：总数 + 三种运输方式 -->
+      <section class="kpi-grid" id="kpi-grid"></section>
+
+      <!-- 三种通道模式：节点分布（各节点当前车次数） -->
+      <section class="channel-grid" id="channel-grid"></section>
+
+      <!-- 车次实时进度列表 -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">车次实时进度</div>
+          <div class="filter-tabs" id="filter-tabs">
+            <button class="tab active" data-mode="all">全部</button>
+            <button class="tab" data-mode="rail">铁路直达</button>
+            <button class="tab" data-mode="inter">公铁联运</button>
+            <button class="tab" data-mode="road">汽运直达</button>
+            <button class="tab" data-mode="custom">自定义通道</button>
+          </div>
+        </div>
+
+        <!-- 订单号查询：查询某订单名下的全部车次 -->
+        <div class="order-search">
+          <input id="order-input" class="order-input" list="order-suggestions" placeholder="输入订单号查询名下车次，如 SO1013-001，回车查询" />
+          <datalist id="order-suggestions"></datalist>
+          <button id="order-btn" type="button" class="order-btn">查询</button>
+        </div>
+        <div class="order-bar" id="order-bar" hidden></div>
+
+        <div class="trip-list" id="trip-list"></div>
+      </section>
     </main>
   </div>
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 共享数据层（车次数据与信息录入页共享） -->
+  <script src="trips-store.js"></script>
   <!-- 模块脚本 -->
   <script src="transport.js"></script>
 </body>

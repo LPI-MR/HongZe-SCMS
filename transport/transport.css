@@ -3,14 +3,19 @@
    公共变量 / 布局 / 导航 / 卡片等风格由 /css/common.css 统一提供
    ============================================================ */
 
-/* 模块头图 */
+/* ===== 模块头图：标题 + 实时监控状态 ===== */
 .module-hero {
   background: linear-gradient(135deg, #272E3B, #1D2129);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: var(--space-xl);
+  padding: var(--space-lg) var(--space-xl);
   color: var(--gray-100);
   margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
 }
 
 .module-hero .hero-title {
@@ -23,4 +28,478 @@
   margin-top: var(--space-sm);
   font-size: 14px;        /* Body2 */
   opacity: 0.85;
+}
+
+.hero-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* 信息录入入口按钮 */
+.hero-entry {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--gray-100);
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.hero-entry:hover { background: var(--color-primary-dark); }
+
+.hero-live {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  font-size: 12px;
+  opacity: 0.92;
+  white-space: nowrap;
+}
+
+.live-sep { opacity: 0.5; }
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  animation: live-pulse 1.6s ease-out infinite;
+}
+
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 182, 42, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(0, 182, 42, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 182, 42, 0); }
+}
+
+/* ===== KPI 总览：四列（覆盖公共三列）===== */
+.kpi-grid {
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: var(--space-lg);
+}
+
+.kpi-unit {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray-500);
+}
+
+/* 公铁联运：浅紫整卡变体 */
+.kpi-card.purple { background: var(--assist-bg-purple); }
+.kpi-card.purple .kpi-icon { background: var(--gray-100); }
+.kpi-icon.purple svg { stroke: #722ED1; }
+
+/* ===== 三种通道模式卡片 ===== */
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.channel-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md) var(--space-lg);
+  transition: box-shadow 0.2s;
+}
+
+.channel-card:hover { box-shadow: var(--shadow-hover); }
+
+.channel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: var(--space-md);
+}
+
+.channel-count {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.channel-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* 节点分布 chip：数量 > 0 高亮 */
+.node-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 6px 0 10px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.node-chip .node-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--gray-300);
+  color: var(--gray-600);
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.node-chip.active { background: var(--color-primary-light); color: var(--color-primary); }
+.node-chip.active .node-count { background: var(--color-primary); color: var(--gray-100); }
+
+/* 自定义通道卡：各车次节点链不同，按车次列出当前节点 */
+.custom-trip-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.custom-trip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-600);
+  font-variant-numeric: tabular-nums;
+}
+
+.custom-trip .cur { color: var(--color-primary); }
+
+/* ===== 运输方式徽标 ===== */
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mode-badge.rail  { background: var(--color-primary-light); color: var(--color-primary); }
+.mode-badge.inter { background: var(--assist-bg-purple); color: #722ED1; }
+.mode-badge.road  { background: var(--assist-bg-orange); color: var(--color-warning); }
+.mode-badge.custom { background: var(--assist-bg-green); color: var(--color-success); }
+
+/* ===== 车次实时进度面板 ===== */
+.panel {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--gray-300);
+  margin-bottom: var(--space-xs);
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+/* 方式筛选 tabs */
+.filter-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  background: var(--gray-200);
+  padding: 3px;
+  border-radius: var(--radius-md);
+}
+
+.filter-tabs .tab {
+  border: none;
+  background: transparent;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.filter-tabs .tab:hover { color: var(--gray-800); }
+
+.filter-tabs .tab.active {
+  background: var(--gray-100);
+  color: var(--color-primary);
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* 车次列表行 */
+.trip-list { display: flex; flex-direction: column; }
+
+.trip-item {
+  display: grid;
+  grid-template-columns: 240px 1fr 52px;
+  gap: var(--space-lg);
+  align-items: center;
+  padding: var(--space-md) 0;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.trip-item:last-child { border-bottom: none; }
+
+.trip-id-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.trip-id {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.trip-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+}
+
+.trip-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.trip-status.running { color: var(--color-primary); }
+.trip-status.running::before { background: var(--color-primary); animation: blink 1.6s infinite; }
+.trip-status.done { color: var(--color-success); }
+.trip-status.done::before { background: var(--color-success); }
+
+@keyframes blink { 50% { opacity: 0.25; } }
+
+.trip-meta {
+  margin-top: var(--space-xs);
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.trip-time {
+  font-size: 12px;
+  color: var(--gray-500);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.trip-empty {
+  padding: var(--space-xl) 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+/* ===== 订单号查询 ===== */
+.order-search {
+  display: flex;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+}
+
+.order-input {
+  flex: 1;
+  max-width: 380px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--gray-700);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.order-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(64, 128, 255, 0.12);
+}
+
+.order-btn {
+  height: 34px;
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--gray-100);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.order-btn:hover { background: var(--color-primary-dark); }
+
+/* 查询结果条 */
+.order-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.order-bar-label b {
+  color: var(--color-primary);
+  margin-left: 2px;
+}
+
+.order-bar-clear {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.order-bar-clear:hover { text-decoration: underline; }
+
+/* 车次行内订单号链接 */
+.order-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.order-link:hover { text-decoration: underline; }
+
+.order-none { color: var(--gray-400); }
+
+/* 亏吨率：正常绿色，超过阈值红色 */
+.loss-rate {
+  font-variant-numeric: tabular-nums;
+}
+
+.loss-rate.ok { color: var(--color-success); }
+
+.loss-rate.bad {
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+/* ===== 节点进度条（stepper）===== */
+.trip-stepper { overflow-x: auto; }
+
+.stepper {
+  display: flex;
+  min-width: 480px;
+}
+
+.step {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 节点连接线（到达当前节点之前的线视为已走完）*/
+.step:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--gray-300);
+}
+
+.step.done:not(:first-child)::before,
+.step.current::before { background: var(--color-primary); }
+
+.step .dot {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gray-400);
+}
+
+.step.done .dot { background: var(--color-primary); }
+
+/* 当前节点：脉冲光圈强调 */
+.step.current .dot {
+  background: var(--color-primary);
+  animation: dot-pulse 1.6s ease-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(64, 128, 255, 0.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(64, 128, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(64, 128, 255, 0); }
+}
+
+.step-name {
+  font-size: 11px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.step.done .step-name { color: var(--gray-600); }
+.step.current .step-name { color: var(--color-primary); font-weight: 600; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 1400px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .channel-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+  .trip-item {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+  .trip-time { text-align: left; }
 }
