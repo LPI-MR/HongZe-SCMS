@@ -51,10 +51,22 @@
     </div>
   </div>
 
-  <a class="nav-item" data-path="运输调度管理">
-    <svg class="icon" viewBox="0 0 24 24"><path d="M2 6h12v11H2z"/><path d="M14 10h4l3 3.5V17h-7"/><circle cx="6.5" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>
-    <span class="label">运输调度管理</span>
-  </a>
+  <!-- 运输调度管理（含二级菜单） -->
+  <div class="nav-group">
+    <a class="nav-item has-children">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M2 6h12v11H2z"/><path d="M14 10h4l3 3.5V17h-7"/><circle cx="6.5" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>
+      <span class="label">运输调度管理</span>
+      <svg class="arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+    <div class="subnav">
+      <div class="subnav-inner">
+        <div class="subnav-list">
+          <a class="nav-sub-item" data-path="运输调度管理 / 调度看板" href="/transport/transport.html">调度看板</a>
+          <a class="nav-sub-item" data-path="运输调度管理 / 信息录入" href="/transport/transport-entry.html">信息录入</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 数据分析（含二级菜单） -->
   <div class="nav-group">

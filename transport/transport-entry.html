@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>运输信息录入 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块公共样式：复用 mode-badge / stepper 等组件样式 -->
+  <link rel="stylesheet" href="transport.css" />
+  <!-- 录入页独立样式 -->
+  <link rel="stylesheet" href="transport-entry.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- 模块头图 -->
+      <section class="module-hero">
+        <div class="hero-text">
+          <div class="hero-title">运输信息录入</div>
+          <div class="hero-desc">录入车次实时进度与新增车次，数据实时同步至调度看板</div>
+        </div>
+        <a class="hero-back" href="/transport/transport.html">返回调度看板</a>
+      </section>
+
+      <div class="entry-layout">
+        <!-- 左：录入表单 -->
+        <section class="entry-card">
+          <div class="entry-tabs" id="entry-tabs">
+            <button class="tab active" data-tab="progress" type="button">进度上报</button>
+            <button class="tab" data-tab="new" type="button">新增车次</button>
+          </div>
+
+          <!-- 进度上报：为已有车次录入实时进度 -->
+          <form id="progress-form" class="entry-form">
+            <div class="field">
+              <label class="field-label" for="p-trip">选择车次</label>
+              <select id="p-trip" class="input" required></select>
+            </div>
+
+            <div class="field">
+              <label class="field-label">当前进度</label>
+              <div class="preview-box" id="p-preview"></div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="p-node">上报节点</label>
+                <select id="p-node" class="input" required></select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="p-time">上报时间</label>
+                <input id="p-time" type="datetime-local" class="input" required />
+              </div>
+              <div class="field">
+                <label class="field-label" for="p-actual">实际到货重量（吨，选填）</label>
+                <input id="p-actual" type="number" min="0" step="0.1" class="input" placeholder="车次到货后填写" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="p-note">备注（选填）</label>
+              <textarea id="p-note" class="input" rows="2" placeholder="如：延误原因、现场情况等"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">提交上报</button>
+          </form>
+
+          <!-- 新增车次 -->
+          <form id="new-form" class="entry-form" hidden>
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="n-id">车次号</label>
+                <input id="n-id" class="input" required />
+              </div>
+              <div class="field">
+                <label class="field-label" for="n-mode">运输方式</label>
+                <select id="n-mode" class="input">
+                  <option value="rail">铁路直达</option>
+                  <option value="inter">公铁联运</option>
+                  <option value="road">汽运直达</option>
+                  <option value="custom">自定义通道</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="n-from">起点</label>
+                <input id="n-from" class="input" required placeholder="如：淮安南" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="n-to">终点</label>
+                <input id="n-to" class="input" required placeholder="如：郑州北" />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="n-cargo">货物</label>
+                <input id="n-cargo" class="input" required list="cargo-list" placeholder="如：煤炭" />
+                <datalist id="cargo-list">
+                  <option value="煤炭"></option>
+                  <option value="钢材"></option>
+                  <option value="化肥"></option>
+                  <option value="粮食"></option>
+                  <option value="石英砂"></option>
+                  <option value="矿粉"></option>
+                </datalist>
+              </div>
+              <div class="field">
+                <label class="field-label" for="n-tons">吨位（吨）</label>
+                <input id="n-tons" type="number" min="1" step="0.1" class="input" required placeholder="如：3200" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="n-order">关联订单号（选填）</label>
+                <input id="n-order" class="input" list="order-list" placeholder="如：SO1013-001" />
+                <datalist id="order-list"></datalist>
+              </div>
+            </div>
+
+            <div class="field" id="n-node-field">
+              <label class="field-label" for="n-node">当前节点</label>
+              <select id="n-node" class="input"></select>
+            </div>
+
+            <!-- 自定义通道：节点链编辑器（选择"自定义通道"时显示） -->
+            <div class="field" id="n-nodes-field" hidden>
+              <label class="field-label">自定义节点链（至少 2 个，按运输顺序排列）</label>
+              <div class="node-editor" id="n-nodes"></div>
+              <button type="button" class="btn-ghost" id="n-add-node">＋ 添加节点</button>
+            </div>
+
+            <button type="submit" class="btn-primary">创建车次</button>
+          </form>
+        </section>
+
+        <!-- 右：最近录入记录 -->
+        <section class="entry-card">
+          <div class="log-title">最近录入记录</div>
+          <div class="log-list" id="log-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- 全局提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 共享数据层 -->
+  <script src="trips-store.js"></script>
+  <!-- 录入页脚本 -->
+  <script src="transport-entry.js"></script>
+</body>
+</html>
