@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据看板 - 泓泽宜通 HongZe-SCMS</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧导航栏 -->
+    <aside class="sidebar">
+      <!-- 系统名称 -->
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+
+      <!-- 一级导航（由 common/fetch.js 动态加载 common/navbar.html） -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- 页面标题 -->
+      <section class="page-header">
+        <div class="page-title">数据看板</div>
+        <div class="page-desc">合同管理数据概览，实时汇总合同台账数据</div>
+      </section>
+
+      <!-- KPI 面板（3 × 1） -->
+      <section class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <div class="kpi-label">合同总数</div>
+            <div class="kpi-value" id="kpiCount" data-target="0">0</div>
+            <div class="kpi-trend">全部登记合同</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card blue">
+          <div class="kpi-info">
+            <div class="kpi-label">合同总金额</div>
+            <div class="kpi-value" id="kpiAmount" data-prefix="¥" data-target="0">¥0</div>
+            <div class="kpi-trend">合同金额合计</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M9.5 9.5c0-1 1.1-1.8 2.5-1.8s2.5.8 2.5 1.8-1 1.5-2.5 1.9-2.5 1-2.5 1.9 1.1 1.8 2.5 1.8 2.5-.8 2.5-1.8"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-info">
+            <div class="kpi-label">合同总货量</div>
+            <div class="kpi-value" id="kpiQuantity" data-target="0">0</div>
+            <div class="kpi-trend">登记货量合计（吨）</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="1.5"/><path d="M4 12h16"/><path d="M10 8V5h4v3"/></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- 多维度图表区（2 × 2，第一行饼图 / 第二行柱状图） -->
+      <section class="chart-grid">
+        <!-- 合同类型分布 -->
+        <div class="chart-card">
+          <div class="chart-title">合同类型分布</div>
+          <div class="chart-body">
+            <svg id="typePie" viewBox="0 0 120 120" role="img" aria-label="合同类型分布环形图"></svg>
+            <div class="chart-legend" id="typeLegend"></div>
+          </div>
+        </div>
+
+        <!-- 回款占比 -->
+        <div class="chart-card">
+          <div class="chart-title">回款占比</div>
+          <div class="chart-body">
+            <svg id="payPie" viewBox="0 0 120 120" role="img" aria-label="回款占比环形图"></svg>
+            <div class="chart-legend" id="payLegend"></div>
+          </div>
+        </div>
+
+        <!-- 月度签约数量趋势 -->
+        <div class="chart-card">
+          <div class="chart-title">月度签约数量趋势（单）</div>
+          <div class="bar-chart" id="signCountChart"></div>
+        </div>
+
+        <!-- 月度收付款现金流对比（双柱：已收款 / 已付款） -->
+        <div class="chart-card">
+          <div class="chart-title">月度收付款现金流对比</div>
+          <div class="bar-chart" id="cashflowChart"></div>
+          <div class="cashflow-legend">
+            <span class="legend-item"><span class="dot" style="background:#4080FF"></span>已收款</span>
+            <span class="legend-item"><span class="dot" style="background:#FF7D00"></span>已付款</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 履约预警 -->
+      <section class="chart-card warn-card">
+        <div class="chart-title">履约预警<span class="warn-badge" id="warnCount"></span></div>
+        <div class="warn-table" id="warnTable"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="dashboard.js"></script>
+</body>
+</html>

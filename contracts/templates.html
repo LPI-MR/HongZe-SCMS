@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>合同模板 - 泓泽宜通</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="contracts.css" />
+  <link rel="stylesheet" href="templates.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- 页面标题 -->
+      <div class="ledger-header">
+        <div>
+          <div class="page-title">合同模板</div>
+          <div class="page-desc">模板分类管理与版本控制，每次修改自动生成新版本</div>
+        </div>
+        <div>
+          <button class="btn btn-primary banner-action" id="tplAddBtn" type="button">+ 新建模板</button>
+        </div>
+      </div>
+
+      <!-- 搜索栏：关键词搜索全部合同模板 -->
+      <div class="tpl-search-bar">
+        <div class="tpl-search-field">
+          <svg class="tpl-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+          <input class="tpl-search-input" id="tplSearchInput" type="text"
+                 placeholder="输入关键词，搜索全部合同模板（空格分隔多个词）" />
+          <button class="tpl-search-clear" id="tplSearchClear" type="button" hidden>×</button>
+        </div>
+        <button class="tpl-search-btn" id="tplSearchBtn" type="button">搜索</button>
+      </div>
+
+      <!-- 管理视图：分类筛选 + 模板卡片网格 -->
+      <section id="tplManageView">
+        <!-- 分类筛选 -->
+        <div class="tpl-cats" id="tplCats"></div>
+
+        <!-- 模板卡片网格 -->
+        <div class="tpl-grid" id="tplGrid"></div>
+
+        <!-- 空状态 -->
+        <div class="tpl-empty-card" id="tplEmpty" hidden>
+          <svg viewBox="0 0 24 24"><path d="M8 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>
+          <div class="tpl-empty-title">暂无模板</div>
+          <div class="tpl-empty-desc">点击右上角「新建模板」创建第一个合同模板</div>
+        </div>
+      </section>
+
+      <!-- 搜索结果视图（标题 + 简介列表） -->
+      <section id="tplSearchView" class="tpl-result-list" hidden></section>
+
+      <!-- 详情视图：左侧只读正文 + 右侧下载与风险提示 -->
+      <section id="tplDetailView" hidden>
+        <div class="detail-crumb">
+          <a href="javascript:void(0)" id="crumbBack">合同模板</a>
+          <span class="crumb-sep">›</span>
+          <span id="crumbName"></span>
+        </div>
+
+        <div class="detail-layout">
+          <!-- 左：模板内容（PDF 渲染平铺展示，无查看器工具栏；失败时降级文本） -->
+          <div class="detail-main">
+            <div class="detail-loading" id="detailLoading">预览生成中…</div>
+            <div class="detail-doc" id="detailDoc" hidden></div>
+          </div>
+
+          <!-- 右：下载选项 + 元信息 + 风险提示 -->
+          <aside class="detail-side">
+            <button class="dl-btn primary" id="dlWordBtn" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+              下载 Word 文档
+            </button>
+            <button class="dl-btn ghost" id="dlPdfBtn" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+              下载 PDF 文档
+            </button>
+
+            <div class="detail-meta" id="detailMeta"></div>
+
+            <div class="risk-block">
+              <div class="risk-title">
+                <svg viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18v.5"/></svg>
+                风险提示
+              </div>
+              <div class="risk-list" id="riskList"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 模板编辑抽屉（新建 / 编辑） -->
+  <div class="drawer-mask" id="tplDrawerMask" hidden>
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="drawer-title" id="tplDrawerTitle">新建模板</div>
+        <button class="drawer-close" id="tplDrawerClose" type="button">×</button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-section">
+          <div class="field-label">模板名称 <span class="tpl-required">*</span></div>
+          <input class="field-input" id="fTplName" type="text" placeholder="如：钢材采购合同模板" />
+        </div>
+
+        <div class="drawer-section">
+          <div class="field-label">模板分类</div>
+          <select class="field-input" id="fTplCategory">
+            <option>采购类合同</option>
+            <option>销售类合同</option>
+            <option>运输类合同</option>
+            <option>咨询服务类合同</option>
+            <option>通用类合同</option>
+            <option>授权委托书</option>
+          </select>
+        </div>
+
+        <div class="drawer-section">
+          <div class="field-label">模板简介（显示在搜索结果中）</div>
+          <input class="field-input" id="fTplIntro" type="text" placeholder="一句话描述本模板的适用场景" />
+        </div>
+
+        <div class="drawer-section">
+          <div class="field-label">模板内容</div>
+          <div class="tpl-upload-row">
+            <button class="btn btn-ghost btn-sm" id="tplUploadBtn" type="button">上传文档</button>
+            <button class="btn btn-ghost btn-sm" id="tplUploadPdfBtn" type="button">上传 PDF</button>
+            <input type="file" id="tplFileInput" multiple hidden />
+            <input type="file" id="tplPdfFileInput" accept=".pdf" multiple hidden />
+          </div>
+          <!-- 已上传文件列表：上传几个显示几个，逐个可删除 -->
+          <div class="tpl-file-list" id="tplFileList"></div>
+          <textarea class="tpl-textarea" id="fTplContent" rows="14" placeholder="可选：输入模板正文关键词便于搜索匹配；左侧展示内容以上传的文档为准"></textarea>
+        </div>
+
+        <!-- 仅编辑模式显示：版本控制 -->
+        <div class="drawer-section" id="tplVerSection" hidden>
+          <div class="field-label">版本说明（本次修改备注）</div>
+          <input class="field-input" id="fTplRemark" type="text" placeholder="如：调整付款条款" />
+          <label class="tpl-major">
+            <input type="checkbox" id="fTplMajor" />
+            主版本升级（V1.2 → V2.0，不勾选则次版本号 +1）
+          </label>
+        </div>
+
+        <div class="drawer-section">
+          <div class="field-label">风险提示（每行一条，展示在详情页）</div>
+          <textarea class="tpl-textarea" id="fTplRisk" rows="4" placeholder="如：应注意公司等机构作为合同主体的处理"></textarea>
+        </div>
+
+        <div class="tpl-tip" id="tplTip" hidden></div>
+
+        <div class="drawer-actions">
+          <button class="btn btn-primary" id="tplSaveBtn" type="button">保存</button>
+          <button class="btn btn-ghost" id="tplCancelBtn" type="button">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 版本历史抽屉 -->
+  <div class="drawer-mask" id="hisDrawerMask" hidden>
+    <div class="drawer">
+      <div class="drawer-header">
+        <div class="drawer-title" id="hisTitle">版本历史</div>
+        <button class="drawer-close" id="hisClose" type="button">×</button>
+      </div>
+      <div class="drawer-body">
+        <!-- 版本列表（新 → 旧） -->
+        <div id="hisList"></div>
+
+        <!-- 单个版本内容查看 -->
+        <div id="hisView" hidden>
+          <div class="his-view-head">
+            <span class="his-view-ver" id="hisViewVer">V1.0</span>
+            <span class="his-view-time" id="hisViewTime"></span>
+            <a class="tpl-act" id="hisFileDl" hidden>下载原始 Word</a>
+          </div>
+          <pre class="his-content" id="hisContent"></pre>
+          <button class="btn btn-ghost btn-sm" id="hisViewBack" type="button">← 返回版本列表</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <script src="vendor/mammoth.browser.min.js"></script>
+  <script src="vendor/pdf.min.js"></script>
+  <script src="vendor/html2canvas.min.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="templates.js"></script>
+</body>
+</html>
