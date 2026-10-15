@@ -231,6 +231,41 @@
   color: var(--color-danger);
 }
 
+/* ===== 已上传文件列表（多文件：上传几个显示几个）===== */
+.tpl-file-list {
+  margin-top: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 7px 10px;
+  background: var(--gray-200);
+  border-radius: var(--radius-md);
+}
+
+.file-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.file-item .file-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
 /* 链接形态的模板操作按钮（如：下载原始 Word） */
 a.tpl-act {
   display: inline-flex;

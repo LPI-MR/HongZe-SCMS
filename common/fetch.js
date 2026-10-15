@@ -12,6 +12,7 @@
   'use strict';
 
   // 菜单路径 → 页面地址（根绝对路径，适配任意子目录页面）
+  // 带序号的业务模块中暂只有订单管理有页面；其余点击仅高亮并由页面自行处理
   const NAV_ROUTES = {
     '首页': '/index.html',
     '客户管理': '/customers/customers.html',

@@ -52,6 +52,16 @@
   let curCat = '全部';     // 当前分类筛选
   let editingId = null;    // 正在编辑的模板 id；null = 新建
 
+  // 版本附件迁移：旧数据单文件 v.file → 新结构文件数组 v.files（历史版本自动升级）
+  function normalizeFiles(t) {
+    if (!t || !Array.isArray(t.versions)) return;
+    t.versions.forEach(v => {
+      if (v.file && !v.files) { v.files = [v.file]; v.file = null; }
+      if (!Array.isArray(v.files)) v.files = [];
+    });
+  }
+  templates.forEach(normalizeFiles);
+
   function load() {
     try {
       const v = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -68,7 +78,8 @@
       // 配额超限：剥离各模板最新版本的大文档附件后重试（正文与版本记录保留）
       templates.forEach(t => {
         const v = t.versions[t.versions.length - 1];
-        if (v && v.file) v.file = null;
+        if (v && v.files) v.files = [];
+        if (v) v.file = null;
       });
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
@@ -168,6 +179,7 @@
   // ===== 视图切换：管理 / 搜索结果 / 详情 =====
   let lastListView = 'manage';   // 详情返回目标
   let detailId = null;           // 当前详情模板 id
+  let detailFileIdx = 0;         // 当前详情展示的文档索引（多文档标签切换用）
 
   function showView(v) {
     $('tplManageView').hidden = v !== 'manage';
@@ -294,9 +306,11 @@
 
     renderRisks(cur.risks || []);
 
-    // Word 下载：无原始文档时禁用
-    $('dlWordBtn').disabled = !cur.file;
-    $('dlWordBtn').title = cur.file ? '' : '该版本未上传原始 Word 文档';
+    // 左侧只展示 PDF 模板：定位版本内的 PDF 文件（.doc 等原始文档仅供下载，不做展示）
+    detailFileIdx = (cur.files || []).findIndex(f => /\.pdf$/i.test(f.name));
+    const dlWord = $('dlWordBtn');
+    dlWord.disabled = !cur.files.length;
+    dlWord.title = cur.files.length ? '' : '该版本未上传原始文档';
 
     // 左侧：PDF 内容平铺渲染，失败时降级纯文本
     const docBox = $('detailDoc');
@@ -322,11 +336,11 @@
         } catch (e) { /* 渲染失败 → 提示 */ }
         releasePreview();
       }
-      // 转化失败（罕见）：提示下载原始文档
+      // 无 PDF 或转化失败：提示
       docBox.classList.remove('pdf-mode');
-      docBox.textContent = cur.file
-        ? '该文档内容无法预览转化，请下载原始文档查看'
-        : '该版本未上传文档，请在编辑中上传文档后查看';
+      docBox.textContent = cur.files.length
+        ? '该版本未上传 PDF 文档，左侧仅展示 PDF 模板内容，可下载原始文档查看'
+        : '该版本未上传文档，请在编辑中上传 PDF 模板后查看';
       docBox.hidden = false;
       $('detailLoading').hidden = true;
     }).catch(() => {
@@ -355,11 +369,13 @@
   function downloadWord() {
     const t = byId(detailId);
     const cur = t && curVer(t);
-    if (!cur || !cur.file) return;
+    // 优先下载左侧展示的 PDF 原文件；未上传 PDF 时下载第一份原始文档
+    const file = cur && (cur.files[detailFileIdx] || cur.files[0]);
+    if (!file) return;
 
     const a = document.createElement('a');
-    a.href = 'data:' + wordMime(cur.file.name) + ';base64,' + cur.file.data;
-    a.download = cur.file.name;
+    a.href = 'data:' + wordMime(file.name) + ';base64,' + file.data;
+    a.download = file.name;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -401,7 +417,62 @@
   // ===== 编辑抽屉（新建 / 编辑） =====
   const $ = id => document.getElementById(id);
   let tipTimer = null;
-  let pendingFile = null;   // 本次上传的 Word 文档 { name, data(base64) }；null = 未上传
+  let pendingFiles = [];   // 本次上传的文档列表 [{ name, data(base64), type }]；空数组 = 未上传新文件
+
+  // 上传文档（支持多选）：逐个校验后加入待保存列表；同名文件自动替换
+  function addFiles(list, pdfOnly) {
+    Array.from(list || []).forEach(file => {
+      if (pdfOnly && !/\.pdf$/i.test(file.name)) {
+        showTip('「' + file.name + '」不是 PDF 格式，请用「上传文档」或改选 PDF');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        showTip('「' + file.name + '」超过 2MB，超出浏览器本地存储上限');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const item = { name: file.name, data: bufToBase64(reader.result) };
+        const existIdx = pendingFiles.findIndex(f => f.name === file.name);
+        if (existIdx >= 0) {
+          pendingFiles[existIdx] = item;   // 同名替换
+          showTip('已替换同名文件：' + file.name);
+        } else {
+          pendingFiles.push(item);
+          showTip('已添加：' + file.name);
+        }
+        renderFileList();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  // 编辑抽屉当前生效的文件集合（打开编辑时已拷贝为工作区，后续增删都在此进行）
+  function activeFileList() {
+    return pendingFiles;
+  }
+
+  // 渲染已上传文件列表：上传几个显示几个，逐个可删除
+  function renderFileList() {
+    const box = $('tplFileList');
+    const files = pendingFiles;
+    if (!files.length) { box.hidden = true; box.innerHTML = ''; return; }
+    box.hidden = false;
+    box.innerHTML = files.map((f, i) => (
+      '<div class="file-item">' +
+      '<span class="file-dot"></span>' +
+      '<span class="file-name" title="' + esc(f.name) + '">' + esc(f.name) + '</span>' +
+      '<button type="button" class="tpl-file-remove" data-idx="' + i + '" title="移除该文件">×</button>' +
+      '</div>'
+    )).join('');
+  }
+
+  // 点击列表中的 ×：从工作区移除该文件后刷新列表
+  function removeFileAt(idx) {
+    pendingFiles.splice(idx, 1);
+    renderFileList();
+  }
 
   function showTip(msg) {
     const tip = $('tplTip');
@@ -492,55 +563,6 @@
     return '';
   }
 
-  // 上传文档：原始文档 base64 暂存（保存时随新版本保留，详情页以 PDF 原样展示）
-  function handleFile(file) {
-    if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      showTip('文档超过 2MB，超出浏览器本地存储上限');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingFile = { name: file.name, data: bufToBase64(reader.result) };
-      setFileTip('已上传：' + file.name, true);
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  // 上传 PDF：仅校验格式与大小，原始文件 base64 暂存（与普通文档共用保存链路）
-  // PDF 在预览管线中本身就是「直接展示」分支，左侧即原样内容
-  function handlePdfFile(file) {
-    if (!file) return;
-    if (!/\.pdf$/i.test(file.name)) {
-      showTip('请选择 PDF 格式文件（.pdf）');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      showTip('PDF 超过 2MB，超出浏览器本地存储上限');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingFile = { name: file.name, data: bufToBase64(reader.result) };
-      setFileTip('已上传：' + file.name, true);
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  // 移除本次待上传的文件（× 按钮）
-  function removePendingFile() {
-    pendingFile = null;
-    setFileTip('支持 Word 全格式（.docx/.doc/.docm/.dot/.dotx/.dotm/.rtf）', false);
-  }
-
-  // 文件名提示统一设置：hasFile 控制移除按钮 × 的显隐
-  function setFileTip(text, hasFile) {
-    $('tplFileName').textContent = text;
-    $('tplFileRemove').hidden = !hasFile;
-  }
-
   // ===== 详情页 PDF 预览管线 =====
   // 原始文件是 PDF → 直接展示；其他格式 → 浏览器端渲染排版后截图转 PDF 再展示，
   // 中文由浏览器原生渲染（截图方案），从根上避免乱码。
@@ -614,10 +636,11 @@
   // 为模板版本生成预览 PDF 的 blob URL（覆盖所有常见文档格式）
   async function buildPreviewPdf(t) {
     const cur = curVer(t);
-    if (!cur.file) return null;
+    const file = cur.files[detailFileIdx];
+    if (!file) return null;
 
-    const name = cur.file.name;
-    const buf = base64ToBuf(cur.file.data);
+    const name = file.name;
+    const buf = base64ToBuf(file.data);
 
     // PDF → 直接展示（零转换、像素级保真）
     if (/\.pdf$/i.test(name)) {
@@ -645,7 +668,7 @@
       };
       const ext = name.split('.').pop().toLowerCase();
       const html = '<div style="text-align:center"><img src="data:' + (mimes[ext] || 'application/octet-stream') +
-        ';base64,' + cur.file.data + '" style="max-width:100%"></div>';
+        ';base64,' + file.data + '" style="max-width:100%"></div>';
       return htmlOrTextToPdf(html, '');
     }
 
@@ -682,11 +705,9 @@
     $('fTplMajor').checked = false;
     $('tplVerSection').hidden = !t;   // 版本控制区仅编辑模式显示
     $('tplTip').hidden = true;
-    pendingFile = null;
-    setFileTip(
-      cur && cur.file ? '当前版本文档：' + cur.file.name : '支持 Word 全格式（.docx/.doc/.docm/.dot/.dotx/.dotm/.rtf）',
-      false
-    );
+    // 编辑工作区：拷贝当前版本文件列表，增删操作不直接影响已存数据，保存时统一比对
+    pendingFiles = cur ? (cur.files || []).slice() : [];
+    renderFileList();
 
     $('tplDrawerMask').hidden = false;
     $('fTplName').focus();
@@ -695,7 +716,7 @@
   function closeEditor() {
     $('tplDrawerMask').hidden = true;
     editingId = null;
-    pendingFile = null;
+    pendingFiles = [];
   }
 
   function saveTpl() {
@@ -720,18 +741,30 @@
         category: category,
         versions: [{ ver: 'V1.0', time: Date.now(), name: name,
                      intro: intro, content: content, risks: risks,
-                     remark: '', file: pendingFile }]
+                     remark: '', files: pendingFiles.slice() }]
       });
     } else {
       const t = byId(editingId);
       const cur = curVer(t);
-      const same = name === cur.name && content === cur.content && category === t.category &&
-        intro === (cur.intro || '') && risks.join('\n') === (cur.risks || []).join('\n');
-      if (same) {
-        showTip('内容未发生变化，未生成新版本');
+      // 版本号只跟随「上传模板（文件）」的变动：文件列表一致 → 仅更新介绍信息，不生成新版本
+      const filesChanged =
+        JSON.stringify(pendingFiles) !== JSON.stringify(cur.files || []);
+
+      t.category = category;
+      cur.name = name;
+      cur.intro = intro;
+      cur.content = content;
+      cur.risks = risks;
+
+      if (!filesChanged) {
+        // 无文件变动：直接覆盖当前版本的介绍信息，版本号不变
+        save();
+        closeEditor();
+        renderAll();
         return;
       }
-      t.category = category;
+
+      // 文件变动：生成新版本（主版本勾选生效）
       t.versions.push({
         ver: nextVer(cur.ver, major),
         time: Date.now(),
@@ -739,9 +772,8 @@
         intro: intro,
         content: content,
         risks: risks,
-        remark: remark,
-        // 未重新上传时继承当前版本的原始文档
-        file: pendingFile || cur.file || null
+        remark: remark || '更新模板文档',
+        files: pendingFiles.slice()
       });
     }
 
@@ -797,10 +829,11 @@
     $('hisContent').textContent = v.content || '（空内容）';
 
     const dl = $('hisFileDl');
-    if (v.file) {
+    const hf = (v.files || [])[0];
+    if (hf) {
       dl.hidden = false;
-      dl.href = 'data:' + wordMime(v.file.name) + ';base64,' + v.file.data;
-      dl.download = v.file.name;
+      dl.href = 'data:' + wordMime(hf.name) + ';base64,' + hf.data;
+      dl.download = hf.name;
     } else {
       dl.hidden = true;
     }
@@ -823,8 +856,11 @@
       ver: nextVer(cur.ver, false),
       time: Date.now(),
       name: v.name,
+      intro: v.intro || '',
       content: v.content,
-      remark: '恢复自 ' + ver
+      risks: v.risks || [],
+      remark: '恢复自 ' + ver,
+      files: (cur.files || []).slice()   // 文档附件不回滚，继承当前版本
     });
     save();
     renderAll();
@@ -856,19 +892,22 @@
     // 上传 Word 文档
     $('tplUploadBtn').addEventListener('click', () => $('tplFileInput').click());
     $('tplFileInput').addEventListener('change', e => {
-      handleFile(e.target.files[0]);
+      addFiles(e.target.files, false);   // 支持多选
       e.target.value = '';   // 允许连续选择同一文件
     });
 
-    // 上传 PDF：不做任何解析转化，保存后详情页左侧原样展示
+    // 上传 PDF：仅接受 .pdf，支持多选；保存后详情页左侧原样展示
     $('tplUploadPdfBtn').addEventListener('click', () => $('tplPdfFileInput').click());
     $('tplPdfFileInput').addEventListener('change', e => {
-      handlePdfFile(e.target.files[0]);
+      addFiles(e.target.files, true);
       e.target.value = '';
     });
 
-    // 移除已上传文件（×）
-    $('tplFileRemove').addEventListener('click', removePendingFile);
+    // 已上传文件列表：点击 × 移除对应文件
+    $('tplFileList').addEventListener('click', e => {
+      const btn = e.target.closest('.tpl-file-remove');
+      if (btn) removeFileAt(Number(btn.dataset.idx));
+    });
 
     // 编辑抽屉
     $('tplDrawerClose').addEventListener('click', closeEditor);

@@ -138,11 +138,11 @@
           <div class="tpl-upload-row">
             <button class="btn btn-ghost btn-sm" id="tplUploadBtn" type="button">上传文档</button>
             <button class="btn btn-ghost btn-sm" id="tplUploadPdfBtn" type="button">上传 PDF</button>
-            <span class="tpl-file-name" id="tplFileName">Word 等文档自动转化展示；PDF 原样展示</span>
-            <button class="tpl-file-remove" id="tplFileRemove" type="button" hidden title="移除已上传文件">×</button>
-            <input type="file" id="tplFileInput" hidden />
-            <input type="file" id="tplPdfFileInput" accept=".pdf" hidden />
+            <input type="file" id="tplFileInput" multiple hidden />
+            <input type="file" id="tplPdfFileInput" accept=".pdf" multiple hidden />
           </div>
+          <!-- 已上传文件列表：上传几个显示几个，逐个可删除 -->
+          <div class="tpl-file-list" id="tplFileList"></div>
           <textarea class="tpl-textarea" id="fTplContent" rows="14" placeholder="可选：输入模板正文关键词便于搜索匹配；左侧展示内容以上传的文档为准"></textarea>
         </div>
 
