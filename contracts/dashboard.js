@@ -340,4 +340,20 @@
   renderCashflowChart();
   renderPayChart();
   renderWarnList();
+
+  // 启动后从同步服务器拉取最新台账数据并刷新看板（服务器不可达时保持本地数据）
+  if (window.HZ_SYNC) {
+    HZ_SYNC.pull().then(function (remote) {
+      if (!remote) return;
+      try {
+        localStorage.setItem('hz_contracts', JSON.stringify(remote.contracts || []));
+      } catch (e) { /* 存储不可用时忽略，本次仍以拉取到的数据渲染 */ }
+      renderKpis();
+      renderTypeChart();
+      renderSignCharts();
+      renderCashflowChart();
+      renderPayChart();
+      renderWarnList();
+    });
+  }
 })();

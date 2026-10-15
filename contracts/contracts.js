@@ -69,16 +69,21 @@
       // 配额超限：不中断后续渲染流程，提示用户备份清理
       alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据，再删除部分旧合同或材料后重试。');
     }
+    // 同步到服务器（服务器不可达时静默降级，仅存本机）
+    if (window.HZ_SYNC) HZ_SYNC.push({ contracts: contracts });
   }
 
   function saveMaterials() {
     try {
       localStorage.setItem(LS_MATERIALS, JSON.stringify(matStore));
-      return true;
     } catch (e) {
-      alert('材料文件过大，本地存储空间不足：本次上传仅本次浏览有效，刷新后将丢失');
+      // 本地配额不足时仍尝试上报服务器（服务器落盘无浏览器配额限制）
+      if (window.HZ_SYNC) HZ_SYNC.push({ materials: matStore });
+      alert('材料文件过大，本地存储空间不足：已尝试同步到服务器，若服务器未启动则仅本次浏览有效');
       return false;
     }
+    if (window.HZ_SYNC) HZ_SYNC.push({ materials: matStore });
+    return true;
   }
 
   function genId() {
@@ -743,4 +748,22 @@
   initCheckAll();
   bindPager();
   renderAll(); // 启动时从 localStorage 恢复已添加的数据
+
+  // 启动后与同步服务器对齐：服务器有数据则以服务器为准刷新页面；
+  // 服务器无数据而本地有数据时，把本地数据上报（首次冷启动引导）
+  if (window.HZ_SYNC) {
+    HZ_SYNC.pull().then(function (remote) {
+      if (remote) {
+        contracts = remote.contracts || [];
+        matStore = remote.materials || {};
+        if (!Array.isArray(contracts)) contracts = [];
+        if (!matStore || typeof matStore !== 'object') matStore = {};
+        try { localStorage.setItem(LS_CONTRACTS, JSON.stringify(contracts)); } catch (e) {}
+        try { localStorage.setItem(LS_MATERIALS, JSON.stringify(matStore)); } catch (e) {}
+        renderAll();
+      } else if (contracts.length || Object.keys(matStore).length) {
+        HZ_SYNC.push({ contracts: contracts, materials: matStore });
+      }
+    });
+  }
 })();

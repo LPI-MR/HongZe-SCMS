@@ -38,4 +38,32 @@
   ensure('hz_contracts', SEED.contracts);
   ensure('hz_contract_materials', SEED.materials);
   ensure('hz_contract_templates', SEED.templates);
+
+  // ===== 数据同步桥：对接轻量同步服务器（server/server.js）=====
+  // pull：拉取服务器最新数据；服务器不可达或无数据时返回 null（各页面据此降级用本地缓存）
+  // push：将本地数据补丁上报服务器（静默失败，不影响本机继续使用）
+  window.HZ_SYNC = {
+    pull: function () {
+      if (!window.fetch) return Promise.resolve(null);
+      return fetch('/api/data', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d) return null;
+          var has = (d.contracts && d.contracts.length) ||
+                    (d.templates && d.templates.length) ||
+                    (d.materials && Object.keys(d.materials).length);
+          return has ? d : null;
+        })
+        .catch(function () { return null; });
+    },
+    push: function (patch) {
+      try {
+        fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patch)
+        }).catch(function () { /* 服务器未启动：静默降级，数据仍保存在本机 */ });
+      } catch (e) { /* 忽略 */ }
+    }
+  };
 })();

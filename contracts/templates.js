@@ -72,10 +72,14 @@
   }
 
   function save() {
+    let localOk = false;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+      localOk = true;
     } catch (e) {
-      // 配额超限：剥离各模板最新版本的大文档附件后重试（正文与版本记录保留）
+      // 配额超限：完整数据仍会上报服务器（服务器落盘无浏览器配额限制）；
+      // 随后剥离大附件降级保存，保证页面不卡死
+      if (window.HZ_SYNC) HZ_SYNC.push({ templates: templates });
       templates.forEach(t => {
         const v = t.versions[t.versions.length - 1];
         if (v && v.files) v.files = [];
@@ -83,11 +87,13 @@
       });
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
-        alert('本地存储空间不足：各模板最新版本的大文档附件未能保存（正文与版本记录已保存，可重新上传）');
+        alert('本地存储空间不足：完整数据已尝试同步到服务器；本机仅保留正文与版本记录（大附件未存本地）');
       } catch (e2) {
         alert('本地存储空间不足，本次修改未能保存到浏览器，请清理旧模板后重试');
       }
     }
+    // 同步到服务器（服务器不可达时静默降级，仅存本机）
+    if (localOk && window.HZ_SYNC) HZ_SYNC.push({ templates: templates });
   }
 
   function uid() {
@@ -982,4 +988,20 @@
 
   bindEvents();
   renderAll();
+
+  // 启动后与同步服务器对齐：服务器有数据则以服务器为准刷新列表；
+  // 服务器无数据而本地有数据时，把本地数据上报（首次冷启动引导）
+  if (window.HZ_SYNC) {
+    HZ_SYNC.pull().then(function (remote) {
+      if (remote) {
+        templates = remote.templates || [];
+        if (!Array.isArray(templates)) templates = [];
+        templates.forEach(normalizeFiles);
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(templates)); } catch (e) {}
+        renderAll();
+      } else if (templates.length) {
+        HZ_SYNC.push({ templates: templates });
+      }
+    });
+  }
 })();

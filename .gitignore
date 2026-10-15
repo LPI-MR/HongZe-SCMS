@@ -1,0 +1,3 @@
+# 服务器运行时数据（含业务数据，不随仓库分发）
+server/data.json
+server/data.json.tmp
