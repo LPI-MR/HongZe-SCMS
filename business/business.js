@@ -1,10 +1,10 @@
-// ===== orders 模块脚本 =====
+// ===== business（业务管理）模块脚本 =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责本模块自身的初始化逻辑
 (function () {
   'use strict';
 
   // 本模块对应的一级导航菜单
-  const NAV_PATH = '订单管理';
+  const NAV_PATH = '业务管理';
 
   // 设置导航栏选中态，标示当前所在模块
   function setActiveNav() {

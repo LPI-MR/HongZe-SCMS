@@ -12,14 +12,14 @@
   'use strict';
 
   // 菜单路径 → 页面地址（根绝对路径，适配任意子目录页面）
-  // 带序号的业务模块中暂只有订单管理有页面；其余点击仅高亮并由页面自行处理
+  // 带序号的业务模块暂无页面；点击仅高亮并由页面自行处理
   const NAV_ROUTES = {
     '首页': '/index.html',
     '客户管理': '/customers/customers.html',
     '价格指数管理 / 汽运价格指数': '/price-index/price-index.html',
     '价格指数管理 / 火运价格指数': '/price-index/price-index.html',
     '价格指数管理 / 铁矿石价格指数': '/price-index/price-index.html',
-    '订单管理': '/orders/orders.html',
+    '业务管理': '/business/business.html',
     '合同管理 / 数据看板': '/contracts/dashboard.html',
     '合同管理 / 合同台账': '/contracts/contracts.html',
     '合同管理 / 合同模板': '/contracts/templates.html',
