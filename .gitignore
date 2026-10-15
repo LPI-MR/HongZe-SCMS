@@ -1,3 +1,2 @@
-# 服务器运行时数据（含业务数据，不随仓库分发）
-server/data.json
+# 服务器临时文件
 server/data.json.tmp

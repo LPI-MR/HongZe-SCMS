@@ -40,21 +40,48 @@
   ensure('hz_contract_templates', SEED.templates);
 
   // ===== 数据同步桥：对接轻量同步服务器（server/server.js）=====
-  // pull：拉取服务器最新数据；服务器不可达或无数据时返回 null（各页面据此降级用本地缓存）
-  // push：将本地数据补丁上报服务器（静默失败，不影响本机继续使用）
+  // 三级降级：live API → 静态 data.json → 浏览器 localStorage
+  //   1. 先请求 /api/data（服务器运行时，多人实时共享）
+  //   2. API 不可用（404/无数据）→ 拉取仓库里的 /server/data.json（静态兜底，随仓库分发）
+  //   3. 仍不可用 → 各页面回退使用浏览器 localStorage
   window.HZ_SYNC = {
     pull: function () {
       if (!window.fetch) return Promise.resolve(null);
+
+      // 第一步：尝试实时 API
+      var apiTried = false;
       return fetch('/api/data', { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (r) {
+          apiTried = true;
+          if (!r.ok) return null;
+          return r.json();
+        })
+        .then(function (d) {
+          if (d && (
+            (d.contracts && d.contracts.length) ||
+            (d.templates && d.templates.length) ||
+            (d.materials && Object.keys(d.materials).length)
+          )) return d;
+          return null;
+        })
+        .catch(function () { return null; })
+
+        // 第二步：API 无数据或不可用 → 拉仓库静态文件
+        .then(function (liveData) {
+          if (liveData) return liveData;
+          return fetch('/server/data.json', { cache: 'no-store' })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .catch(function () { return null; });
+        })
+
+        // 第三步：最终判断
         .then(function (d) {
           if (!d) return null;
           var has = (d.contracts && d.contracts.length) ||
                     (d.templates && d.templates.length) ||
                     (d.materials && Object.keys(d.materials).length);
           return has ? d : null;
-        })
-        .catch(function () { return null; });
+        });
     },
     push: function (patch) {
       try {
