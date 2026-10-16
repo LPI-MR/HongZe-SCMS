@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>铁路供应商详情 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 / 详情页框架 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：与列表页共用 railway.css -->
+  <link rel="stylesheet" href="/railway/railway.css" />
+</head>
+<body data-portal="railway">
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：详情容器，由 railway.js 依据 ?id= 参数渲染 -->
+    <main class="main">
+      <section class="detail-wrap" id="detailWrap">
+        <!-- 顶部：操作 -->
+        <div class="detail-top">
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" id="backBtn" type="button">返回列表</button>
+        </div>
+
+        <!-- 详情主体：概览头 / 工商信息 / 企业介绍 / 对接人（JS 渲染） -->
+        <div id="detailPanel" style="padding-top: var(--space-md);"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 编辑弹窗（与列表页共用） -->
+  <div class="rs-mask" id="rsMask" hidden>
+    <div class="rs-modal">
+      <div class="rs-modal-head">
+        <div class="rs-modal-title" id="rsModalTitle">编辑</div>
+        <button class="rs-modal-close" id="rsModalClose">✕</button>
+      </div>
+      <div class="rs-modal-body" id="rsModalBody"></div>
+      <div class="rs-modal-foot">
+        <button class="rs-btn rs-btn-ghost" id="rsModalCancel">取消</button>
+        <button class="rs-btn rs-btn-primary" id="rsModalSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rs-toast" id="rsToast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本（同文件内自动识别详情模式） -->
+  <script src="/railway/railway.js"></script>
+</body>
+</html>
