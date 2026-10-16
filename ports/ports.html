@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>港口信息管理 - 泓泽宜通供应链管理系统</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="ports.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <header class="page-header">
+        <h1 class="page-title">港口信息管理</h1>
+      </header>
+
+      <!-- 港口 Tab 行 -->
+      <div class="tabs-row">
+        <div class="tabs" id="portTabs"></div>
+        <button class="btn-add" id="btnAddPort">＋ 新增港口</button>
+      </div>
+
+      <!-- 动态渲染区 -->
+      <div id="portPanel"></div>
+    </main>
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" id="modalBox"></div>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="ports.js"></script>
+</body>
+</html>
