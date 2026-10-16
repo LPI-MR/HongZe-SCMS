@@ -1,0 +1,336 @@
+/* ============================================================
+   mine 模块独立样式（仅矿山管理模块生效）
+   公共变量 / 布局 / 导航 / 卡片等风格由 /css/common.css 统一提供
+   布局骨架与 contracts 模块风格保持一致，类名独立定义避免跨模块耦合
+   ============================================================ */
+
+/* 按钮 / 页面标题 / 统计卡 / 检索卡 / 列表卡等通用组件样式
+   已上收至 /css/common.css 组件层，本模块仅保留矿山特有定义 */
+
+/* ===== 矿山检索（基础样式由 common.css 组件层提供）===== */
+.search-form {
+  grid-template-columns: minmax(200px, 1.4fr) minmax(180px, 1.2fr) minmax(150px, 1fr) minmax(120px, 0.8fr) auto;
+}
+
+/* ===== 矿山列表表格（基础样式由 common.css 组件层提供）===== */
+.ledger-table { min-width: 1080px; }      /* 9 列最小宽度，窄屏时横向滚动 */
+
+/* 列对齐与列宽（矿山列表特有列） */
+.ledger-table .col-code { width: 110px; font-variant-numeric: tabular-nums; }
+.ledger-table .col-name { min-width: 200px; }
+.ledger-table .col-products { min-width: 200px; }
+.ledger-table .col-action { width: 150px; text-align: center; }
+
+/* 可排序表头：hover 提示 + 排序箭头 */
+.ledger-table .col-sortable { cursor: pointer; user-select: none; }
+.ledger-table .col-sortable:hover { color: var(--color-primary); }
+
+.sort-arrow {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 10px;
+  color: var(--gray-400);
+}
+
+.sort-arrow.asc { color: var(--color-primary); }
+.sort-arrow.asc::after { content: '▲'; }
+.sort-arrow.desc { color: var(--color-primary); }
+.sort-arrow.desc::after { content: '▼'; }
+
+/* 矿山名称：可点击进入详情 */
+.mine-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.mine-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+
+/* 主流产品标签：最多显示 3 个，超出显示 +N */
+.product-tags {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  max-width: 260px;
+  overflow: hidden;
+}
+
+.product-tag {
+  flex-shrink: 0;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 12px;        /* Caption */
+  line-height: 18px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-tag.more {
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+/* 状态标签变体（基础样式由 common.css 组件层提供） */
+.status-tag.active {
+  background: #E6FFEA;
+  color: var(--color-success);
+}
+
+.status-tag.inactive {
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+/* 操作列变体（详情 / 编辑 / 停用，基础样式由 common.css 组件层提供） */
+.row-act.detail { color: var(--color-primary); }
+.row-act.detail:hover { background: var(--color-primary-light); border-color: var(--color-primary); }
+
+.row-act.edit { color: var(--color-primary); }
+.row-act.edit:hover { background: var(--color-primary-light); border-color: var(--color-primary); }
+
+/* 停用 / 启用按钮：停用为警示色，启用为成功色 */
+.row-act.toggle { color: var(--color-warning); }
+.row-act.toggle:hover { background: var(--assist-bg-orange); border-color: var(--color-warning); }
+
+.row-act.toggle.on { color: var(--color-success); }
+.row-act.toggle.on:hover { background: var(--assist-bg-green); border-color: var(--color-success); }
+
+/* 分页 / 抽屉骨架（mask / 标题 / 表单栅格 / 底部操作等）
+   已上收至 /css/common.css 组件层，此处仅保留矿山抽屉特有内容 */
+
+/* 主流产品快捷标签 */
+.product-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.product-pill {
+  padding: 3px var(--space-sm);
+  border: 1px solid var(--gray-300);
+  border-radius: 14px;
+  background: var(--gray-100);
+  font-size: 12px;        /* Caption */
+  font-family: inherit;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.product-pill:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+.product-pill.selected {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.product-custom { margin-top: var(--space-sm); }
+
+/* 已选产品回显：胶囊 + 可移除 */
+.product-selected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.product-selected:empty { display: none; }
+
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 2px var(--space-sm);
+  border-radius: 14px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.selected-tag .tag-remove {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.selected-tag .tag-remove:hover { color: var(--color-danger); }
+
+/* ============================================================
+   矿山详情页（mine-detail.html）
+   ============================================================ */
+.detail-wrap {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+}
+
+/* 顶部：名称 + 编号 + 状态 + 操作 */
+.detail-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--gray-200);
+  flex-wrap: wrap;
+}
+
+.detail-name {
+  font-size: 20px;        /* H2 */
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.3;
+}
+
+.detail-code {
+  font-size: 13px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.detail-top .spacer { flex: 1; }
+
+/* 主体：左信息 + 右位置图 */
+.detail-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--space-lg);
+  padding-top: var(--space-md);
+}
+
+@media (max-width: 1100px) {
+  .detail-body { grid-template-columns: 1fr; }
+}
+
+/* 左侧信息分组（与抽屉三分组一致） */
+.detail-section { margin-bottom: var(--space-lg); }
+.detail-section:last-child { margin-bottom: 0; }
+
+.detail-section .section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--gray-200);
+  margin-bottom: var(--space-md);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+@media (max-width: 640px) {
+  .info-grid { grid-template-columns: 1fr; }
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.info-label { font-size: 12px; color: var(--gray-500); }
+
+.info-value {
+  font-size: 14px;
+  color: var(--gray-700);
+  word-break: break-all;
+}
+
+/* 产品标签（详情页复用） */
+.info-value .product-tags { max-width: none; }
+
+/* 右侧位置图卡片 */
+.geo-card {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  align-self: start;
+}
+
+.geo-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--space-sm);
+}
+
+.geo-map { width: 100%; height: auto; display: block; }
+
+.geo-coord {
+  margin-top: var(--space-sm);
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* 地图散点脉冲动画（详情页当前位置） */
+.geo-pulse {
+  animation: geo-pulse 1.6s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes geo-pulse {
+  0%   { opacity: 0.7; transform: scale(0.6); }
+  100% { opacity: 0;   transform: scale(2.4); }
+}
+
+/* 下方 Tab 页签：关联货物批次 / 关联运输计划（本期占位） */
+.detail-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-lg);
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.detail-tab {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--gray-600);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.detail-tab:hover { color: var(--color-primary); }
+
+.detail-tab.active {
+  color: var(--color-primary);
+  font-weight: 500;
+  border-bottom-color: var(--color-primary);
+}
+
+.tab-panel {
+  padding: var(--space-lg) 0 var(--space-sm);
+  font-size: 14px;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+/* 看板返回条（看板页顶部） */
+.dash-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
