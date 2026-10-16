@@ -37,9 +37,9 @@
 
         <!-- 主体：左信息 + 右位置图 -->
         <div class="detail-body">
-          <!-- 左侧：三分组完整信息 -->
+          <!-- 左侧：四分组完整信息（分组可点击，弹出居中浮窗查看更细字段） -->
           <div class="detail-info">
-            <div class="detail-section">
+            <div class="detail-section" data-section="basic" tabindex="0" role="button" aria-label="查看基础信息详情">
               <div class="section-title">基础信息</div>
               <div class="info-grid">
                 <div class="info-item"><span class="info-label">矿山名称</span><span class="info-value" id="dMineName">—</span></div>
@@ -51,7 +51,7 @@
               </div>
             </div>
 
-            <div class="detail-section">
+            <div class="detail-section" data-section="geo" tabindex="0" role="button" aria-label="查看地理位置详情">
               <div class="section-title">地理位置</div>
               <div class="info-grid">
                 <div class="info-item"><span class="info-label">所在省份</span><span class="info-value" id="dProvince">—</span></div>
@@ -63,7 +63,7 @@
               </div>
             </div>
 
-            <div class="detail-section">
+            <div class="detail-section" data-section="product" tabindex="0" role="button" aria-label="查看产品与产能详情">
               <div class="section-title">产品与产能</div>
               <div class="info-grid">
                 <div class="info-item"><span class="info-label">主流产品</span><span class="info-value" id="dProducts"></span></div>
@@ -75,7 +75,7 @@
               </div>
             </div>
 
-            <div class="detail-section">
+            <div class="detail-section" data-section="remark" tabindex="0" role="button" aria-label="查看备注详情">
               <div class="section-title">备注</div>
               <div class="info-value" id="dRemark">—</div>
             </div>
@@ -99,6 +99,17 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- 分组详情浮窗（居中，展示分组更细的完整字段；× / 遮罩 / ESC 三种方式关闭） -->
+  <div class="section-modal-mask" id="sectionModalMask" hidden>
+    <div class="section-modal" role="dialog" aria-modal="true" aria-labelledby="sectionModalTitle">
+      <div class="section-modal-header">
+        <span class="section-modal-title" id="sectionModalTitle">详情</span>
+        <button class="drawer-close" id="sectionModalClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="section-modal-body" id="sectionModalBody"></div>
+    </div>
   </div>
 
   <!-- 公共导航栏加载脚本 -->

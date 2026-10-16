@@ -313,6 +313,8 @@
 }
 
 .detail-tab:hover { color: var(--color-primary); }
+.detail-tab:active { color: var(--color-primary-dark, var(--color-primary)); }
+.detail-tab:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; border-radius: 4px; }
 
 .detail-tab.active {
   color: var(--color-primary);
@@ -325,6 +327,144 @@
   font-size: 14px;
   color: var(--gray-500);
   text-align: center;
+}
+
+/* ===== 详情页轻交互（苹果式：极浅反馈，不干扰阅读） ===== */
+/* 信息项悬停：极浅背景渐显（gray-100 为白色 token，故用 50/200 两级灰） */
+.info-item { transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); border-radius: 6px; }
+.info-item:hover { background: var(--gray-50, #FAFBFC); }
+
+/* 位置图卡片：悬停微升 */
+.geo-card {
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.geo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(29, 33, 41, 0.1);
+}
+
+/* 返回/编辑按钮已有组件层四态；Tab 面板淡入 */
+.tab-panel { animation: tabFade 0.25s cubic-bezier(0.25, 0.1, 0.25, 1); }
+@keyframes tabFade {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .info-item, .geo-card { transition: none !important; }
+  .geo-card:hover { transform: none !important; }
+  .tab-panel { animation: none; }
+}
+
+/* ===== 详情分组可点击态 + 分组详情浮窗（PRD FR-2） ===== */
+/* 分组卡片可点击：padding 内收原垂直间距，hover 热区扩大但视觉占位不变 */
+.detail-section {
+  cursor: pointer;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-sm);   /* 24px 原间距 = 8px 间距 + 16px 上下 padding */
+  transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.detail-section:last-child { margin-bottom: calc(-1 * var(--space-md)); }
+.detail-section:hover { background: var(--gray-50, #FAFBFC); box-shadow: 0 1px 4px rgba(29, 33, 41, 0.05); }
+.detail-section:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* 标题右侧「查看详情」提示：hover / 聚焦时渐显 */
+.detail-section .section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.detail-section .section-title::after {
+  content: '查看详情 ›';
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.detail-section:hover .section-title::after,
+.detail-section:focus-visible .section-title::after { opacity: 1; }
+
+/* 居中浮窗（分组详情）：遮罩淡入 + 弹窗上移缩放进入 */
+.section-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(29, 33, 41, 0.4);
+  animation: modalMaskFade 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.section-modal-mask[hidden] { display: none; }
+
+.section-modal {
+  width: min(560px, calc(100vw - 48px));
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--gray-100);
+  border-radius: 12px;
+  box-shadow: 0 24px 48px rgba(29, 33, 41, 0.18);
+  animation: modalIn 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.section-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.section-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.section-modal-body {
+  padding: var(--space-xs) var(--space-lg) var(--space-md);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+.section-modal-body::-webkit-scrollbar { width: 6px; }
+.section-modal-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+/* 浮窗字段行：label 定宽灰色，value 弹性区 */
+.modal-field {
+  display: flex;
+  gap: var(--space-md);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 14px;
+}
+.modal-field:last-child { border-bottom: none; }
+.mf-label { width: 120px; flex-shrink: 0; font-size: 13px; color: var(--gray-500); }
+.mf-value {
+  flex: 1;
+  min-width: 0;
+  color: var(--gray-700);
+  word-break: break-all;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes modalMaskFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-section,
+  .detail-section .section-title::after { transition: none !important; }
+  .section-modal-mask, .section-modal { animation: none !important; }
 }
 
 /* 看板返回条（看板页顶部） */

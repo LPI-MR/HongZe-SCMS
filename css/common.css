@@ -1012,6 +1012,102 @@ textarea.field-input {
 }
 
 /* ============================================================
+   交互四态补全（悬停 / 按压 / 禁用 / 键盘焦点）
+   原则：150-250ms 柔和过渡、transform 微动效不影响文档流、
+   色值全部取自现有 token，键盘焦点外圈不影响鼠标用户
+   ============================================================ */
+
+/* ===== 主按钮：hover 上浮 / active 回缩 / disabled 半透明 ===== */
+.btn {
+  transition: background-color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
+              border-color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.18s cubic-bezier(0.25, 0.1, 0.25, 1),
+              filter 0.18s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.btn:hover:not(:disabled):not([disabled]) { transform: translateY(-1px); }
+.btn:active:not(:disabled):not([disabled]) { transform: translateY(0) scale(0.98); transition-duration: 0.06s; }
+.btn:disabled, .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.btn-primary:active:not(:disabled):not([disabled]) { filter: brightness(0.92); }
+.btn-ghost:active:not(:disabled):not([disabled]) { filter: brightness(0.96); }
+
+/* ===== 键盘焦点外圈（:focus-visible 仅键盘触发） ===== */
+.btn:focus-visible,
+.row-act:focus-visible,
+.pager-btn:focus-visible,
+.pager-size:focus-visible,
+.pager-input:focus-visible,
+.drawer-close:focus-visible,
+.field-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== 行操作按钮：按压缩放 ===== */
+.row-act {
+  transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              border-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.12s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.row-act:active:not(:disabled):not([disabled]) { transform: scale(0.94); }
+.row-act:disabled, .row-act[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+/* ===== 分页组件：按钮四态 ===== */
+.pager-btn {
+  transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              border-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.pager-btn:hover:not(:disabled):not([disabled]) { transform: translateY(-1px); }
+.pager-btn:active:not(:disabled):not([disabled]) { transform: translateY(0) scale(0.97); transition-duration: 0.06s; }
+.pager-btn:disabled, .pager-btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+.pager-size { transition: border-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.pager-size:hover { border-color: var(--color-primary); }
+
+/* ===== 表格行：在既有 hover 基础上补按压与过渡 ===== */
+.ledger-table tbody tr { transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.ledger-table tbody tr:active td { background: var(--gray-300); }
+
+/* ===== 输入框：hover 边框提亮（与 focus 主色形成渐进） ===== */
+.field-input:hover:not(:focus):not(:disabled) { border-color: var(--gray-400); }
+
+/* ===== 抽屉关闭按钮：hover 背景圈 / active 回缩 ===== */
+.drawer-close {
+  transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.12s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.drawer-close:hover:not(:disabled) { background: var(--gray-200); }
+.drawer-close:active:not(:disabled) { transform: scale(0.9); }
+
+/* ===== 统计卡：苹果式浮起层次（hover 上浮 + 阴影加深，按压回落） ===== */
+.kpi-card, .stat-card {
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.kpi-card:hover, .stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover, 0 6px 16px rgba(29, 33, 41, 0.1));
+}
+.kpi-card:active, .stat-card:active { transform: translateY(0); }
+
+/* ===== 数字排版：苹果式等宽紧凑数字 ===== */
+.kpi-value, .stat-value { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ===== 细滚动条：抽屉与表格容器 ===== */
+.drawer-body { scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent; }
+.drawer-body::-webkit-scrollbar { width: 6px; }
+.drawer-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+.drawer-body::-webkit-scrollbar-track { background: transparent; }
+
+/* ===== 系统减少动态效果：停用全部过渡与微动效 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .btn, .row-act, .pager-btn, .pager-size, .drawer-close, .kpi-card, .stat-card,
+  .ledger-table tbody tr, .field-input, .pie-seg, .bar-col, .map-dot {
+    transition: none !important;
+  }
+  .btn:hover:not(:disabled):not([disabled]),
+  .kpi-card:hover, .stat-card:hover,
+  .pager-btn:hover:not(:disabled):not([disabled]) { transform: none !important; }
    详情页框架（*-detail.html 通用：顶部名称条 + 信息分组栅格）
    实体特有内容（hero / 指标 / 卡片 / 表格）由各模块 css 提供
    ============================================================ */

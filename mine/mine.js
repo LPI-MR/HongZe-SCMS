@@ -54,7 +54,7 @@
 
   // ===== 本地持久化 =====
   const LS_MINES = 'hz_mines';   // 矿山主数据（本模块权威存储键，其他模块只读复用）
-  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v2：种子追加西芒杜）
+  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v3：矿山名称与海运对齐标准化）
 
   function loadJSON(key, fallback) {
     try {
@@ -72,57 +72,58 @@
   let mines = loadJSON(LS_MINES, []);
   if (!Array.isArray(mines)) mines = [];
 
-  // ===== 预置五大矿山（首次打开时写入完整种子；v2 起对已有数据仅增量追加西芒杜，不覆盖用户维护的数据） =====
+  // ===== 预置五大矿山（首次打开时写入完整种子；v3 起对已有数据做标准化对齐：
+  //       矿山名称与海运模块一致，清理旧预置脏数据，保留用户自建矿山） =====
   // 力拓 / 必和必拓 / 淡水河谷 / 福斯特库 / 西芒杜——均为铁矿，经纬度用于看板分布与海运距离推算
-  const SEED_VER = 'v2';
+  const SEED_VER = 'v3';
 
   // 种子基础数据（不含系统字段）
   function seedList() {
     return [
       {
-        mine_name: '哈默斯利铁矿（皮尔巴拉）', short_name: '力拓',
+        mine_name: '力拓', short_name: '力拓',
         mine_type: 'iron', main_products: 'PB粉,杨迪粉,罗布河粉',
         province: '西澳大利亚州', city: '皮尔巴拉地区', district: '', address: 'Pilbara, Western Australia',
         longitude: 117.85, latitude: -22.66,
         annual_capacity: 35000, reserve: 2600000, ore_grade: 'TFe 61%-63%',
         operator: 'Rio Tinto（力拓集团）', contact_person: '', contact_phone: '',
-        status: 'active', remark: '全球主要铁矿供应商之一，装货港以丹皮尔港为主'
+        status: 'active', remark: '即哈默斯利铁矿（皮尔巴拉）。全球主要铁矿供应商之一，装货港以丹皮尔港为主'
       },
       {
-        mine_name: '纽曼山铁矿（皮尔巴拉）', short_name: '必和必拓',
+        mine_name: '必和必拓', short_name: '必和必拓',
         mine_type: 'iron', main_products: '纽曼粉,麦克粉,块矿',
         province: '西澳大利亚州', city: '纽曼镇', district: '', address: 'Mount Newman, Pilbara, Western Australia',
         longitude: 119.75, latitude: -23.36,
         annual_capacity: 29000, reserve: 2100000, ore_grade: 'TFe 61%-62%',
         operator: 'BHP（必和必拓）', contact_person: '', contact_phone: '',
-        status: 'active', remark: '装货港以黑德兰港为主'
+        status: 'active', remark: '即纽曼山铁矿（皮尔巴拉）。装货港以黑德兰港为主'
       },
       {
-        mine_name: '卡拉加斯铁矿', short_name: '淡水河谷',
+        mine_name: '淡水河谷', short_name: '淡水河谷',
         mine_type: 'iron', main_products: '卡拉加斯粉,IOCJ,球团矿',
         province: '帕拉州', city: '卡拉加斯矿区', district: '', address: 'Carajás, Pará, Brazil',
         longitude: -50.03, latitude: -6.07,
         annual_capacity: 20000, reserve: 7200000, ore_grade: 'TFe 65%-67%',
         operator: 'Vale（淡水河谷）', contact_person: '', contact_phone: '',
-        status: 'active', remark: '全球品位最高的铁矿之一，装货港以图巴朗港为主'
+        status: 'active', remark: '即卡拉加斯铁矿。全球品位最高的铁矿之一，装货港以图巴朗港为主'
       },
       {
-        mine_name: '所罗门铁矿（奇切斯特岭）', short_name: '福斯特库',
+        mine_name: '福斯特库', short_name: '福斯特库',
         mine_type: 'iron', main_products: '超特粉,混合粉',
         province: '西澳大利亚州', city: '黑德兰港', district: '', address: 'Solomon Hub, Chichester Ranges, Western Australia',
         longitude: 118.0, latitude: -22.3,
         annual_capacity: 19000, reserve: 1600000, ore_grade: 'TFe 56%-59%',
         operator: 'Fortescue（福斯特库）', contact_person: '', contact_phone: '',
-        status: 'active', remark: '装货港以黑德兰港为主'
+        status: 'active', remark: '即所罗门铁矿（奇切斯特岭）。装货港以黑德兰港为主'
       },
       {
-        mine_name: '西芒杜铁矿（Simandou）', short_name: '西芒杜',
+        mine_name: '西芒杜', short_name: '西芒杜',
         mine_type: 'iron', main_products: '西芒杜高品位粉,块矿',
         province: '几内亚', city: '恩泽雷科雷大区', district: '', address: 'Simandou, Nzérékoré Region, Guinea',
         longitude: -9.0, latitude: 8.5,
         annual_capacity: 6000, reserve: 2400000, ore_grade: 'TFe 65%-67%',
         operator: 'Rio Tinto（力拓集团）SimFer联合体', contact_person: '', contact_phone: '',
-        status: 'active', remark: '全球最大未开发高品位铁矿之一，装货港为几内亚莫雷巴亚港（Morebaya）'
+        status: 'active', remark: '即西芒杜铁矿（Simandou）。全球最大未开发高品位铁矿之一，装货港为几内亚莫雷巴亚港（Morebaya）'
       }
     ];
   }
@@ -162,15 +163,43 @@
       return;
     }
 
-    // 版本迁移（v1 → v2）：旧数据不含西芒杜时仅追加一条，不触碰用户已有记录
+    // 版本迁移（v1/v2 → v3）：矿山名称与海运模块标准化对齐
+    // ① 简称命中的条目按种子规范化业务字段（保留 id/编号/创建信息）② 简称未命中且为「系统预置」的
+    //    旧预置脏数据移除（标准矿山由下方补齐）③ 用户自建矿山原样保留 ④ 缺失标准矿山补齐（编号顺延）
     if (seedVer === SEED_VER) return;
-    if (mines.some(m => m.short_name === '西芒杜')) { markSeedVer(); return; }
-    const simandou = attachSystemFields(seedList().filter(m => m.short_name === '西芒杜'))
-      .map(m => Object.assign(m, { mine_code: genCode() }));   // 编号顺延现有最大流水号
-    mines = mines.concat(simandou);
+
+    const seeds = seedList();
+    const byShort = {};
+    seeds.forEach(s => { byShort[s.short_name] = s; });
+
+    const kept = [];
+    const seenShorts = new Set();
+    mines.forEach(m => {
+      const short = m.short_name || '';
+      if (byShort[short]) {
+        seenShorts.add(short);
+        kept.push(Object.assign({}, m, byShort[short], { updated_at: Date.now() }));
+      } else if (m.created_by !== '系统预置') {
+        kept.push(m);   // 用户自建矿山：不触碰
+      }
+      // 其余（旧预置且不在标准名单内）：丢弃
+    });
+
+    mines = kept;
+    let nextSeq = mines.reduce((max, m) => {
+      const n = /^M-(\d+)$/.exec(m.mine_code || '');
+      return n ? Math.max(max, Number(n[1])) : max;
+    }, 0) + 1;
+    seeds.forEach(s => {
+      if (seenShorts.has(s.short_name)) return;
+      const added = attachSystemFields([s])[0];
+      added.mine_code = genCode(nextSeq++);
+      mines = mines.concat([added]);
+    });
+
     try {
       localStorage.setItem(LS_MINES, JSON.stringify(mines));
-    } catch (e) { /* 追加失败不阻断页面 */ }
+    } catch (e) { /* 迁移失败不阻断页面，下次打开重试 */ }
     markSeedVer();
   }
 
