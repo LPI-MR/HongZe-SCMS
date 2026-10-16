@@ -1,0 +1,9 @@
+# 忽略日志与系统杂项文件
+*.log
+.DS_Store
+Thumbs.db
+
+# 忽略编辑器与工具临时文件
+.idea/
+.vscode/
+*.tmp

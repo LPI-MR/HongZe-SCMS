@@ -16,8 +16,8 @@
   color: var(--gray-500);
 }
 
-/* 统计卡片：4 张横排（覆盖 common.css 的 3 列栅格） */
-.kpi-grid { grid-template-columns: repeat(4, 1fr); }
+/* 统计卡片：5 张横排（覆盖 common.css 的 3 列栅格） */
+.kpi-grid { grid-template-columns: repeat(5, 1fr); }   /* 5 张 KPI 卡（含已登记证书数） */
 
 @media (max-width: 1200px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }

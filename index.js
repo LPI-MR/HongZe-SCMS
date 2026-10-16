@@ -123,21 +123,21 @@
 
   // ===== 业务模块入口（已上线模块直达功能页，其余进入门户页）=====
   const MODULES = [
-    { name: '矿山管理', desc: '四大矿山档案与产能台账', href: '/mine/mine.html', live: true, tone: 'blue',
+    { name: '矿山管理', desc: '五大矿山档案与产能台账', href: '/mine/mine.html', live: true, tone: 'blue',
       path: 'M3 20L10 6l4 7 3-4 4 11z' },
     { name: '海运管理', desc: '航次台账与在途跟踪', href: '/ocean/ocean.html', live: true, tone: 'green',
       path: 'M4 13h16l-2 5H6z M8 13V8h8v5 M12 8V4 M2 21c1.5-1.2 3-1.2 4.5 0s3 1.2 4.5 0 3-1.2 4.5 0 3 1.2 4.5 0' },
-    { name: '港口管理', desc: '装卸港口与作业台账', href: '/port/port.html', live: false, tone: 'orange',
+    { name: '港口管理', desc: '装卸港口档案与现货参考', href: '/ports/ports.html', live: true, tone: 'orange',
       path: 'M5 21V5h11 M5 9h8 M16 5l5 4v3 M19 12v4 M19 16a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z' },
     { name: '铁路供应商管理', desc: '铁路运力与供应商档案', href: '/railway/railway.html', live: false, tone: 'purple',
       path: 'M5 3h14v11H5z M5 9h14 M9 14l-3 6 M15 14l3 6 M9 11.5h.01 M15 11.5h.01' },
     { name: '中转站点管理', desc: '中转站点与库存衔接', href: '/transfer/transfer.html', live: false, tone: 'blue',
       path: 'M6 6a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M18 6a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M12 20.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z M8.2 7.4l2.8 8.2 M15.8 7.4L13 15.6 M8.5 6h7' },
-    { name: '仓储管理', desc: '仓库库存与出入库台账', href: '/warehouse/warehouse.html', live: false, tone: 'green',
+    { name: '仓储管理', desc: '仓库库存与出入库台账', href: '/warehouse/warehouse.html', live: true, tone: 'green',
       path: 'M3 21V9l9-6 9 6v12 M7 21v-6h10v6 M7 18h10 M3 21h18' },
-    { name: '汽运车队', desc: '车队运力与调度台账', href: '/fleet/fleet.html', live: false, tone: 'orange',
+    { name: '汽运车队', desc: '车队运力与调度台账', href: '/fleet/fleet.html', live: true, tone: 'orange',
       path: 'M2 6h12v11H2z M14 10h4l3 3.5V17h-7 M6.5 18.5a1.8 1.8 0 1 0 0-.01 M17 18.5a1.8 1.8 0 1 0 0-.01' },
-    { name: '钢厂管理', desc: '钢厂客户与采购计划', href: '/steel/steel.html', live: false, tone: 'purple',
+    { name: '钢厂管理', desc: '钢厂客户与采购计划', href: '/steel/steel.html', live: true, tone: 'purple',
       path: 'M3 21V10l6 4v-4l6 4V6h6v15z M7 21v-3 M12 21v-3 M17 21v-3' }
   ];
 
