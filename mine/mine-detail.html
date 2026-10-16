@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>矿山详情 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：与列表页共用 mine.css -->
+  <link rel="stylesheet" href="mine.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <!-- 详情容器：由 mine-detail.js 依据 ?id= 参数渲染 -->
+      <section class="detail-wrap" id="detailWrap">
+        <!-- 顶部：名称 + 编号 + 状态 + 操作 -->
+        <div class="detail-top">
+          <div class="detail-name" id="dName">加载中…</div>
+          <div class="detail-code" id="dCode"></div>
+          <span class="status-tag" id="dStatus" hidden></span>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" id="backBtn" type="button">返回列表</button>
+          <button class="btn btn-primary" id="editBtn" type="button">编辑</button>
+        </div>
+
+        <!-- 主体：左信息 + 右位置图 -->
+        <div class="detail-body">
+          <!-- 左侧：三分组完整信息 -->
+          <div class="detail-info">
+            <div class="detail-section">
+              <div class="section-title">基础信息</div>
+              <div class="info-grid">
+                <div class="info-item"><span class="info-label">矿山名称</span><span class="info-value" id="dMineName">—</span></div>
+                <div class="info-item"><span class="info-label">矿山简称</span><span class="info-value" id="dShortName">—</span></div>
+                <div class="info-item"><span class="info-label">矿山类型</span><span class="info-value" id="dMineType">—</span></div>
+                <div class="info-item"><span class="info-label">开采/运营主体</span><span class="info-value" id="dOperator">—</span></div>
+                <div class="info-item"><span class="info-label">联系人</span><span class="info-value" id="dContactPerson">—</span></div>
+                <div class="info-item"><span class="info-label">联系电话</span><span class="info-value" id="dContactPhone">—</span></div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="section-title">地理位置</div>
+              <div class="info-grid">
+                <div class="info-item"><span class="info-label">所在省份</span><span class="info-value" id="dProvince">—</span></div>
+                <div class="info-item"><span class="info-label">所在城市</span><span class="info-value" id="dCity">—</span></div>
+                <div class="info-item"><span class="info-label">所在区县</span><span class="info-value" id="dDistrict">—</span></div>
+                <div class="info-item"><span class="info-label">详细地址</span><span class="info-value" id="dAddress">—</span></div>
+                <div class="info-item"><span class="info-label">经度（WGS84）</span><span class="info-value" id="dLongitude">—</span></div>
+                <div class="info-item"><span class="info-label">纬度（WGS84）</span><span class="info-value" id="dLatitude">—</span></div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="section-title">产品与产能</div>
+              <div class="info-grid">
+                <div class="info-item"><span class="info-label">主流产品</span><span class="info-value" id="dProducts"></span></div>
+                <div class="info-item"><span class="info-label">年产能（万吨/年）</span><span class="info-value" id="dCapacity">—</span></div>
+                <div class="info-item"><span class="info-label">保有储量（万吨）</span><span class="info-value" id="dReserve">—</span></div>
+                <div class="info-item"><span class="info-label">品位 / 品位范围</span><span class="info-value" id="dOreGrade">—</span></div>
+                <div class="info-item"><span class="info-label">创建时间</span><span class="info-value" id="dCreatedAt">—</span></div>
+                <div class="info-item"><span class="info-label">创建人</span><span class="info-value" id="dCreatedBy">—</span></div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="section-title">备注</div>
+              <div class="info-value" id="dRemark">—</div>
+            </div>
+          </div>
+
+          <!-- 右侧：矿山位置示意图（经纬度标注，零依赖 SVG） -->
+          <aside class="geo-card">
+            <div class="geo-title">矿山位置</div>
+            <svg class="geo-map" id="geoMap" viewBox="0 0 1000 520" role="img" aria-label="矿山位置示意图"></svg>
+            <div class="geo-coord" id="geoCoord"></div>
+          </aside>
+        </div>
+
+        <!-- 下方 Tab：关联数据（本期占位，Q-MINE-05 由货物批次模块对接） -->
+        <div class="detail-tabs">
+          <button class="detail-tab active" type="button" data-tab="cargo">关联货物批次</button>
+          <button class="detail-tab" type="button" data-tab="transport">关联运输计划</button>
+        </div>
+        <div class="tab-panel" id="tabPanel">
+          暂无关联数据：关联货物批次列表将由「货物批次」模块对接本矿山主数据后展示（接口占位）
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="mine-detail.js"></script>
+</body>
+</html>
