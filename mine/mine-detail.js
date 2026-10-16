@@ -81,17 +81,22 @@
 
   const $ = id => document.getElementById(id);
 
+  // 当前矿山对象（render 时缓存，供分组浮窗实时取数）
+  let currentMine = null;
+
   function render() {
     const mines = loadJSON('hz_mines', []);
     const m = mineId && mines.find(x => x.id === mineId);
 
     if (!m) {
       // 未找到矿山：给出明确空态，避免白屏
+      currentMine = null;
       $('dName').textContent = '未找到该矿山';
       $('dCode').textContent = '可能已被删除或链接参数有误';
       $('editBtn').hidden = true;
       return;
     }
+    currentMine = m;
 
     // 顶部
     $('dName').textContent = m.mine_name || '—';
@@ -221,11 +226,119 @@
     });
   }
 
+  // ===== 分组点击浮窗（居中 modal，展示分组更细的完整字段） =====
+  const SECTION_TITLES = {
+    basic: '基础信息',
+    geo: '地理位置',
+    product: '产品与产能',
+    remark: '备注'
+  };
+
+  // 浮窗字段行：label 定宽 + value 弹性；value 为空时显示 —（文本须先经 esc）
+  function fieldRow(label, value) {
+    const v = (value == null || value === '') ? '—' : value;
+    return '<div class="modal-field"><span class="mf-label">' + esc(label) + '</span>' +
+      '<span class="mf-value">' + v + '</span></div>';
+  }
+
+  function statusHtml(m) {
+    return '<span class="status-tag ' + esc(m.status || '') + '">' +
+      esc(STATUS[m.status] || m.status || '—') + '</span>';
+  }
+
+  function productsHtml(m) {
+    const ps = productsOf(m);
+    if (!ps.length) return '';
+    return '<span class="product-tags">' +
+      ps.map(p => '<span class="product-tag">' + esc(p) + '</span>').join('') +
+      '</span>';
+  }
+
+  // 组装分组对应的完整字段行（数据与页面渲染同源，打开时实时读取）
+  function buildSectionRows(key, m) {
+    if (key === 'basic') {
+      return [
+        fieldRow('矿山编号', esc(m.mine_code || '')),
+        fieldRow('矿山名称', esc(m.mine_name || '')),
+        fieldRow('矿山简称', esc(m.short_name || '')),
+        fieldRow('矿山类型', esc(MINE_TYPES[m.mine_type] || m.mine_type || '')),
+        fieldRow('开采/运营主体', esc(m.operator || '')),
+        fieldRow('联系人', esc(m.contact_person || '')),
+        fieldRow('联系电话', esc(m.contact_phone || '')),
+        fieldRow('状态', statusHtml(m)),
+        fieldRow('创建人', esc(m.created_by || '')),
+        fieldRow('创建时间', esc(fmtTime(m.created_at))),
+        fieldRow('最近更新', esc(fmtTime(m.updated_at)))
+      ];
+    }
+    if (key === 'geo') {
+      return [
+        fieldRow('所在省份', esc(m.province || '')),
+        fieldRow('所在城市', esc(m.city || '')),
+        fieldRow('所在区县', esc(m.district || '')),
+        fieldRow('详细地址', esc(m.address || '')),
+        fieldRow('经度（WGS84）', m.longitude != null ? esc(String(m.longitude)) : ''),
+        fieldRow('纬度（WGS84）', m.latitude != null ? esc(String(m.latitude)) : ''),
+        fieldRow('坐标说明', 'WGS84 体系，用于看板分布展示与海运距离推算')
+      ];
+    }
+    if (key === 'product') {
+      return [
+        fieldRow('主流产品（全部）', productsHtml(m)),
+        fieldRow('年产能（万吨/年）', m.annual_capacity != null ? esc(fmtNum(m.annual_capacity)) : ''),
+        fieldRow('保有储量（万吨）', m.reserve != null ? esc(fmtNum(m.reserve)) : ''),
+        fieldRow('品位 / 品位范围', esc(m.ore_grade || '')),
+        fieldRow('创建人 / 创建时间', esc((m.created_by || '—') + ' · ' + fmtTime(m.created_at)))
+      ];
+    }
+    // remark
+    return [
+      fieldRow('备注', esc(m.remark || '')),
+      fieldRow('创建人 / 创建时间', esc((m.created_by || '—') + ' · ' + fmtTime(m.created_at))),
+      fieldRow('最近更新', esc(fmtTime(m.updated_at)))
+    ];
+  }
+
+  function openSection(key) {
+    if (!currentMine) return;
+    $('sectionModalTitle').textContent = SECTION_TITLES[key] || '详情';
+    $('sectionModalBody').innerHTML = buildSectionRows(key, currentMine).join('');
+    $('sectionModalMask').hidden = false;
+  }
+
+  function closeSectionModal() {
+    $('sectionModalMask').hidden = true;
+  }
+
+  function initSectionModal() {
+    // 四个分组卡片：点击 / Enter / Space 均可打开对应浮窗
+    document.querySelectorAll('.detail-section[data-section]').forEach(sec => {
+      const key = sec.dataset.section;
+      sec.addEventListener('click', () => openSection(key));
+      sec.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openSection(key);
+        }
+      });
+    });
+
+    // 关闭：× 按钮 / 点击遮罩空白区 / ESC
+    $('sectionModalClose').addEventListener('click', closeSectionModal);
+    $('sectionModalMask').addEventListener('click', e => {
+      if (e.target === $('sectionModalMask')) closeSectionModal();
+    });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !$('sectionModalMask').hidden) closeSectionModal();
+    });
+  }
+
   // ===== 返回列表 =====
   $('backBtn').addEventListener('click', () => {
     location.href = '/mine/mine.html';
   });
 
   initTabs();
+  initSectionModal();
   render();
 })();
