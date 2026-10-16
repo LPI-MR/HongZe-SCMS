@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>中转站点管理 - 泓泽宜通 HongZe-SCMS</title>
-  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 / 门户组件 -->
+  <title>中转站点管理 - 泓泽宜通供应链管理系统</title>
   <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="transfer.css" />
 </head>
-<body data-portal="transfer">
+<body>
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -19,43 +20,108 @@
       <div id="navbar"></div>
     </aside>
 
-    <!-- 主内容区：统一门户结构 -->
+    <!-- 主内容区 -->
     <main class="main">
-      <!-- 模块标题条 -->
-      <section class="portal-hero">
-        <div class="portal-hero-icon">
-          <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 7.4l2.8 8.2M15.8 7.4L13 15.6M8.5 6h7"/></svg>
+      <!-- 页面标题条 -->
+      <div class="ledger-header">
+        <div>
+          <div class="page-title">中转站点管理</div>
+          <div class="page-desc">铁路中转站点主数据库：公铁换装与货物集散节点，衔接矿山、港口与钢厂两端</div>
         </div>
-        <div class="portal-hero-info">
-          <div class="portal-title">中转站点管理</div>
-          <div class="portal-desc">中转站点与库存衔接</div>
+      </div>
+
+      <!-- 站点检索 -->
+      <div class="search-card">
+        <div class="search-banner">
+          <span class="banner-title">站点检索</span>
         </div>
-        <span class="portal-flag">建设中</span>
-      </section>
 
-      <!-- 系统数据概览（portal.js 真实聚合） -->
-      <section class="portal-stats" id="portalStats"></section>
+        <form class="search-form" id="searchForm">
+          <div class="search-field">
+            <label class="field-label" for="searchName">站点名称</label>
+            <input class="field-input" type="text" id="searchName" placeholder="输入名称模糊搜索" />
+          </div>
 
-      <!-- 规划能力 -->
-      <section class="portal-panel">
-        <div class="panel-head">
-          <div class="panel-title">规划能力</div>
-          <div class="panel-sub">模块建设范围</div>
+          <div class="search-field">
+            <label class="field-label" for="searchLocation">所属地区</label>
+            <input class="field-input" type="text" id="searchLocation" placeholder="省份 / 城市 / 区县" />
+          </div>
+
+          <div class="search-actions">
+            <button class="btn btn-primary" type="submit">查询</button>
+            <button class="btn btn-ghost" type="reset" id="searchReset">重置</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 站点列表 -->
+      <div class="ledger-card">
+        <div class="ledger-banner">
+          <span class="banner-title">站点列表</span>
+          <span class="banner-stat">共 <em id="stCount">0</em> 个站点</span>
+          <button class="btn btn-ghost banner-action" id="exportBtn" type="button">导出 Excel</button>
+          <button class="btn btn-primary banner-action" id="btnAddStation" type="button">新增站点</button>
         </div>
-        <div class="portal-features" id="portalFeatures"></div>
-      </section>
 
-      <!-- 建设说明 -->
-      <section class="portal-note">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M12 11v5"/></svg>
-        <span>该模块正在建设中，规划能力以“规划能力”清单为准；数据结构将与合同、矿山、海运模块打通，上线后自动接入系统导航与首页入口。</span>
-      </section>
+        <div class="table-wrap">
+          <table class="ledger-table">
+            <thead>
+              <tr>
+                <th class="col-index">序号</th>
+                <th class="col-name">站点名称</th>
+                <th class="col-line">所属线路</th>
+                <th class="col-region">所属地区</th>
+                <th class="col-volume">年中转量</th>
+                <th class="col-tracks">装卸线数量</th>
+                <th class="col-action">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- 暂无数据，由 transfer.js 数据驱动渲染 -->
+              <tr class="empty-row">
+                <td colspan="7">暂无站点数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 分页控制 -->
+        <div class="pager">
+          <div class="pager-left">
+            <select class="pager-size" id="pageSize">
+              <option value="10" selected>10 条/页</option>
+              <option value="20">20 条/页</option>
+              <option value="50">50 条/页</option>
+            </select>
+            <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
+          </div>
+          <div class="pager-right">
+            <button type="button" class="pager-btn" id="pgFirst">首页</button>
+            <button type="button" class="pager-btn" id="pgPrev">上一页</button>
+            <span class="pager-info">
+              第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
+              / <span id="pgPages">1</span> 页
+            </span>
+            <button type="button" class="pager-btn" id="pgNext">下一页</button>
+            <button type="button" class="pager-btn" id="pgLast">末页</button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
-  <!-- 公共导航栏加载脚本 -->
+  <!-- 编辑弹窗（详情 / 列表共用） -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" id="modalBox"></div>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast"></div>
+
   <script src="/common/fetch.js"></script>
-  <!-- 门户页通用模板脚本 -->
-  <script src="/common/portal.js"></script>
+  <!-- Excel 导出组件（复用 contracts 内置 vendor） -->
+  <script src="/contracts/vendor/xlsx.full.min.js"></script>
+  <!-- 模块脚本 -->
+  <script src="transfer.js"></script>
 </body>
 </html>
