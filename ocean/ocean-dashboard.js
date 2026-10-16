@@ -221,7 +221,7 @@
       const len = (n / total) * C;
       const color = STATUS_COLORS[status] || STATUS_COLORS.pending;
       const seg =
-        '<circle cx="60" cy="60" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="24"' +
+        '<circle class="pie-seg" cx="60" cy="60" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="24"' +
         ' stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '"' +
         ' stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 60 60)"' +
         '><title>' + esc(STATUS[status] + '：' + n + ' 个航次') + '</title></circle>';

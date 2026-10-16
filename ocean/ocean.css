@@ -188,3 +188,33 @@
   font-size: 12px;
   color: var(--gray-500);
 }
+
+/* ============================================================
+   板块轻交互（苹果式：柔和过渡、极浅反馈、不改色值体系）
+   ============================================================ */
+
+/* 状态标签：柔和过渡 + 悬停轻提亮（仅本模块表格内生效） */
+.ledger-table .status-tag {
+  transition: filter 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.ledger-table .status-tag:hover { filter: brightness(1.04); }
+
+/* COA 单据分区：悬停极浅背景（gray-100 为白色 token，用 50 级灰） */
+.coa-sec {
+  transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+  border-radius: 6px;
+  padding: 2px 4px;
+  margin-left: -4px;
+  margin-right: -4px;
+}
+.coa-sec:hover { background: var(--gray-50, #FAFBFC); }
+
+/* COA 数字排版：统一等宽紧凑数字 */
+.coa-value { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* COA 按钮联动：登记/编辑/删除按钮已有组件层四态 */
+@media (prefers-reduced-motion: reduce) {
+  .ledger-table .status-tag, .coa-sec { transition: none !important; }
+  .coa-sec:hover { background: transparent; }
+}

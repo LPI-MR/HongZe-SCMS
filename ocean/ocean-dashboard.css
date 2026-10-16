@@ -220,3 +220,41 @@
   font-size: 13px;
   color: var(--gray-500);
 }
+
+/* ============================================================
+   看板图元交互反馈（苹果式轻精致：150ms 柔和过渡、克制动效）
+   ============================================================ */
+
+/* 月度离港柱：悬停提亮 + 自底部轻微抬升 */
+.month-bar {
+  cursor: pointer;
+  transition: filter 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transform-box: fill-box;
+  transform-origin: bottom center;
+}
+.month-bar:hover { filter: brightness(1.08); transform: scaleY(1.04); }
+
+/* 状态环形分段：悬停加宽提亮 */
+.pie-seg {
+  cursor: pointer;
+  transition: stroke-width 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
+              filter 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.pie-seg:hover { stroke-width: 27; filter: brightness(1.08); }
+
+/* 航线 TOP 横条：悬停轻提亮 */
+.hbar { transition: filter 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.hbar-row:hover .hbar { filter: brightness(1.06); }
+.hbar-row { transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.hbar-row:hover { background: var(--gray-50, #FAFBFC); }
+
+/* 图例项：悬停轻反馈 */
+.legend-item { transition: opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); }
+.legend-item:hover { opacity: 0.82; }
+
+/* 系统减少动态效果：停用图元过渡 */
+@media (prefers-reduced-motion: reduce) {
+  .month-bar, .pie-seg, .hbar, .hbar-row, .legend-item { transition: none !important; }
+  .month-bar:hover { transform: none !important; }
+}

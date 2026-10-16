@@ -171,7 +171,7 @@
         ' · 产能 ' + cap.toLocaleString('zh-CN') + ' 万吨/年 · ' +
         [m.province, m.city].filter(Boolean).join(' '));
       parts.push(
-        '<circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + r.toFixed(1) + '"' +
+        '<circle class="map-dot" cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="' + r.toFixed(1) + '"' +
         ' fill="' + color + '" fill-opacity="0.75" stroke="#FFFFFF" stroke-width="1.5"' +
         '><title>' + title + '</title></circle>'
       );
@@ -224,7 +224,7 @@
       const len = (n / total) * C;
       const color = PIE_COLORS[i % PIE_COLORS.length];
       const seg =
-        '<circle cx="60" cy="60" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="24"' +
+        '<circle class="pie-seg" cx="60" cy="60" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="24"' +
         ' stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2) + '"' +
         ' stroke-dashoffset="' + (-offset).toFixed(2) + '" transform="rotate(-90 60 60)"' +
         '><title>' + esc(product + '：' + n + ' 座矿山') + '</title></circle>';
