@@ -1,9 +1,12 @@
 // ===== 港口信息管理模块脚本 =====
-// 数据持久化：localStorage（hz_ports_data），带版本号自动覆盖旧缓存
+// 列表页（ports.html）：检索卡片 + 台账卡片（搜索 / 分页 / 导出 / 新增 / 编辑 / 删除）
+// 详情页（ports-detail.html?id=xxx）：港口概览 + 指标 + 信息卡片 + 港区分部（✎ 编辑）
+// 数据持久化：localStorage（hz_ports_data），{__version, list} 包装格式，版本不匹配自动回种子
 (function () {
   'use strict';
 
   var STORAGE_KEY = 'hz_ports_data';
+  var VERSION = 'v12';
   var VERSION = 'v12';   // v12：新增港口现货参考数据（spotMarket 展示区块）
 
   // ===== 种子数据（黄骅港 / 天津港）=====
@@ -165,7 +168,6 @@
 
   // ===== 状态 =====
   var ports = [];
-  var activeId = null;
 
   // ===== 工具 =====
   function esc(s) {
@@ -189,10 +191,45 @@
     return prefix + '-' + Date.now().toString(36) + '-' + Math.floor(Math.random() * 1e4).toString(36);
   }
 
+  // 从 kv 行数组中按字段名取值
+  function kvGet(rows, label) {
+    if (!rows) return '';
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].label === label) return rows[i].value || '';
+    }
+    return '';
+  }
+
+  // 从指标数组中按名称取指标
+  function metricOf(metrics, label) {
+    if (!metrics) return null;
+    for (var i = 0; i < metrics.length; i++) {
+      if (metrics[i].label === label) return metrics[i];
+    }
+    return null;
+  }
+
+  // ===== 导航栏选中态 =====
+  var NAV_PATH = '港口管理';
+
+  function setActiveNav() {
+    var navbar = document.getElementById('navbar');
+    if (!navbar) return;
+    navbar.querySelectorAll('.nav-item.active, .nav-sub-item.active')
+      .forEach(function (el) { el.classList.remove('active'); });
+    navbar.querySelectorAll('.nav-item').forEach(function (item) {
+      if ((item.dataset.path || '') === NAV_PATH) item.classList.add('active');
+    });
+  }
+
+  var navbar = document.getElementById('navbar');
+  if (navbar && navbar.children.length) setActiveNav();
+  else document.addEventListener('navbar:loaded', setActiveNav, { once: true });
+
   // ===== 数据读写 =====
   function saveData() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(ports));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ __version: VERSION, list: ports }));
     } catch (e) {
       toast('保存失败：浏览器本地存储不可用');
     }
@@ -204,46 +241,35 @@
     if (stored) {
       try {
         var parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length && parsed.__version === VERSION) {
-          ports = parsed;
-          activeId = ports[0].id;
+        if (parsed && Array.isArray(parsed.list) && parsed.__version === VERSION) {
+          ports = parsed.list;
           return;
         }
       } catch (e) { /* 解析失败则重新写入种子数据 */ }
     }
     // 版本不匹配或无缓存：写入种子数据（副本，避免污染 SEED）
     ports = JSON.parse(JSON.stringify(SEED));
-    ports.__version = VERSION;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(ports)); } catch (e) { /* 忽略 */ }
-    activeId = ports[0].id;
+    saveData();
   }
 
-  function getActive() {
-    for (var i = 0; i < ports.length; i++) {
-      if (ports[i].id === activeId) return ports[i];
+  // ============================================================
+  // 详情模式：ports-detail.html?id=xxx
+  // ============================================================
+  var detailPanel = document.getElementById('detailPanel');
+
+  // ===== 渲染：详情主体 =====
+  function renderDetail() {
+    var id = new URLSearchParams(location.search).get('id');
+    var p = null;
+    ports.forEach(function (x) { if (x.id === id) { p = x; } });
+
+    if (!p) {
+      detailPanel.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--gray-500);">' +
+        '港口不存在或已被删除，请返回列表刷新。</div>';
+      return;
     }
-    return ports[0];
-  }
 
-  // ===== 渲染：Tab =====
-  function renderTabs() {
-    var box = $('#portTabs');
-    var multi = ports.length > 1;
-    box.innerHTML = ports.map(function (p) {
-      return '<div class="tab' + (p.id === activeId ? ' active' : '') + '" data-tab="' + p.id + '">' +
-        '<span class="tab-icon">' + esc(p.icon) + '</span>' +
-        '<span>' + esc(p.name) + '</span>' +
-        (multi ? '<span class="tab-close" data-close="' + p.id + '" title="删除该港口">✕</span>' : '') +
-        '</div>';
-    }).join('');
-  }
-
-  // ===== 渲染：主面板 =====
-  function renderPanel() {
-    var p = getActive();
-    var multi = ports.length > 1;
-    var html = ''
-
+    detailPanel.innerHTML = ''
       // 港口概览头
       + '<section class="port-hero">'
       + '  <div class="port-hero-info">'
@@ -257,8 +283,8 @@
       + '</section>'
 
       // 核心指标
-      + '<section class="metric-grid">' + p.metrics.map(function (m) {
-        var longCls = m.value.length > 8 ? ' long' : '';
+      + '<section class="metric-grid">' + (p.metrics || []).map(function (m) {
+        var longCls = String(m.value).length > 8 ? ' long' : '';
         return '<div class="metric-card"><div class="metric-label">' + esc(m.label) + '</div>'
           + '<div class="metric-value' + longCls + '">' + esc(m.value)
           + (m.unit ? '<span class="metric-unit">' + esc(m.unit) + '</span>' : '') + '</div>'
@@ -267,29 +293,27 @@
 
       // 基本信息 + 港口能力
       + '<div class="section-grid">'
-      + kvCard('基本信息', 'basicInfo', p.basicInfo)
-      + kvCard('集疏运体系', 'capacity', p.capacity)
+      + kvCard(p, 'basicInfo', '基本信息', p.basicInfo)
+      + kvCard(p, 'capacity', '集疏运体系', p.capacity)
       + '</div>'
 
       // 港区分部（通栏）
-      + zonesCard(p.zones);
-
-    $('#portPanel').innerHTML = html;
+      + zonesCard(p, p.zones);
   }
 
-  function kvCard(title, key, rows) {
+  function kvCard(p, key, title, rows) {
     return '<section class="card">'
       + '<div class="card-head"><div class="card-title">' + title + '</div>'
       + '<button class="icon-btn" data-edit="' + key + '" title="编辑">✎</button></div>'
-      + '<div class="kv-list">' + rows.map(function (r) {
+      + '<div class="kv-list">' + (rows || []).map(function (r) {
         return '<div class="kv-row"><span class="kv-label">' + esc(r.label) + '</span>'
           + '<span class="kv-value">' + esc(r.value) + '</span></div>';
       }).join('') + '</div>'
       + '</section>';
   }
 
-  function zonesCard(rows) {
-    var body = rows.length
+  function zonesCard(p, rows) {
+    var body = rows && rows.length
       ? '<thead><tr><th style="width:104px;">港区名称</th><th style="width:190px;">位置</th><th>功能定位</th><th style="width:32%;">主要设施</th></tr></thead>'
         + '<tbody>' + rows.map(function (z) {
           return '<tr><td class="zt-name">' + esc(z.name) + '</td>'
@@ -305,12 +329,7 @@
       + '</section>';
   }
 
-  function renderAll() {
-    renderTabs();
-    renderPanel();
-  }
-
-  // ===== 弹窗 =====
+  // ===== 弹窗（列表 / 详情共用） =====
   function openModal(title, bodyHTML, onOk) {
     var mask = $('#modalMask');
     $('#modalBox').innerHTML =
@@ -330,7 +349,7 @@
 
   function closeModal() { $('#modalMask').classList.remove('show'); }
 
-  // ===== 表单行构建（动态增删）=====
+  // ===== 表单行构建（动态增删） =====
   function kvRowHTML(r) {
     return '<div class="form-kv-row" style="display:grid;grid-template-columns:110px 1fr auto;gap:6px;margin-bottom:8px;align-items:center;">'
       + '<input class="f-label" placeholder="字段名" value="' + esc(r.label) + '">'
@@ -345,9 +364,18 @@
     });
   }
 
-  // ===== 各编辑器 =====
+  // ===== 详情页各编辑器 =====
+  function findPort(id) {
+    for (var i = 0; i < ports.length; i++) {
+      if (ports[i].id === id) return ports[i];
+    }
+    return null;
+  }
+
   function editKV(key, title) {
-    var p = getActive();
+    var p = findPort(new URLSearchParams(location.search).get('id'));
+    if (!p) return;
+    p[key] = p[key] || [];
     var body = '<div id="f-kv-rows">' + p[key].map(kvRowHTML).join('') + '</div>'
       + '<button class="form-add" id="f-kv-add">＋ 添加字段</button>';
     openModal(title, body, function () {
@@ -359,7 +387,7 @@
       });
       p[key] = rows;
       saveData();
-      renderPanel();
+      renderDetail();
       toast(title + '已更新');
     });
     bindRowRemove($('#f-kv-rows'));
@@ -370,7 +398,9 @@
   }
 
   function editZones() {
-    var p = getActive();
+    var p = findPort(new URLSearchParams(location.search).get('id'));
+    if (!p) return;
+    p.zones = p.zones || [];
     function zoneRow(z) {
       return '<div class="form-zone-row" style="border:1px solid var(--gray-300);border-radius:8px;padding:10px;margin-bottom:10px;">'
         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">'
@@ -397,7 +427,7 @@
       });
       p.zones = rows;
       saveData();
-      renderPanel();
+      renderDetail();
       toast('港区分部已更新');
     });
     bindRowRemove($('#f-zone-rows'));
@@ -408,72 +438,328 @@
     };
   }
 
-  // ===== 新增 / 删除港口 =====
+  // ============================================================
+  // 列表模式：ports.html
+  // ============================================================
+  var tbody = document.querySelector('.ledger-table tbody');
+  var applyFilter = null;
+
+  // 由港口对象构造表格行
+  function renderRow(p) {
+    var tr = document.createElement('tr');
+    tr.dataset.id = p.id;
+    tr.dataset.name = p.name || '';
+    tr.dataset.location = kvGet(p.basicInfo, '所属地区') || p.subtitle || '';
+
+    var throughput = metricOf(p.metrics, '年吞吐量');
+    var berth = metricOf(p.metrics, '泊位数量');
+
+    tr.innerHTML = [
+      '<td class="col-index"></td>',
+      '<td class="col-name"><a class="port-link" href="/ports/ports-detail.html?id=' + encodeURIComponent(p.id) + '">' +
+        esc(p.name) + '</a></td>',
+      '<td class="col-loc">' + (esc(tr.dataset.location) || '—') + '</td>',
+      '<td class="col-throughput">' + (throughput ? esc(throughput.value) + (throughput.unit ? esc(throughput.unit) : '') : '—') + '</td>',
+      '<td class="col-berth">' + (berth ? esc(berth.value) + (berth.unit ? ' ' + esc(berth.unit) : '') : '—') + '</td>',
+      '<td class="col-action"><div class="cell-actions">' +
+        '<button class="row-act detail" type="button">详情</button>' +
+        '<button class="row-act edit" type="button">编辑</button>' +
+        '<button class="row-act del" type="button">删除</button>' +
+      '</div></td>'
+    ].join('');
+    return tr;
+  }
+
+  // 按当前数据全量重建表格（新增 / 编辑 / 删除后统一走这里）
+  function renderAll() {
+    tbody.querySelectorAll('tr:not(.empty-row)').forEach(function (row) { row.remove(); });
+    ports.forEach(function (p) { tbody.appendChild(renderRow(p)); });
+
+    // 重新编号（按当前展示顺序）
+    var i = 0;
+    tbody.querySelectorAll('tr:not(.empty-row)').forEach(function (row) {
+      row.querySelector('.col-index').textContent = ++i;
+    });
+
+    $('#portCount').textContent = ports.length;
+    var emptyRow = tbody.querySelector('.empty-row');
+    if (emptyRow) emptyRow.hidden = ports.length > 0;
+    if (applyFilter) applyFilter();
+  }
+
+  // ===== 检索 =====
+  function initSearch() {
+    var form = document.getElementById('searchForm');
+    if (!form) return;
+
+    var nameInput = document.getElementById('searchName');
+    var locInput = document.getElementById('searchLocation');
+
+    applyFilter = function () {
+      var keywords = (nameInput.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+      var loc = (locInput.value || '').trim().toLowerCase();
+
+      var visible = 0;
+      document.querySelectorAll('.ledger-table tbody tr').forEach(function (row) {
+        if (row.classList.contains('empty-row')) return;
+
+        var text = row.textContent.toLowerCase() + ' ' +
+          Object.values(row.dataset).join(' ').toLowerCase();
+        var ok =
+          keywords.every(function (kw) { return text.includes(kw); }) &&
+          (!loc || (row.dataset.location || '').toLowerCase().includes(loc));
+
+        row.hidden = !ok;
+        // 标记「被检索过滤」的行：与分页隐藏区分，保证导出覆盖完整筛选结果
+        if (ok) delete row.dataset.filtered;
+        else row.dataset.filtered = '1';
+        if (ok) visible += 1;
+      });
+
+      var emptyRow = document.querySelector('.ledger-table .empty-row');
+      if (emptyRow) emptyRow.hidden = visible > 0;
+
+      renderPage();
+    };
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      applyFilter();
+    });
+
+    form.addEventListener('reset', function () {
+      requestAnimationFrame(function () { applyFilter(); });
+    });
+  }
+
+  // ===== 分页（基于检索后的可见行切片显示） =====
+  var pageSize = 10;
+  var curPage = 1;
+
+  function renderPage() {
+    var rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(function (r) { return !r.hidden; });
+
+    var total = rows.length;
+    var pages = Math.max(1, Math.ceil(total / pageSize));
+    if (curPage > pages) curPage = pages;
+    if (curPage < 1) curPage = 1;
+
+    var start = (curPage - 1) * pageSize;
+    rows.forEach(function (r, i) {
+      r.hidden = i < start || i >= start + pageSize;
+    });
+
+    $('#pagerTotal').textContent = total;
+    $('#pgPages').textContent = pages;
+    $('#pgInput').value = curPage;
+    $('#pgInput').max = pages;
+    $('#pgFirst').disabled = curPage <= 1;
+    $('#pgPrev').disabled = curPage <= 1;
+    $('#pgNext').disabled = curPage >= pages;
+    $('#pgLast').disabled = curPage >= pages;
+  }
+
+  function bindPager() {
+    var pages = function () { return Math.max(1, Number($('#pgPages').textContent) || 1); };
+    var go = function (p) { curPage = p; renderPage(); };
+
+    $('#pgFirst').addEventListener('click', function () { go(1); });
+    $('#pgPrev').addEventListener('click', function () { go(curPage - 1); });
+    $('#pgNext').addEventListener('click', function () { go(curPage + 1); });
+    $('#pgLast').addEventListener('click', function () { go(pages()); });
+
+    $('#pageSize').addEventListener('change', function (e) {
+      pageSize = Number(e.target.value) || 10;
+      curPage = 1;
+      renderPage();
+    });
+
+    var jump = function () {
+      var p = parseInt($('#pgInput').value, 10);
+      if (isNaN(p)) p = curPage;
+      go(Math.min(Math.max(p, 1), pages()));
+    };
+    $('#pgInput').addEventListener('change', jump);
+    $('#pgInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') jump(); });
+  }
+
+  // ===== 新增 / 编辑 / 删除港口 =====
   function addPort() {
     var body = '<div class="form-row"><label>港口名称</label><input id="f-new-name" placeholder="如：青岛港"></div>'
-      + '<div class="form-row"><label>图标（emoji）</label><input id="f-new-icon" value="⚓"></div>'
-      + '<div class="form-row"><label>副标题</label><input id="f-new-sub" placeholder="如：山东省青岛市·胶州湾"></div>';
+      + '<div class="form-row"><label>副标题（所属地区）</label><input id="f-new-sub" placeholder="如：山东省青岛市·胶州湾"></div>'
+      + '<div class="form-row"><label>港口简介</label><input id="f-new-intro" placeholder="一句话介绍该港口"></div>';
     openModal('新增港口', body, function () {
       var name = $('#f-new-name').value.trim();
       if (!name) { toast('港口名称不能为空'); return false; }
       ports.push({
         id: uid('port'),
         name: name,
-        icon: $('#f-new-icon').value.trim() || '⚓',
         subtitle: $('#f-new-sub').value.trim(),
-        intro: '',
+        intro: $('#f-new-intro').value.trim(),
+        photo: '',
         metrics: [
           { label: '年吞吐量', value: '—', unit: '' },
           { label: '年设计通过能力', value: '—', unit: '' },
           { label: '泊位数量', value: '—', unit: '' },
           { label: '最大泊位吨级', value: '—', unit: '' }
         ],
-        basicInfo: [{ label: '港口名称', value: name }],
+        basicInfo: [
+          { label: '港口名称', value: name },
+          { label: '所属地区', value: $('#f-new-sub').value.trim() },
+          { label: '主营业务货类', value: '' }
+        ],
         capacity: [],
         zones: []
       });
-      activeId = ports[ports.length - 1].id;
       saveData();
       renderAll();
-      toast('已新增「' + name + '」，各板块可通过 ✎ 补充信息');
+      toast('已新增「' + name + '」，点击名称进入详情补充信息');
+    });
+  }
+
+  function editPort(id) {
+    var p = findPort(id);
+    if (!p) return;
+    var body = '<div class="form-row"><label>港口名称</label><input id="f-edit-name" value="' + esc(p.name) + '"></div>'
+      + '<div class="form-row"><label>副标题（所属地区）</label><input id="f-edit-sub" value="' + esc(p.subtitle) + '"></div>'
+      + '<div class="form-row"><label>港口简介</label><input id="f-edit-intro" value="' + esc(p.intro) + '"></div>';
+    openModal('编辑港口', body, function () {
+      var name = $('#f-edit-name').value.trim();
+      if (!name) { toast('港口名称不能为空'); return false; }
+      p.name = name;
+      p.subtitle = $('#f-edit-sub').value.trim();
+      p.intro = $('#f-edit-intro').value.trim();
+      // 同步基本信息中的名称 / 所属地区
+      if (p.basicInfo) {
+        p.basicInfo.forEach(function (r) {
+          if (r.label === '港口名称') r.value = name;
+          if (r.label === '所属地区') r.value = p.subtitle;
+        });
+      }
+      saveData();
+      renderAll();
+      toast('已保存');
     });
   }
 
   function deletePort(id) {
-    if (ports.length <= 1) { toast('至少保留一个港口'); return; }
-    var p = ports.filter(function (x) { return x.id === id; })[0];
+    var p = findPort(id);
     if (!p) return;
     var body = '<p style="font-size:14px;color:var(--gray-700);">确定删除「<b>' + esc(p.name)
       + '</b>」？删除后无法恢复。</p>';
     openModal('删除港口', body, function () {
       ports = ports.filter(function (x) { return x.id !== id; });
-      if (activeId === id) activeId = ports[0].id;
       saveData();
       renderAll();
       toast('已删除「' + p.name + '」');
     });
   }
 
-  // ===== 事件绑定 =====
-  document.addEventListener('click', function (e) {
-    var closeBtn = e.target.closest('[data-close]');
-    var tab = e.target.closest('[data-tab]');
-    var editBtn = e.target.closest('[data-edit]');
-    var delBtn = e.target.closest('[data-del]');
+  // ===== 表格操作（事件委托） =====
+  function initTableActions() {
+    tbody.addEventListener('click', function (e) {
+      var row = e.target.closest('tr[data-id]');
+      if (!row) return;
 
-    if (closeBtn) { e.stopPropagation(); deletePort(closeBtn.getAttribute('data-close')); return; }
-    if (tab) { activeId = tab.getAttribute('data-tab'); renderAll(); return; }
-    if (delBtn) { deletePort(activeId); return; }
-    if (editBtn) {
+      // 详情：表格内统一入口（名称链接与详情按钮）
+      if (e.target.closest('.row-act.detail')) {
+        location.href = '/ports/ports-detail.html?id=' + encodeURIComponent(row.dataset.id);
+        return;
+      }
+      if (e.target.closest('.row-act.edit')) { editPort(row.dataset.id); return; }
+      if (e.target.closest('.row-act.del')) { deletePort(row.dataset.id); return; }
+    });
+  }
+
+  // ===== 导出 Excel：导出当前筛选结果 =====
+  function initExport() {
+    var btn = $('#exportBtn');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+      if (!ports.length) { alert('暂无港口数据可导出'); return; }
+      if (!window.XLSX) { alert('导出组件加载失败，请刷新页面后重试'); return; }
+
+      // 导出当前筛选结果：仅排除被检索过滤的行（data-filtered），包含分页未展示的行
+      var visibleIds = [];
+      tbody.querySelectorAll('tr[data-id]').forEach(function (row) {
+        if (!row.dataset.filtered) visibleIds.push(row.dataset.id);
+      });
+      var list = ports.filter(function (p) { return visibleIds.includes(p.id); });
+
+      if (!list.length) { alert('当前筛选条件下暂无可导出的港口数据'); return; }
+      if (!confirm('将导出当前筛选结果 ' + list.length + ' 个港口，是否继续？')) return;
+
+      var headers = [
+        '序号', '港口名称', '所属地区', '年吞吐量', '年设计通过能力',
+        '泊位数量', '最大泊位吨级', '主营业务货类', '集疏港铁路', '集疏港公路', '港区数量', '港口简介'
+      ];
+
+      var rows = list.map(function (p, i) {
+        var t = metricOf(p.metrics, '年吞吐量') || {};
+        var d = metricOf(p.metrics, '年设计通过能力') || {};
+        var b = metricOf(p.metrics, '泊位数量') || {};
+        var m = metricOf(p.metrics, '最大泊位吨级') || {};
+        return [
+          i + 1, p.name,
+          kvGet(p.basicInfo, '所属地区') || p.subtitle,
+          t.value || '', d.value || '',
+          b.value || '', m.value || '',
+          kvGet(p.basicInfo, '主营业务货类'),
+          kvGet(p.capacity, '集疏港铁路'),
+          kvGet(p.capacity, '集疏港公路'),
+          p.zones ? p.zones.length : 0,
+          p.intro || ''
+        ];
+      });
+
+      var ws = XLSX.utils.aoa_to_sheet([headers].concat(rows));
+      ws['!cols'] = [
+        { wch: 6 }, { wch: 14 }, { wch: 22 }, { wch: 20 }, { wch: 20 },
+        { wch: 10 }, { wch: 12 }, { wch: 30 }, { wch: 34 }, { wch: 40 }, { wch: 10 }, { wch: 50 }
+      ];
+
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, '港口台账');
+
+      var dt = new Date();
+      var stamp = dt.getFullYear() +
+        String(dt.getMonth() + 1).padStart(2, '0') +
+        String(dt.getDate()).padStart(2, '0');
+      XLSX.writeFile(wb, '港口台账_' + stamp + '.xlsx');
+    });
+  }
+
+  // ===== 初始化 =====
+  loadData();
+
+  if (detailPanel) {
+    // 详情模式
+    renderDetail();
+
+    $('#backBtn').addEventListener('click', function () {
+      location.href = '/ports/ports.html';
+    });
+
+    document.addEventListener('click', function (e) {
+      var editBtn = e.target.closest('[data-edit]');
+      if (!editBtn) return;
       var key = editBtn.getAttribute('data-edit');
       if (key === 'basicInfo') editKV('basicInfo', '基本信息');
       else if (key === 'capacity') editKV('capacity', '集疏运体系');
       else if (key === 'zones') editZones();
-      return;
-    }
-  });
+    });
+  } else {
+    // 列表模式
+    initSearch();
+    initTableActions();
+    initExport();
+    bindPager();
+    renderAll();
+  }
 
-  $('#btnAddPort').addEventListener('click', addPort);
+  var addBtn = $('#btnAddPort');
+  if (addBtn) addBtn.addEventListener('click', addPort);
   $('#modalMask').addEventListener('click', function (e) {
     if (e.target === this) closeModal();
   });

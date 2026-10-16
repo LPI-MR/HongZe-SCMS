@@ -1,0 +1,156 @@
+/* ===== 铁路供应商管理模块样式 ===== */
+
+/* ---- 列表页表格（检索卡片 / 台账卡片基础样式由 common.css 提供）---- */
+/* 检索字段一行横排：企业名称 + 国标行业 + 按钮 */
+.search-form { grid-template-columns: minmax(260px, 1.6fr) minmax(200px, 1.2fr) auto; }
+
+.ledger-table { min-width: 840px; }      /* 6 列最小宽度，窄屏时横向滚动 */
+
+.ledger-table .col-name { min-width: 280px; }
+.ledger-table .col-legal { min-width: 110px; }
+.ledger-table .col-capital { min-width: 130px; }
+.ledger-table .col-industry { min-width: 130px; }
+.ledger-table .col-action { width: 170px; text-align: center; }
+
+/* 企业名称：可点击进入详情 */
+.rs-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.rs-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+
+/* 操作列变体：详情 / 编辑 / 删除 */
+.row-act.detail { color: var(--color-primary); }
+.row-act.detail:hover { background: var(--color-primary-light); border-color: var(--color-primary); }
+.row-act.edit { color: var(--color-primary); }
+.row-act.edit:hover { background: var(--color-primary-light); border-color: var(--color-primary); }
+.row-act.del { color: var(--color-danger); }
+.row-act.del:hover { background: var(--assist-bg-red); border-color: var(--color-danger); }
+
+/* ---- 供应商概览头 ---- */
+.rs-hero {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 18px;
+  background: linear-gradient(135deg, #fff 55%, #fff7ec 100%);
+  border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 22px 26px; margin-bottom: var(--space-md); min-height: 118px;
+}
+.rs-hero-info { flex: 1; min-width: 0; }
+.rs-hero-name { font-size: 21px; font-weight: 700; color: var(--gray-800); line-height: 1.3; }
+.rs-hero-sub { font-size: 13px; color: var(--gray-500); margin-top: 5px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rs-hero-site { color: var(--color-primary); text-decoration: none; font-weight: 500; }
+.rs-hero-site:hover { text-decoration: underline; }
+
+/* ---- 卡片通用 ---- */
+.rs-card {
+  background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card); padding: 20px 24px; margin-bottom: var(--space-md);
+}
+.rs-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.rs-card-title { font-size: 15px; font-weight: 700; color: var(--gray-800); padding-left: 10px; border-left: 4px solid var(--color-primary); }
+
+/* ---- 工商基本信息（3 列键值） ---- */
+.rs-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 26px; }
+.rs-fact { display: flex; flex-direction: column; gap: 3px; }
+.rs-fact-label { font-size: 12.5px; color: var(--gray-500); }
+.rs-fact-value { font-size: 13.5px; color: var(--gray-800); font-weight: 500; word-break: break-all; }
+.rs-fact-value.mono { font-family: Consolas, monospace; letter-spacing: .3px; }
+.rs-badge-ok { display: inline-block; background: #E8F7EE; color: #1F9D55; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 6px; }
+
+/* ---- 双列区：企业介绍 + 对接人 ---- */
+.rs-duo { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-md); align-items: stretch; }
+.rs-duo .rs-card { margin-bottom: 0; }
+.rs-intro { font-size: 13.5px; color: var(--gray-700); line-height: 1.9; }
+.rs-intro p { text-indent: 2em; }
+.rs-intro p + p { margin-top: 12px; }
+
+/* ---- 对接人卡片 ---- */
+.rs-persons { display: grid; grid-template-columns: 1fr; gap: 12px; align-content: start; }
+.rs-person {
+  background: var(--gray-100); border-radius: var(--radius-md); padding: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.rs-person-main { flex: 1; min-width: 0; }
+.rs-person-avatar {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  background: var(--color-primary-light); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700;
+}
+.rs-person-name { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+.rs-person-role { font-size: 12px; color: var(--gray-500); }
+.rs-person-tel { font-size: 12.5px; color: var(--color-primary); font-weight: 500; white-space: nowrap; }
+
+/* ---- 纯图标编辑按钮 ---- */
+.rs-icon-btn {
+  width: 28px; height: 28px; border: none; background: transparent;
+  border-radius: var(--radius-md); font-size: 14px; color: var(--gray-500);
+  cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all .2s;
+}
+.rs-icon-btn:hover { background: var(--color-primary-light); color: var(--color-primary); }
+.rs-icon-btn.danger:hover { background: var(--assist-bg-red); color: var(--color-danger); }
+
+/* ---- 弹窗 ---- */
+.rs-mask {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, .45); z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+}
+.rs-mask[hidden] { display: none; }
+.rs-modal {
+  width: 560px; max-width: 96vw; max-height: 84vh; display: flex; flex-direction: column;
+  background: #fff; border-radius: var(--radius-lg); box-shadow: 0 18px 50px rgba(15, 23, 42, .25);
+}
+.rs-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--gray-200); }
+.rs-modal-title { font-size: 15px; font-weight: 700; color: var(--gray-800); }
+.rs-modal-close { border: none; background: transparent; font-size: 15px; color: var(--gray-500); cursor: pointer; }
+.rs-modal-close:hover { color: var(--color-danger); }
+.rs-modal-body { padding: 18px 20px; overflow-y: auto; }
+.rs-modal-foot { padding: 14px 20px; border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 10px; }
+.rs-btn { padding: 8px 18px; border-radius: var(--radius-md); font-size: 13.5px; cursor: pointer; border: 1px solid transparent; }
+.rs-btn-primary { background: var(--color-primary); color: #fff; border: none; }
+.rs-btn-primary:hover { background: var(--color-primary-dark); }
+.rs-btn-ghost { background: #fff; border-color: var(--gray-300); color: var(--gray-600); }
+.rs-btn-ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* ---- 弹窗表单 ---- */
+.rs-form-item { display: flex; flex-direction: column; gap: 5px; margin-bottom: 13px; }
+.rs-form-item label { font-size: 12.5px; color: var(--gray-500); }
+.rs-form-item input, .rs-form-item textarea {
+  border: 1px solid var(--gray-300); border-radius: var(--radius-md);
+  padding: 8px 10px; font-size: 13.5px; color: var(--gray-800); outline: none; font-family: inherit;
+}
+.rs-form-item input:focus, .rs-form-item textarea:focus { border-color: var(--color-primary); }
+.rs-form-item textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
+
+/* 可增删行 */
+.rs-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.rs-row input { flex: 1; border: 1px solid var(--gray-300); border-radius: var(--radius-md); padding: 8px 10px; font-size: 13px; outline: none; }
+.rs-row input:focus { border-color: var(--color-primary); }
+.rs-row .rs-row-del { border: none; background: transparent; color: var(--gray-400); font-size: 15px; cursor: pointer; padding: 4px; }
+.rs-row .rs-row-del:hover { color: var(--color-danger); }
+.rs-row-add {
+  border: 1px dashed var(--gray-300); background: transparent; color: var(--gray-500);
+  border-radius: var(--radius-md); padding: 7px 12px; font-size: 12.5px; cursor: pointer;
+}
+.rs-row-add:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* ---- Toast ---- */
+.rs-toast {
+  position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%) translateY(16px);
+  background: rgba(15, 23, 42, .85); color: #fff; font-size: 13px;
+  padding: 9px 18px; border-radius: 999px; opacity: 0; pointer-events: none; transition: all .25s; z-index: 1100;
+}
+.rs-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---- 响应式 ---- */
+@media (max-width: 1100px) {
+  .rs-facts { grid-template-columns: repeat(2, 1fr); }
+  .rs-duo { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .rs-facts { grid-template-columns: 1fr; }
+  .rs-persons { grid-template-columns: 1fr; }
+}
