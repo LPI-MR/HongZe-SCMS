@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>海运管理 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="ocean.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <section class="ledger">
+        <!-- 页面标题 + 模块级入口 -->
+        <div class="ledger-header">
+          <div>
+            <div class="page-title">海运管理</div>
+            <div class="page-desc">海运航次台账：矿山 → 装货港 → 卸货港，运力与运价全流程跟踪</div>
+          </div>
+          <div>
+            <button class="btn btn-ghost banner-action" id="oceanDashBtn" type="button">数据看板</button>
+          </div>
+        </div>
+
+        <!-- 台账统计卡（实时汇总全部航次数据） -->
+        <div class="ledger-kpis">
+          <div class="stat-card">
+            <div class="stat-label">航次总数</div>
+            <div class="stat-value" id="tTotal">0</div>
+            <div class="stat-note">全部登记航次</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">在途航次</div>
+            <div class="stat-value" id="tSailing">0</div>
+            <div class="stat-note">状态为在途</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">海运总货量</div>
+            <div class="stat-value" id="tVolume">0</div>
+            <div class="stat-note">万吨（全部航次累计）</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">预估总运费</div>
+            <div class="stat-value" id="tFreight">0</div>
+            <div class="stat-note">美元（货量 × 运价）</div>
+          </div>
+        </div>
+
+        <!-- 航次检索 -->
+        <div class="search-card">
+          <!-- 检索小标题 -->
+          <div class="search-banner">
+            <span class="banner-title">航次检索</span>
+          </div>
+
+          <!-- 检索表单 -->
+          <form class="search-form" id="searchForm">
+            <div class="search-field">
+              <label class="field-label" for="searchVessel">船名</label>
+              <input class="field-input" type="text" id="searchVessel" placeholder="输入船名模糊搜索" />
+            </div>
+
+            <div class="search-field">
+              <label class="field-label" for="searchMine">关联矿山</label>
+              <select class="field-input" id="searchMine">
+                <option value="">全部</option>
+                <!-- 选项由 ocean.js 依据矿山主数据（hz_mines）生成 -->
+              </select>
+            </div>
+
+            <div class="search-field">
+              <label class="field-label" for="searchCargo">货种</label>
+              <select class="field-input" id="searchCargo">
+                <option value="">全部</option>
+                <!-- 选项由 ocean.js 依据现有航次货种聚合生成 -->
+              </select>
+            </div>
+
+            <div class="search-field">
+              <label class="field-label" for="searchStatus">状态</label>
+              <select class="field-input" id="searchStatus">
+                <option value="">全部</option>
+                <option value="pending">待装船</option>
+                <option value="loading">装船中</option>
+                <option value="sailing">在途</option>
+                <option value="arrived">已到港</option>
+                <option value="done">已完成</option>
+              </select>
+            </div>
+
+            <div class="search-actions">
+              <button class="btn btn-primary" type="submit">查询</button>
+              <button class="btn btn-ghost" type="reset" id="searchReset">重置</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 航次列表 -->
+        <div class="ledger-card">
+          <!-- 列表小标题 -->
+          <div class="ledger-banner">
+            <span class="banner-title">航次列表</span>
+            <span class="banner-stat">共 <em id="voyageCount">0</em> 个航次，总货量 <em id="voyageVolume">0</em> 万吨</span>
+            <button class="btn btn-primary banner-action" id="addVoyageBtn" type="button">新增航次</button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="ledger-table">
+              <thead>
+                <tr>
+                  <th class="col-index">序号</th>
+                  <th class="col-code">航次编号</th>
+                  <th>船名</th>
+                  <th>关联矿山</th>
+                  <th>装货港</th>
+                  <th>卸货港</th>
+                  <th>货种</th>
+                  <th class="col-num">货量(万吨)</th>
+                  <th class="col-num">运价($/吨)</th>
+                  <th class="col-date">离港日期</th>
+                  <th class="col-date">预计到港</th>
+                  <th>状态</th>
+                  <th class="col-action">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 暂无数据，由 ocean.js 数据驱动渲染 -->
+                <tr class="empty-row">
+                  <td colspan="13">暂无航次数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页控制 -->
+          <div class="pager">
+            <div class="pager-left">
+              <select class="pager-size" id="pageSize">
+                <option value="10" selected>10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+              <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
+            </div>
+            <div class="pager-right">
+              <button type="button" class="pager-btn" id="pgFirst">首页</button>
+              <button type="button" class="pager-btn" id="pgPrev">上一页</button>
+              <span class="pager-info">
+                第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
+                / <span id="pgPages">1</span> 页
+              </span>
+              <button type="button" class="pager-btn" id="pgNext">下一页</button>
+              <button type="button" class="pager-btn" id="pgLast">末页</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 新增 / 编辑航次抽屉（航次信息 / 航线与货载 / 运价与船期 三分组） -->
+  <div class="drawer-mask" id="editorMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="editorTitle">新增航次</span>
+        <button class="drawer-close" id="editorClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- 分组一：航次信息 -->
+        <div class="drawer-section">
+          <div class="section-title">航次信息</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="fVesselName">船名 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="fVesselName" placeholder="如：Pacific Glory" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fStatus">航次状态</label>
+              <select class="field-input" id="fStatus">
+                <option value="pending">待装船</option>
+                <option value="loading">装船中</option>
+                <option value="sailing">在途</option>
+                <option value="arrived">已到港</option>
+                <option value="done">已完成</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组二：航线与货载 -->
+        <div class="drawer-section">
+          <div class="section-title">航线与货载</div>
+          <div class="form-item">
+            <label class="field-label" for="fMine">关联矿山 <i class="required">*</i></label>
+            <select class="field-input" id="fMine">
+              <!-- 仅显示在用矿山（复用矿山主数据 hz_mines，与 PRD 下拉联动约定一致） -->
+            </select>
+            <div class="mine-hint" id="mineHint"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="fLoadPort">装货港 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="fLoadPort" placeholder="选择矿山后自动推荐" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fLoadCountry">装货国家/地区</label>
+              <input class="field-input" type="text" id="fLoadCountry" placeholder="如：澳大利亚" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fDischargePort">卸货港 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="fDischargePort" placeholder="如：青岛港" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fDischargeCountry">卸货国家/地区</label>
+              <input class="field-input" type="text" id="fDischargeCountry" placeholder="如：中国" />
+            </div>
+          </div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="fCargoType">货种 <i class="required">*</i></label>
+              <select class="field-input" id="fCargoType">
+                <!-- 选择矿山后自动载入该矿山主流产品 -->
+              </select>
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fQuantity">货量（万吨） <i class="required">*</i></label>
+              <input class="field-input" type="number" min="0" step="0.01" id="fQuantity" placeholder="0.00" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组三：运价与船期 -->
+        <div class="drawer-section">
+          <div class="section-title">运价与船期</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="fFreightRate">运价（美元/吨） <i class="required">*</i></label>
+              <input class="field-input" type="number" min="0" step="0.01" id="fFreightRate" placeholder="0.00" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fFreightTotal">预估总运费（美元）</label>
+              <input class="field-input" type="text" id="fFreightTotal" placeholder="自动计算" readonly disabled />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fSailDate">离港日期</label>
+              <input class="field-input" type="date" id="fSailDate" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fEtaDate">预计到港日期</label>
+              <input class="field-input" type="date" id="fEtaDate" />
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="field-label" for="fRemark">备注</label>
+            <textarea class="field-input remark-input" id="fRemark" rows="3" placeholder="其他说明信息（受载期、滞期费条款等）"></textarea>
+          </div>
+        </div>
+
+        <!-- 表单错误提示 -->
+        <div class="form-tip" id="formTip" hidden></div>
+
+        <div class="drawer-actions">
+          <button class="btn btn-primary" id="editorSave" type="button">保存</button>
+          <button class="btn btn-ghost" id="editorCancel" type="button">取消</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="ocean.js"></script>
+</body>
+</html>

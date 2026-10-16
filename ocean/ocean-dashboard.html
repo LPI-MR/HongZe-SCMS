@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>海运数据看板 - 泓泽宜通 HongZe-SCMS</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="ocean.css" />
+  <link rel="stylesheet" href="ocean-dashboard.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 一级导航（由 common/fetch.js 动态加载 common/navbar.html） -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- 页面标题 -->
+      <section class="dash-header">
+        <div>
+          <div class="page-title">海运数据看板</div>
+          <div class="page-desc">航次趋势、航线结构、运力状态实时汇总（数据口径与航次列表一致）</div>
+        </div>
+        <div>
+          <button class="btn btn-ghost" id="backListBtn" type="button">返回航次列表</button>
+        </div>
+      </section>
+
+      <!-- 统计卡片（4 × 1） -->
+      <section class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-info">
+            <div class="kpi-label">航次总数</div>
+            <div class="kpi-value" id="kpiTotal" data-target="0">0</div>
+            <div class="kpi-trend">全部登记航次</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 18V9l8-5 8 5v9"/><path d="M2 18h20"/><path d="M9 18v-4h6v4"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-info">
+            <div class="kpi-label">在途航次</div>
+            <div class="kpi-value" id="kpiSailing" data-target="0">0</div>
+            <div class="kpi-trend">状态为在途</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/><path d="M12 8l4 4-4 4"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card orange">
+          <div class="kpi-info">
+            <div class="kpi-label">海运总货量（万吨）</div>
+            <div class="kpi-value" id="kpiVolume" data-target="0">0</div>
+            <div class="kpi-trend">全部航次货量累计</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 3l9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card purple">
+          <div class="kpi-info">
+            <div class="kpi-label">预估总运费（美元）</div>
+            <div class="kpi-value" id="kpiFreight" data-target="0">0</div>
+            <div class="kpi-trend">货量 × 运价 累计</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10"/><path d="M15 9.5c0-1.4-1.3-2-3-2s-3 .6-3 2 1 1.9 3 2.3 3 1 3 2.4-1.3 2-3 2-3-.6-3-2"/></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- 图表区：月度趋势（通栏） + 状态环形 / 航线排行 -->
+      <section class="chart-grid">
+        <!-- 月度离港货量趋势（柱状图） -->
+        <div class="chart-card chart-card-full">
+          <div class="chart-title">月度离港货量趋势（万吨）</div>
+          <svg id="monthChart" viewBox="0 0 1000 300" role="img" aria-label="月度离港货量趋势图"></svg>
+        </div>
+
+        <!-- 航次状态分布（环形图） -->
+        <div class="chart-card">
+          <div class="chart-title">航次状态分布</div>
+          <div class="chart-body">
+            <svg id="statusPie" viewBox="0 0 120 120" role="img" aria-label="航次状态分布环形图"></svg>
+            <div class="chart-legend" id="statusLegend"></div>
+          </div>
+        </div>
+
+        <!-- 航线货量排行（横向柱状图） -->
+        <div class="chart-card">
+          <div class="chart-title">航线货量排行（装货港 → 卸货港）</div>
+          <div class="hbar-chart" id="routeChart"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="ocean-dashboard.js"></script>
+</body>
+</html>
