@@ -633,6 +633,39 @@ a.tpl-act {
   word-break: break-all;
 }
 
+/* 写死模板静态内容：模拟 A4 文档页排版 */
+.detail-doc.static-mode {
+  white-space: normal;
+  word-break: normal;
+  background: #fff;
+  max-width: 794px;
+  min-height: 600px;
+  margin: 0 auto;
+  padding: 56px 64px;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 4px rgba(29, 33, 41, 0.08);
+}
+
+.static-page .static-title {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 8px;
+}
+
+.static-page .static-sub {
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-500);
+  margin-bottom: 24px;
+}
+
+.static-page p {
+  margin: 0 0 12px;
+  text-indent: 2em;
+}
+
 .detail-side {
   width: 300px;
   flex-shrink: 0;
