@@ -4,12 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>价格指数管理 - 泓泽宜通 HongZe-SCMS</title>
-  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 / 门户组件 -->
   <link rel="stylesheet" href="/css/common.css" />
-  <!-- 模块独立样式：仅本模块生效 -->
-  <link rel="stylesheet" href="price-index.css" />
 </head>
-<body>
+<body data-portal="price-index">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -21,23 +19,43 @@
       <div id="navbar"></div>
     </aside>
 
-    <!-- 主内容区：本模块独立设计 -->
+    <!-- 主内容区：统一门户结构（汽运 / 火运 / 铁矿石三个指数入口共用本页） -->
     <main class="main">
-      <section class="module-hero">
-        <div class="hero-title">价格指数管理</div>
-        <div class="hero-desc">汽运、火运与铁矿石价格指数</div>
+      <!-- 模块标题条 -->
+      <section class="portal-hero">
+        <div class="portal-hero-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        </div>
+        <div class="portal-hero-info">
+          <div class="portal-title">价格指数管理</div>
+          <div class="portal-desc">汽运、火运与铁矿石价格指数</div>
+        </div>
+        <span class="portal-flag">建设中</span>
       </section>
 
-      <div class="placeholder-card">
-        <div class="page-title">价格指数管理</div>
-        <div class="page-body">本模块内容区域（待开发）</div>
-      </div>
+      <!-- 系统数据概览（portal.js 真实聚合） -->
+      <section class="portal-stats" id="portalStats"></section>
+
+      <!-- 规划能力 -->
+      <section class="portal-panel">
+        <div class="panel-head">
+          <div class="panel-title">规划能力</div>
+          <div class="panel-sub">模块建设范围</div>
+        </div>
+        <div class="portal-features" id="portalFeatures"></div>
+      </section>
+
+      <!-- 建设说明 -->
+      <section class="portal-note">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M12 11v5"/></svg>
+        <span>该模块正在建设中，汽运、火运、铁矿石三个指数入口建设完成后将拆分为独立页面；数据结构将与合同、矿山、海运模块打通，上线后自动接入系统导航。</span>
+      </section>
     </main>
   </div>
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
-  <!-- 模块脚本 -->
-  <script src="price-index.js"></script>
+  <!-- 门户页通用模板脚本 -->
+  <script src="/common/portal.js"></script>
 </body>
 </html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>中转站点管理 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 / 门户组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+</head>
+<body data-portal="transfer">
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：统一门户结构 -->
+    <main class="main">
+      <!-- 模块标题条 -->
+      <section class="portal-hero">
+        <div class="portal-hero-icon">
+          <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 7.4l2.8 8.2M15.8 7.4L13 15.6M8.5 6h7"/></svg>
+        </div>
+        <div class="portal-hero-info">
+          <div class="portal-title">中转站点管理</div>
+          <div class="portal-desc">中转站点与库存衔接</div>
+        </div>
+        <span class="portal-flag">建设中</span>
+      </section>
+
+      <!-- 系统数据概览（portal.js 真实聚合） -->
+      <section class="portal-stats" id="portalStats"></section>
+
+      <!-- 规划能力 -->
+      <section class="portal-panel">
+        <div class="panel-head">
+          <div class="panel-title">规划能力</div>
+          <div class="panel-sub">模块建设范围</div>
+        </div>
+        <div class="portal-features" id="portalFeatures"></div>
+      </section>
+
+      <!-- 建设说明 -->
+      <section class="portal-note">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M12 11v5"/></svg>
+        <span>该模块正在建设中，规划能力以“规划能力”清单为准；数据结构将与合同、矿山、海运模块打通，上线后自动接入系统导航与首页入口。</span>
+      </section>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 门户页通用模板脚本 -->
+  <script src="/common/portal.js"></script>
+</body>
+</html>
