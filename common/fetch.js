@@ -12,7 +12,7 @@
   'use strict';
 
   // 菜单路径 → 页面地址（根绝对路径，适配任意子目录页面）
-  // 带序号的业务模块暂无页面；点击仅高亮并由页面自行处理
+  // 港口管理指向 ports/（真功能模块）；其余带序号模块由门户页承接
   const NAV_ROUTES = {
     '首页': '/index.html',
     '客户管理': '/customers/customers.html',
@@ -22,7 +22,7 @@
     '业务管理': '/business/business.html',
     '矿山管理': '/mine/mine.html',
     '海运管理': '/ocean/ocean.html',
-    '港口管理': '/port/port.html',
+    '港口管理': '/ports/ports.html',
     '铁路供应商管理': '/railway/railway.html',
     '中转站点管理': '/transfer/transfer.html',
     '仓储管理': '/warehouse/warehouse.html',
@@ -32,14 +32,10 @@
     '合同管理 / 合同台账': '/contracts/contracts.html',
     '合同管理 / 合同模板': '/contracts/templates.html',
     '运输调度管理': '/transport/transport.html',
-    '港口管理': '/ports/ports.html',
     '运输调度管理 / 调度看板': '/transport/transport.html',
     '运输调度管理 / 信息录入': '/transport/transport-entry.html',
     '数据分析 / 调度数据分析': '/analytics/analytics.html',
-    '数据分析 / 财务数据分析': '/analytics/analytics.html',
-    '仓储管理': '/warehouse/warehouse.html',
-    '汽运车队': '/fleet/fleet.html',
-    '钢厂管理': '/steel/steel.html'
+    '数据分析 / 财务数据分析': '/analytics/analytics.html'
   };
 
   // 当前页面路径规范化（兼容本地服务器的无后缀 clean URL）

@@ -57,6 +57,16 @@
     }
   }
 
+  // 品质证书数据（localStorage hz_ocean_coas，与航次 1:1 关联）
+  function loadCoas() {
+    try {
+      const c = JSON.parse(localStorage.getItem('hz_ocean_coas'));
+      return Array.isArray(c) ? c : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   function esc(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -93,6 +103,7 @@
     animateValue(document.getElementById('kpiSailing'), sailing);
     animateValue(document.getElementById('kpiVolume'), Math.round(volume));
     animateValue(document.getElementById('kpiFreight'), freight);
+    animateValue(document.getElementById('kpiCoa'), loadCoas().length);   // 已登记品质证书数
   }
 
   // ===== 月度离港货量趋势（SVG 柱状图，零依赖） =====

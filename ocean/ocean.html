@@ -281,6 +281,167 @@
     </aside>
   </div>
 
+  <!-- COA 品质证书查看抽屉（单据式分区展示，内容由 ocean.js 渲染） -->
+  <div class="drawer-mask" id="coaMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title">品质证书（COA）</span>
+        <button class="drawer-close" id="coaClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="coa-voyage-line">关联航次：<b id="coaViewVoyage">—</b></div>
+
+        <!-- 单据内容（有证书时由 ocean.js 渲染） -->
+        <div id="coaViewBody"></div>
+
+        <!-- 空态登记入口 -->
+        <div class="drawer-actions">
+          <button class="btn btn-primary" id="coaViewCreate" type="button">登记品质证书</button>
+          <button class="btn btn-ghost" id="coaViewCloseBtn" type="button">关闭</button>
+        </div>
+
+        <!-- 有证书时的编辑 / 删除操作 -->
+        <div class="drawer-actions">
+          <button class="btn btn-primary" id="coaViewEdit" type="button" hidden>编辑</button>
+          <button class="btn btn-danger" id="coaViewDelete" type="button" hidden>删除</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- COA 品质证书登记 / 编辑抽屉 -->
+  <div class="drawer-mask" id="coaEditMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="coaEditTitle">登记品质证书</span>
+        <button class="drawer-close" id="coaEditClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- 分组一：证书信息 -->
+        <div class="drawer-section">
+          <div class="section-title">证书信息</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="cVoyage">关联航次 <i class="required">*</i></label>
+              <select class="field-input" id="cVoyage"></select>
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cCertificateNo">证书编号 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="cCertificateNo" placeholder="如：810190245" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cIssueDate">签发日期 <i class="required">*</i></label>
+              <input class="field-input" type="date" id="cIssueDate" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cShipmentNo">Shipment No.</label>
+              <input class="field-input" type="text" id="cShipmentNo" placeholder="如：416919" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cBlDate">提单日期</label>
+              <input class="field-input" type="date" id="cBlDate" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cOrigin">原产地</label>
+              <input class="field-input" type="text" id="cOrigin" placeholder="如：Australia（澳大利亚）" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组二：船期与货物 -->
+        <div class="drawer-section">
+          <div class="section-title">船期与货物</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="cVessel">船名 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="cVessel" placeholder="如：G.P. ZAFIRAKIS" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cGoods">货物名称 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="cGoods" placeholder="如：PILBARA BLEND FINES（PB粉）" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cLoadPort">装货港</label>
+              <input class="field-input" type="text" id="cLoadPort" placeholder="如：DAMPIER, WESTERN AUSTRALIA" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cDischargePort">卸货港</label>
+              <input class="field-input" type="text" id="cDischargePort" placeholder="如：MAIN PORT(S) CHINA" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组三：吨位与水分 -->
+        <div class="drawer-section">
+          <div class="section-title">吨位与水分</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="cWetTons">装货量（湿吨 WMT）</label>
+              <input class="field-input" type="number" min="0" step="0.001" id="cWetTons" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cDryTons">干吨（DMT）</label>
+              <input class="field-input" type="number" min="0" step="0.001" id="cDryTons" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cMoisture">水分（装港）%</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cMoisture" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cPhysical">+6.3mm 物理成分%（干基）</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cPhysical" placeholder="0.000" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组四：化学成分（干基 %） -->
+        <div class="drawer-section">
+          <div class="section-title">化学成分（干基 %）</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="cFe">Fe</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cFe" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cP">P</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cP" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cS">S</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cS" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cSio2">SiO₂</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cSio2" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cAl2o3">Al₂O₃</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cAl2o3" placeholder="0.000" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="cLoi">LOI</label>
+              <input class="field-input" type="number" min="0" max="100" step="0.001" id="cLoi" placeholder="0.000" />
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="field-label" for="cRemark">备注</label>
+            <textarea class="field-input remark-input" id="cRemark" rows="2" placeholder="签发方、备注说明等"></textarea>
+          </div>
+        </div>
+
+        <!-- 表单错误提示 -->
+        <div class="form-tip" id="coaFormTip" hidden></div>
+
+        <div class="drawer-actions">
+          <button class="btn btn-primary" id="coaEditSave" type="button">保存</button>
+          <button class="btn btn-ghost" id="coaEditCancel" type="button">取消</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
   <!-- 模块脚本 -->

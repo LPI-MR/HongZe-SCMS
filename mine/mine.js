@@ -54,6 +54,7 @@
 
   // ===== 本地持久化 =====
   const LS_MINES = 'hz_mines';   // 矿山主数据（本模块权威存储键，其他模块只读复用）
+  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v2：种子追加西芒杜）
 
   function loadJSON(key, fallback) {
     try {
@@ -71,12 +72,13 @@
   let mines = loadJSON(LS_MINES, []);
   if (!Array.isArray(mines)) mines = [];
 
-  // ===== 预置四大矿山（首次打开时写入，之后完全由用户维护） =====
-  // 力拓 / 必和必拓 / 淡水河谷 / 福斯特库——均为铁矿，经纬度用于看板分布与海运距离推算
-  function seedMines() {
-    if (loadJSON(LS_MINES, null) !== null) return;   // 已有数据（含空数组）则不重复写入
+  // ===== 预置五大矿山（首次打开时写入完整种子；v2 起对已有数据仅增量追加西芒杜，不覆盖用户维护的数据） =====
+  // 力拓 / 必和必拓 / 淡水河谷 / 福斯特库 / 西芒杜——均为铁矿，经纬度用于看板分布与海运距离推算
+  const SEED_VER = 'v2';
 
-    const seed = [
+  // 种子基础数据（不含系统字段）
+  function seedList() {
+    return [
       {
         mine_name: '哈默斯利铁矿（皮尔巴拉）', short_name: '力拓',
         mine_type: 'iron', main_products: 'PB粉,杨迪粉,罗布河粉',
@@ -112,25 +114,64 @@
         annual_capacity: 19000, reserve: 1600000, ore_grade: 'TFe 56%-59%',
         operator: 'Fortescue（福斯特库）', contact_person: '', contact_phone: '',
         status: 'active', remark: '装货港以黑德兰港为主'
+      },
+      {
+        mine_name: '西芒杜铁矿（Simandou）', short_name: '西芒杜',
+        mine_type: 'iron', main_products: '西芒杜高品位粉,块矿',
+        province: '几内亚', city: '恩泽雷科雷大区', district: '', address: 'Simandou, Nzérékoré Region, Guinea',
+        longitude: -9.0, latitude: 8.5,
+        annual_capacity: 6000, reserve: 2400000, ore_grade: 'TFe 65%-67%',
+        operator: 'Rio Tinto（力拓集团）SimFer联合体', contact_person: '', contact_phone: '',
+        status: 'active', remark: '全球最大未开发高品位铁矿之一，装货港为几内亚莫雷巴亚港（Morebaya）'
       }
     ];
+  }
 
-    // 统一补齐系统字段：编号、时间戳、创建人
+  // 写入种子版本标记（失败不阻断，下次打开会重试迁移）
+  function markSeedVer() {
+    try { localStorage.setItem(LS_SEED_VER, SEED_VER); } catch (e) { /* 忽略 */ }
+  }
+
+  // 统一补齐系统字段：编号、时间戳、创建人
+  function attachSystemFields(list) {
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
-    mines = seed.map((m, i) => Object.assign({
+    return list.map((m, i) => Object.assign({
       id: 'm' + (now + i).toString(36),
       mine_code: genCode(i + 1),
       contact_person: '', contact_phone: '', district: '', address: '',
       longitude: null, latitude: null,
-      created_at: now - (seed.length - i) * day,   // 依次前推一天，保证默认按创建时间倒序稳定
-      updated_at: now - (seed.length - i) * day,
+      created_at: now - (list.length - i) * day,   // 依次前推一天，保证默认按创建时间倒序稳定
+      updated_at: now - (list.length - i) * day,
       created_by: '系统预置'
     }, m));
+  }
 
+  function seedMines() {
+    const existing = loadJSON(LS_MINES, null);
+    let seedVer = null;
+    try { seedVer = localStorage.getItem(LS_SEED_VER); } catch (e) { /* 忽略 */ }
+
+    if (existing === null) {
+      // 首次打开：写入完整五大矿山种子
+      mines = attachSystemFields(seedList());
+      try {
+        localStorage.setItem(LS_MINES, JSON.stringify(mines));
+      } catch (e) { /* 预置失败不阻断页面，用户可手动新增 */ }
+      markSeedVer();
+      return;
+    }
+
+    // 版本迁移（v1 → v2）：旧数据不含西芒杜时仅追加一条，不触碰用户已有记录
+    if (seedVer === SEED_VER) return;
+    if (mines.some(m => m.short_name === '西芒杜')) { markSeedVer(); return; }
+    const simandou = attachSystemFields(seedList().filter(m => m.short_name === '西芒杜'))
+      .map(m => Object.assign(m, { mine_code: genCode() }));   // 编号顺延现有最大流水号
+    mines = mines.concat(simandou);
     try {
       localStorage.setItem(LS_MINES, JSON.stringify(mines));
-    } catch (e) { /* 预置失败不阻断页面，用户可手动新增 */ }
+    } catch (e) { /* 追加失败不阻断页面 */ }
+    markSeedVer();
   }
 
   function save() {

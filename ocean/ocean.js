@@ -200,6 +200,9 @@
     const idx = STATUS_ORDER.indexOf(v.status);
     const canAdvance = idx >= 0 && idx < STATUS_ORDER.length - 1;
 
+    // 品质证书：该航次已登记 COA 时按钮高亮标记
+    const hasCoa = coas.some(c => c.voyage_id === v.id);
+
     tr.innerHTML = [
       '<td class="col-index"></td>',
       '<td class="col-code">' + esc(v.voyage_code) + '</td>',
@@ -216,6 +219,8 @@
       '<td class="col-action"><div class="cell-actions">' +
         (canAdvance ? '<button class="row-act advance" type="button" title="推进至「' +
           esc(STATUS[STATUS_ORDER[idx + 1]]) + '">推进</button>' : '') +
+        '<button class="row-act coa' + (hasCoa ? ' has-coa' : '') + '" type="button" title="' +
+          (hasCoa ? '查看品质证书' : '登记品质证书') + '">证书' + (hasCoa ? '<i class="coa-dot"></i>' : '') + '</button>' +
         '<button class="row-act edit" type="button">编辑</button>' +
         '<button class="row-act remove" type="button">删除</button>' +
       '</div></td>'
@@ -606,6 +611,13 @@
         return;
       }
 
+      // 品质证书：打开 COA 查看/登记抽屉
+      const coaBtn = e.target.closest('.row-act.coa');
+      if (coaBtn) {
+        openCoaView(v);
+        return;
+      }
+
       // 编辑：打开抽屉并回填
       const editBtn = e.target.closest('.row-act.edit');
       if (editBtn) {
@@ -625,8 +637,296 @@
     });
   }
 
+  // ===== COA 品质证书（Certificate of Analysis，航次级品质单据） =====
+  // 独立存储键 hz_ocean_coas，与航次 1:1 关联（voyage_id），不改动 hz_ocean_voyages 结构
+  const LS_COAS = 'hz_ocean_coas';
+
+  function loadCoas() { return loadJSON(LS_COAS, []); }
+  function saveCoas(list) {
+    try {
+      localStorage.setItem(LS_COAS, JSON.stringify(list));
+    } catch (e) { showTip('证书数据保存失败，请检查浏览器存储空间'); }
+  }
+
+  // 数值展示：保留三位小数千分位（与单据原值一致）；空值显示 —
+  function fmtDec(n) {
+    if (n === null || n === undefined || n === '') return '—';
+    return Number(n).toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  }
+
+  // 首次打开预置力拓样例证书（数据来源：Rio Tinto Certificate of Analysis #810190245）
+  function seedCoas() {
+    if (loadJSON(LS_COAS, null) !== null) return;
+    const matched = voyages.find(v => v.vessel_name === 'G.P. ZAFIRAKIS');
+    saveCoas([{
+      id: 'coa' + Date.now().toString(36),
+      voyage_id: matched ? matched.id : '',
+      certificate_no: '810190245',
+      issue_date: '2026-08-18',
+      country_of_origin: 'Australia（澳大利亚）',
+      bl_date: '2026-08-18',
+      shipment_no: '416919',
+      vessel_name: 'G.P. ZAFIRAKIS',
+      port_of_loading: 'DAMPIER, WESTERN AUSTRALIA（丹皮尔港）',
+      port_of_discharge: 'MAIN PORT(S) CHINA（中国主要港口）',
+      goods: 'PILBARA BLEND FINES（PB粉）',
+      wet_tons: 175795.000,
+      dry_tons: 160806.312,
+      moisture: 8.640,
+      physical_63mm: 12.689,
+      fe: 61.120, p: 0.106, s: 0.018, sio2: 4.150, al2o3: 2.360, loi: 5.230,
+      remark: '签发方：Rio Tinto Commercial Pte. Ltd.（新加坡）',
+      created_at: Date.now(),
+      updated_at: Date.now()
+    }]);
+  }
+
+  let coas = loadCoas();   // 证书集合（模块级，renderRow 中用于按钮状态标记）
+
+  // 按 voyage_id 查找航次对应证书
+  function findCoaByVoyage(vid) {
+    return coas.find(c => c.voyage_id === vid) || null;
+  }
+
+  // ===== COA 查看抽屉（单据式分区展示） =====
+  function openCoaView(v) {
+    const coa = findCoaByVoyage(v.id);
+    const body = $('coaViewBody');
+
+    if (!coa) {
+      body.innerHTML =
+        '<div class="coa-empty">'
+        + '<p>该航次暂未登记品质证书（COA）。</p>'
+        + '<p class="coa-empty-sub">可依据船方或矿方出具的 Certificate of Analysis 登记化学成分与吨位信息。</p>'
+        + '</div>';
+    } else {
+      const voyage = voyages.find(x => x.id === coa.voyage_id);
+      body.innerHTML =
+        '<div class="coa-doc">'
+        + '<div class="coa-head"><div class="coa-doc-title">CERTIFICATE OF ANALYSIS</div>'
+        + '<div class="coa-doc-sub">品质证书 · ' + esc(coa.certificate_no) + '</div></div>'
+        // 分组一：基本信息
+        + '<div class="coa-sec"><div class="coa-sec-title">基本信息</div><div class="coa-grid">'
+        + '<div class="coa-item"><span class="coa-label">证书编号</span><span class="coa-value">' + esc(coa.certificate_no) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">签发日期</span><span class="coa-value">' + esc(coa.issue_date || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">Shipment No.</span><span class="coa-value">' + esc(coa.shipment_no || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">提单日期</span><span class="coa-value">' + esc(coa.bl_date || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">原产地</span><span class="coa-value">' + esc(coa.country_of_origin || '—') + '</span></div>'
+        + '</div></div>'
+        // 分组二：船期与航线
+        + '<div class="coa-sec"><div class="coa-sec-title">船期与航线</div><div class="coa-grid">'
+        + '<div class="coa-item"><span class="coa-label">船名</span><span class="coa-value">' + esc(coa.vessel_name || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">装货港</span><span class="coa-value">' + esc(coa.port_of_loading || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">卸货港</span><span class="coa-value">' + esc(coa.port_of_discharge || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">货物名称</span><span class="coa-value">' + esc(coa.goods || '—') + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">关联航次</span><span class="coa-value">'
+        + (voyage ? esc(voyage.voyage_code + ' · ' + voyage.vessel_name) : '<span class="coa-unlinked">未关联航次</span>') + '</span></div>'
+        + '</div></div>'
+        // 分组三：吨位与水分
+        + '<div class="coa-sec"><div class="coa-sec-title">吨位与水分</div><div class="coa-grid">'
+        + '<div class="coa-item"><span class="coa-label">装货量（湿吨 WMT）</span><span class="coa-value">' + fmtDec(coa.wet_tons) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">干吨（DMT）</span><span class="coa-value">' + fmtDec(coa.dry_tons) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">水分（装港）%</span><span class="coa-value">' + fmtDec(coa.moisture) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">+6.3mm 物理成分%（干基）</span><span class="coa-value">' + fmtDec(coa.physical_63mm) + '</span></div>'
+        + '</div></div>'
+        // 分组四：化学成分（干基）
+        + '<div class="coa-sec"><div class="coa-sec-title">化学成分（干基 %）</div><div class="coa-grid coa-grid-6">'
+        + '<div class="coa-item"><span class="coa-label">Fe</span><span class="coa-value">' + fmtDec(coa.fe) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">P</span><span class="coa-value">' + fmtDec(coa.p) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">S</span><span class="coa-value">' + fmtDec(coa.s) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">SiO₂</span><span class="coa-value">' + fmtDec(coa.sio2) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">Al₂O₃</span><span class="coa-value">' + fmtDec(coa.al2o3) + '</span></div>'
+        + '<div class="coa-item"><span class="coa-label">LOI</span><span class="coa-value">' + fmtDec(coa.loi) + '</span></div>'
+        + '</div></div>'
+        + (coa.remark ? '<div class="coa-remark">' + esc(coa.remark) + '</div>' : '')
+        + '</div>';
+      $('coaViewEdit').hidden = false;
+      $('coaViewDelete').hidden = false;
+      coaViewEditingId = coa.id;
+    }
+
+    $('coaViewVoyage').textContent = v.voyage_code + ' · ' + v.vessel_name;
+    $('coaMask').hidden = false;
+  }
+
+  function closeCoaView() {
+    $('coaMask').hidden = true;
+    coaViewEditingId = null;
+  }
+
+  let coaViewEditingId = null;   // 当前查看抽屉对应的证书 id
+
+  // ===== COA 登记 / 编辑表单 =====
+  let coaEditorTargetId = null;   // 正在编辑的证书 id（null=新增）
+
+  // 航次下拉选项：全部航次，当前选中高亮
+  function refreshCoaVoyageOptions(selectedId) {
+    const sel = $('cVoyage');
+    sel.innerHTML = '<option value="">请选择航次</option>' + voyages.map(v =>
+      '<option value="' + esc(v.id) + '">' + esc(v.voyage_code + ' · ' + v.vessel_name + '（' + (v.cargo_type || '—') + '）') + '</option>'
+    ).join('');
+    if (selectedId) sel.value = selectedId;
+  }
+
+  function openCoaEditor(coa, presetVoyageId) {
+    coaEditorTargetId = coa ? coa.id : null;
+    $('coaEditTitle').textContent = coa ? '编辑品质证书' : '登记品质证书';
+    refreshCoaVoyageOptions(coa ? coa.voyage_id : (presetVoyageId || ''));
+
+    const fields = ['cCertificateNo', 'cIssueDate', 'cOrigin', 'cBlDate', 'cShipmentNo', 'cVessel',
+      'cLoadPort', 'cDischargePort', 'cGoods', 'cWetTons', 'cDryTons', 'cMoisture', 'cPhysical',
+      'cFe', 'cP', 'cS', 'cSio2', 'cAl2o3', 'cLoi', 'cRemark'];
+    fields.forEach(id => { $(id).value = ''; });
+
+    if (coa) {
+      $('cCertificateNo').value = coa.certificate_no || '';
+      $('cIssueDate').value = coa.issue_date || '';
+      $('cOrigin').value = coa.country_of_origin || '';
+      $('cBlDate').value = coa.bl_date || '';
+      $('cShipmentNo').value = coa.shipment_no || '';
+      $('cVessel').value = coa.vessel_name || '';
+      $('cLoadPort').value = coa.port_of_loading || '';
+      $('cDischargePort').value = coa.port_of_discharge || '';
+      $('cGoods').value = coa.goods || '';
+      $('cWetTons').value = coa.wet_tons != null ? coa.wet_tons : '';
+      $('cDryTons').value = coa.dry_tons != null ? coa.dry_tons : '';
+      $('cMoisture').value = coa.moisture != null ? coa.moisture : '';
+      $('cPhysical').value = coa.physical_63mm != null ? coa.physical_63mm : '';
+      $('cFe').value = coa.fe != null ? coa.fe : '';
+      $('cP').value = coa.p != null ? coa.p : '';
+      $('cS').value = coa.s != null ? coa.s : '';
+      $('cSio2').value = coa.sio2 != null ? coa.sio2 : '';
+      $('cAl2o3').value = coa.al2o3 != null ? coa.al2o3 : '';
+      $('cLoi').value = coa.loi != null ? coa.loi : '';
+      $('cRemark').value = coa.remark || '';
+    }
+
+    $('coaFormTip').hidden = true;
+    $('coaEditMask').hidden = false;
+  }
+
+  function closeCoaEditor() {
+    $('coaEditMask').hidden = true;
+    coaEditorTargetId = null;
+  }
+
+  // 数值读取：空串 → null；非法数字 → NaN（由校验拦截）
+  function numVal(id) {
+    const raw = $(id).value.trim();
+    if (raw === '') return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  // 成分类数值校验区间：0-100
+  function validPct(n) { return n === null || (Number.isFinite(n) && n >= 0 && n <= 100); }
+
+  function saveCoaEditor() {
+    const vid = $('cVoyage').value;
+    const certNo = $('cCertificateNo').value.trim();
+    const issueDate = $('cIssueDate').value;
+    const vessel = $('cVessel').value.trim();
+    const goods = $('cGoods').value.trim();
+
+    // 必填校验
+    if (!vid) return showCoaTip('请选择关联航次');
+    if (!certNo) return showCoaTip('请填写证书编号');
+    if (!issueDate) return showCoaTip('请填写签发日期');
+    if (!vessel) return showCoaTip('请填写船名');
+    if (!goods) return showCoaTip('请填写货物名称');
+
+    // 证书号唯一校验（同号证书全局唯一）
+    if (coas.some(c => c.certificate_no === certNo && c.id !== coaEditorTargetId)) {
+      return showCoaTip('证书编号「' + certNo + '」已存在，请核对后重新填写');
+    }
+
+    // 数值读取与校验
+    const wet = numVal('cWetTons'), dry = numVal('cDryTons');
+    const moisture = numVal('cMoisture'), physical = numVal('cPhysical');
+    const fe = numVal('cFe'), p = numVal('cP'), s = numVal('cS');
+    const sio2 = numVal('cSio2'), al2o3 = numVal('cAl2o3'), loi = numVal('cLoi');
+
+    if (Number.isNaN(wet) || Number.isNaN(dry)) return showCoaTip('吨位必须为数字');
+    if ((wet !== null && wet <= 0) || (dry !== null && dry <= 0)) return showCoaTip('吨位必须大于 0');
+    if (![moisture, physical, fe, p, s, sio2, al2o3, loi].every(validPct)) {
+      return showCoaTip('成分与水分须为 0-100 之间的数字');
+    }
+
+    const now = Date.now();
+    if (coaEditorTargetId) {
+      const coa = coas.find(c => c.id === coaEditorTargetId);
+      Object.assign(coa, {
+        voyage_id: vid, certificate_no: certNo, issue_date: issueDate,
+        country_of_origin: $('cOrigin').value.trim(), bl_date: $('cBlDate').value,
+        shipment_no: $('cShipmentNo').value.trim(), vessel_name: vessel,
+        port_of_loading: $('cLoadPort').value.trim(), port_of_discharge: $('cDischargePort').value.trim(),
+        goods: goods, wet_tons: wet, dry_tons: dry, moisture: moisture, physical_63mm: physical,
+        fe: fe, p: p, s: s, sio2: sio2, al2o3: al2o3, loi: loi,
+        remark: $('cRemark').value.trim(), updated_at: now
+      });
+    } else {
+      coas.push({
+        id: 'coa' + now.toString(36),
+        voyage_id: vid, certificate_no: certNo, issue_date: issueDate,
+        country_of_origin: $('cOrigin').value.trim(), bl_date: $('cBlDate').value,
+        shipment_no: $('cShipmentNo').value.trim(), vessel_name: vessel,
+        port_of_loading: $('cLoadPort').value.trim(), port_of_discharge: $('cDischargePort').value.trim(),
+        goods: goods, wet_tons: wet, dry_tons: dry, moisture: moisture, physical_63mm: physical,
+        fe: fe, p: p, s: s, sio2: sio2, al2o3: al2o3, loi: loi,
+        remark: $('cRemark').value.trim(),
+        created_at: now, updated_at: now
+      });
+    }
+
+    saveCoas(coas);
+    closeCoaEditor();
+    renderAll();   // 刷新列表按钮的已登记标记
+    showTip('品质证书已保存');
+  }
+
+  function showCoaTip(msg) {
+    const tip = $('coaFormTip');
+    tip.textContent = msg;
+    tip.hidden = false;
+  }
+
+  // ===== COA 抽屉事件绑定 =====
+  function initCoa() {
+    // 查看抽屉：关闭 / 编辑 / 删除
+    $('coaClose').addEventListener('click', closeCoaView);
+    $('coaViewCloseBtn').addEventListener('click', closeCoaView);
+    $('coaViewEdit').addEventListener('click', () => {
+      const coa = coas.find(c => c.id === coaViewEditingId);
+      if (coa) openCoaEditor(coa);
+    });
+    $('coaViewDelete').addEventListener('click', () => {
+      const coa = coas.find(c => c.id === coaViewEditingId);
+      if (!coa) return;
+      if (!confirm('确认删除证书「' + coa.certificate_no + '」吗？删除后不可恢复。')) return;
+      coas = coas.filter(c => c.id !== coa.id);
+      saveCoas(coas);
+      closeCoaView();
+      renderAll();
+      showTip('品质证书已删除');
+    });
+
+    // 空态登记入口
+    $('coaViewCreate').addEventListener('click', () => {
+      const voyageCode = $('coaViewVoyage').textContent || '';
+      const v = voyages.find(x => (x.voyage_code + ' · ' + x.vessel_name) === voyageCode);
+      openCoaEditor(null, v ? v.id : '');
+    });
+
+    // 编辑抽屉：关闭 / 保存
+    $('coaEditClose').addEventListener('click', closeCoaEditor);
+    $('coaEditCancel').addEventListener('click', closeCoaEditor);
+    $('coaEditSave').addEventListener('click', saveCoaEditor);
+  }
+
+
   // ===== 初始化 =====
-  seedVoyages();          // 首次打开预置示例航次（关联四大矿山）
+  seedVoyages();          // 首次打开预置示例航次（关联五大矿山）
+  seedCoas();             // 首次打开预置力拓样例品质证书（COA）
 
   $('oceanDashBtn').addEventListener('click', () => {
     location.href = '/ocean/ocean-dashboard.html';
@@ -635,6 +935,7 @@
   initSearch();
   initEditor();
   initTableActions();
+  initCoa();              // COA 品质证书抽屉事件绑定
   bindPager();
   refreshSearchOptions();
   renderAll();            // 启动时从 localStorage 恢复数据并渲染
