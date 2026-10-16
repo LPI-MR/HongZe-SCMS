@@ -42,14 +42,9 @@
   }
 
   // ===== KPI 统计 =====
-  // 数据来源与合同台账一致：localStorage hz_contracts
+  // 数据来源与合同台账完全一致：共享数据层 contracts-data.js（localStorage hz_contracts）
   function loadContracts() {
-    try {
-      const v = JSON.parse(localStorage.getItem('hz_contracts'));
-      return Array.isArray(v) ? v : [];
-    } catch (e) {
-      return [];
-    }
+    return window.HZContractData.load();
   }
 
   // 数字滚动动画（与首页一致：800ms 缓动 + 千分位）
@@ -149,7 +144,7 @@
     }).join('');
   }
 
-  // ===== 月度签约趋势（近 6 个月柱状图）=====
+  // ===== 月度趋势（签约数量 / 收付款现金流共用月份轴）=====
   // 生成近 n 个月 'YYYY-MM' 序列（含当月）
   function recentMonths(n) {
     const arr = [];
@@ -159,6 +154,31 @@
       arr.push(t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0'));
     }
     return arr;
+  }
+
+  // 月份轴与台账数据对应：覆盖数据中最早的签订月份至当月；
+  // 无数据时回退近 6 个月；跨度过长时只保留最近 12 个月
+  function chartMonths(list) {
+    let min = '';
+    list.forEach(c => {
+      const m = (c.signDate || '').slice(0, 7);
+      if (/^\d{4}-\d{2}$/.test(m) && (!min || m < min)) min = m;
+    });
+    if (!min) return recentMonths(6);
+
+    const now = new Date();
+    let y = Number(min.slice(0, 4));
+    let mo = Number(min.slice(5, 7));
+    const cy = now.getFullYear();
+    const cmo = now.getMonth() + 1;
+
+    const out = [];
+    while (y < cy || (y === cy && mo <= cmo)) {
+      out.push(y + '-' + String(mo).padStart(2, '0'));
+      mo += 1;
+      if (mo > 12) { mo = 1; y += 1; }
+    }
+    return out.length > 12 ? out.slice(-12) : out;
   }
 
   // 金额千分位
@@ -184,18 +204,18 @@
 
   function renderSignCharts() {
     const list = loadContracts();
-    const months = recentMonths(6);
+    const months = chartMonths(list);
     const monthOf = c => (c.signDate || '').slice(0, 7);
 
     const counts = months.map(m => list.filter(c => monthOf(c) === m).length);
     renderBarChart('signCountChart', counts, months.map(m => m.slice(5) + '月'), months, v => String(v));
   }
 
-  // ===== 月度收付款现金流对比（近 6 个月双柱状图）=====
+  // ===== 月度收付款现金流对比（双柱状图）=====
   // 双柱：蓝 = 已收款 Σreceived，橙 = 已付款 Σpaid（按签订月份归集，共用同一归一化基准）
   function renderCashflowChart() {
     const list = loadContracts();
-    const months = recentMonths(6);
+    const months = chartMonths(list);
     const monthOf = c => (c.signDate || '').slice(0, 7);
 
     const inflow = months.map(m =>
@@ -299,7 +319,7 @@
       }
       if (!reasons.length) return;
 
-      warns.push({ level, name: c.name || '未命名合同', no: c.no || '—',
+      warns.push({ level, name: c.name || '未命名合同', no: c.code || '—',
                    reason: reasons.join(' · '), end: c.endDate, days });
     });
 

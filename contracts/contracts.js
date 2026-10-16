@@ -42,7 +42,8 @@
   }
 
   // ===== 本地持久化 =====
-  const LS_CONTRACTS = 'hz_contracts';          // 合同数据
+  // 合同数据走共享数据层（contracts-data.js）：台账与数据看板共用同一份 localStorage 数据与种子
+  const store = window.HZContractData;
   const LS_MATERIALS = 'hz_contract_materials'; // 合同材料（PDF 以 dataURL 存储）
 
   function loadJSON(key, fallback) {
@@ -55,17 +56,15 @@
   }
 
   // 合同列表：[{id, code, name, type, partyA, partyB, partyC, amount, received, paid, signDate, endDate, status}]
-  let contracts = loadJSON(LS_CONTRACTS, []);
-  if (!Array.isArray(contracts)) contracts = [];
+  let contracts = store.load();
+  if (!Array.isArray(contracts)) contracts = store.load();
 
   // 材料库：{ [合同id]: { approval|legal|contract|other: {name, dataUrl}|null } }
   let matStore = loadJSON(LS_MATERIALS, {});
   if (!matStore || typeof matStore !== 'object') matStore = {};
 
   function save() {
-    try {
-      localStorage.setItem(LS_CONTRACTS, JSON.stringify(contracts));
-    } catch (e) {
+    if (!store.save(contracts)) {
       // 配额超限：不中断后续渲染流程，提示用户备份清理
       alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据，再删除部分旧合同或材料后重试。');
     }

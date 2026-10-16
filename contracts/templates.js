@@ -48,6 +48,59 @@
   const STORAGE_KEY = 'hz_contract_templates';
   const CATS = ['采购类合同', '销售类合同', '运输类合同', '咨询服务类合同', '通用类合同', '授权委托书'];
 
+  // 种子版本号：种子内容变更时递增，浏览器检测到不匹配自动丢弃旧缓存、加载最新种子
+  const SEED_VERSION = 'v1';
+
+  // 写死的合同模板种子数据：火运授权委托书（V1.0 → V1.1 两个版本）
+  const SEED_TEMPLATES = [
+    {
+      id: 'tpl-seed-huoyun',
+      category: '授权委托书',
+      versions: [
+        {
+          ver: 'V1.0',
+          time: new Date(2026, 8, 20, 10, 30).getTime(),
+          name: '火运授权委托书',
+          intro: '本模版适用于火车运输的货物授权',
+          content: '本模板正文以内置静态文档形式展示，详见详情页。',
+          risks: ['1、确认提货码头', '2、提货授权吨数及提货时间'],
+          remark: '初始版本',
+          files: []
+        },
+        {
+          ver: 'V1.1',
+          time: new Date(2026, 9, 15, 9, 6).getTime(),
+          name: '火运授权委托书',
+          intro: '本模版适用于火车运输的货物授权',
+          content: '本模板正文以内置静态文档形式展示，详见详情页。',
+          risks: ['1、确认提货码头', '2、提货授权吨数及提货时间'],
+          remark: '完善提货授权条款',
+          files: []
+        }
+      ]
+    }
+  ];
+
+  // 写死模板的详情查看内容（静态 HTML，替代 PDF 转换管线，内容固定、无乱码风险）
+  const STATIC_DOCS = {
+    'tpl-seed-huoyun': [
+      '<div class="static-page">',
+      '  <div class="static-title">火运授权委托书</div>',
+      '  <div class="static-sub">编号：HZ-WT-2026-001</div>',
+      '  <p>委托单位：河北泓泽宜通供应链管理有限公司</p>',
+      '  <p>受 托 人：______________　身份证号：______________________</p>',
+      '  <p>兹委托上述受托人代表我单位办理铁路运输货物提货相关事宜。受托人在授权范围内实施的行为，我单位均予以承认并承担相应法律责任。</p>',
+      '  <p>授权范围：</p>',
+      '  <p>1、确认提货码头；</p>',
+      '  <p>2、提货授权吨数及提货时间。</p>',
+      '  <p>本委托书自签发之日起至 ____ 年 __ 月 __ 日止有效。未经委托单位书面同意，受托人不得转委托第三方。</p>',
+      '  <p>委托单位（盖章）：______________</p>',
+      '  <p>法定代表人（签字）：______________</p>',
+      '  <p>日　　期：______ 年 __ 月 __ 日</p>',
+      '</div>'
+    ].join('\n')
+  };
+
   let templates = load();
   let curCat = '全部';     // 当前分类筛选
   let editingId = null;    // 正在编辑的模板 id；null = 新建
@@ -64,16 +117,25 @@
 
   function load() {
     try {
+      // 包装格式 { __version, list }：版本不匹配或旧格式数据一律回退种子
       const v = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      return Array.isArray(v) ? v : [];
+      if (v && v.__version === SEED_VERSION && Array.isArray(v.list)) {
+        return v.list;
+      }
+      return seed();
     } catch (e) {
-      return [];
+      return seed();
     }
+  }
+
+  // 首次使用（或版本升级）写入种子数据（深拷贝，避免编辑污染种子）
+  function seed() {
+    return JSON.parse(JSON.stringify(SEED_TEMPLATES));
   }
 
   function save() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ __version: SEED_VERSION, list: templates }));
     } catch (e) {
       // 配额超限：剥离各模板最新版本的大文档附件后重试（正文与版本记录保留）
       templates.forEach(t => {
@@ -306,6 +368,25 @@
 
     renderRisks(cur.risks || []);
 
+    // 写死模板：直接渲染静态 HTML 内容，不走 PDF 转换管线
+    if (STATIC_DOCS[id]) {
+      detailFileIdx = -1;
+      const dlWord0 = $('dlWordBtn');
+      dlWord0.disabled = true;
+      dlWord0.title = '静态模板无附件，正文已内置';
+
+      const box = $('detailDoc');
+      releasePreview();
+      box.classList.remove('pdf-mode');
+      box.classList.add('static-mode');
+      box.innerHTML = STATIC_DOCS[id];
+      box.hidden = false;
+      $('detailLoading').hidden = true;
+
+      showView('detail');
+      return;
+    }
+
     // 左侧只展示 PDF 模板：定位版本内的 PDF 文件（.doc 等原始文档仅供下载，不做展示）
     detailFileIdx = (cur.files || []).findIndex(f => /\.pdf$/i.test(f.name));
     const dlWord = $('dlWordBtn');
@@ -317,6 +398,7 @@
     releasePreview();
     docBox.hidden = true;
     docBox.classList.remove('pdf-mode');
+    docBox.classList.remove('static-mode');
     $('detailLoading').hidden = false;
 
     showView('detail');
@@ -392,8 +474,11 @@
     btn.textContent = '生成中…';
 
     try {
-      // 已有预览 PDF（blob URL）→ 直接保存；否则现场构建
+      // 已有预览 PDF（blob URL）→ 直接保存；写死模板由静态内容现场生成；否则走原构建流程
       let url = previewUrl;
+      if (!url && STATIC_DOCS[detailId]) {
+        url = await htmlOrTextToPdf(STATIC_DOCS[detailId], '');
+      }
       if (!url) url = await buildPreviewPdf(t);
       if (!url) {
         alert('该版本无可下载的 PDF 内容');
