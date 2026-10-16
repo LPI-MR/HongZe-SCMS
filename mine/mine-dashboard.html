@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>矿山数据看板 - 泓泽宜通 HongZe-SCMS</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="mine.css" />
+  <link rel="stylesheet" href="mine-dashboard.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 一级导航（由 common/fetch.js 动态加载 common/navbar.html） -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- 页面标题 -->
+      <section class="dash-header">
+        <div>
+          <div class="page-title">矿山数据看板</div>
+          <div class="page-desc">矿山分布、产品结构、产能概况实时汇总（数据口径与矿山列表一致）</div>
+        </div>
+        <div>
+          <button class="btn btn-ghost" id="backListBtn" type="button">返回矿山列表</button>
+        </div>
+      </section>
+
+      <!-- 统计卡片（4 × 1） -->
+      <section class="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-info">
+            <div class="kpi-label">矿山总数</div>
+            <div class="kpi-value" id="kpiTotal" data-target="0">0</div>
+            <div class="kpi-trend" id="kpiTotalTrend">全部登记矿山</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><path d="M3 20L10 6l4 7 3-4 4 11z"/><path d="M8 20l3-6"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-info">
+            <div class="kpi-label">在用矿山</div>
+            <div class="kpi-value" id="kpiActive" data-target="0">0</div>
+            <div class="kpi-trend">状态为在用</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card orange">
+          <div class="kpi-info">
+            <div class="kpi-label">覆盖省份</div>
+            <div class="kpi-value" id="kpiProvinces" data-target="0">0</div>
+            <div class="kpi-trend">所在地省份去重</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 4 5.7 4 9s-1.5 6.4-4 9c-2.5-2.6-4-5.7-4-9s1.5-6.4 4-9z"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card purple">
+          <div class="kpi-info">
+            <div class="kpi-label">主流产品种类</div>
+            <div class="kpi-value" id="kpiProducts" data-target="0">0</div>
+            <div class="kpi-trend">产品品类去重数</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- 图表区：分布地图（通栏） + 品类环形 / 省份柱状 -->
+      <section class="chart-grid">
+        <!-- 矿山分布地图（经纬度散点：点大小=产能，颜色=矿山类型） -->
+        <div class="chart-card chart-card-full">
+          <div class="chart-title">矿山分布（经纬度示意 · 点大小表示产能，颜色表示矿山类型）</div>
+          <svg id="mapChart" viewBox="0 0 1000 520" role="img" aria-label="矿山分布示意图"></svg>
+          <div class="map-legend" id="mapLegend"></div>
+        </div>
+
+        <!-- 产品品类分布（环形图） -->
+        <div class="chart-card">
+          <div class="chart-title">产品品类分布</div>
+          <div class="chart-body">
+            <svg id="productPie" viewBox="0 0 120 120" role="img" aria-label="产品品类分布环形图"></svg>
+            <div class="chart-legend" id="productLegend"></div>
+          </div>
+        </div>
+
+        <!-- 各省份矿山数量（横向柱状图） -->
+        <div class="chart-card">
+          <div class="chart-title">各省份矿山数量</div>
+          <div class="hbar-chart" id="provinceChart"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="mine-dashboard.js"></script>
+</body>
+</html>

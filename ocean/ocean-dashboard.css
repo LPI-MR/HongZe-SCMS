@@ -1,0 +1,222 @@
+/* ============================================================
+   ocean 模块 · 数据看板样式（仅 ocean-dashboard.html 生效）
+   ============================================================ */
+
+/* 看板头部 */
+.dash-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.dash-header .page-desc {
+  margin-top: var(--space-xs);
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+/* 统计卡片：4 张横排（覆盖 common.css 的 3 列栅格） */
+.kpi-grid { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 概览指标卡片：浅紫整卡底色（common.css 未提供 purple 变体） */
+.kpi-icon.purple { background: var(--assist-bg-purple); }
+.kpi-icon.purple svg { stroke: #722ED1; }
+
+.kpi-card.purple { background: var(--assist-bg-purple); }
+.kpi-card.purple .kpi-icon { background: var(--gray-100); }
+
+/* 图表区栅格：趋势通栏，下方两列 */
+.chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
+.chart-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+  transition: box-shadow 0.2s;
+}
+
+.chart-card:hover { box-shadow: var(--shadow-hover); }
+
+.chart-card-full { grid-column: 1 / -1; }
+
+@media (max-width: 1000px) {
+  .chart-grid { grid-template-columns: 1fr; }
+}
+
+.chart-title {
+  font-size: 16px;        /* H3 */
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+  margin-bottom: var(--space-md);
+}
+
+/* ===== 月度趋势柱状图 ===== */
+#monthChart { width: 100%; height: auto; display: block; }
+
+/* 柱体（与 contracts/dashboard 图表约定一致） */
+.month-bar {
+  transition: fill 0.2s;
+}
+
+.month-bar:hover { fill: var(--color-primary); }
+
+/* 柱顶数值与横轴月份标签 */
+.month-value {
+  font-size: 13px;
+  fill: var(--gray-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.month-label {
+  font-size: 13px;
+  fill: var(--gray-500);
+}
+
+/* 坐标轴基线与网格 */
+.month-axis {
+  stroke: var(--gray-300);
+  stroke-width: 1;
+}
+
+.month-grid {
+  stroke: var(--gray-200);
+  stroke-width: 1;
+}
+
+.chart-empty {
+  font-size: 18px;
+  fill: var(--gray-500);
+}
+
+/* ===== 状态环形图 ===== */
+.chart-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  min-height: 220px;
+}
+
+@media (max-width: 1200px) {
+  .chart-body { flex-direction: column; }
+}
+
+#statusPie {
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+}
+
+/* 环形图中心文字（与 contracts/dashboard 图表约定一致） */
+.pie-center-label {
+  font-size: 9px;
+  fill: var(--gray-500);
+}
+
+.pie-center-value {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--gray-800);
+}
+
+.chart-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.chart-legend .legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 13px;
+}
+
+.chart-legend .legend-item .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chart-legend .legend-item .name { color: var(--gray-700); }
+.chart-legend .legend-item .val {
+  margin-left: auto;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-legend .legend-empty {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* ===== 航线货量排行（横向柱状图） ===== */
+.hbar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding-top: var(--space-xs);
+}
+
+.hbar-row {
+  display: grid;
+  grid-template-columns: 170px 1fr 70px;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.hbar-label {
+  font-size: 13px;        /* Caption */
+  color: var(--gray-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.hbar-track {
+  height: 18px;
+  background: var(--gray-200);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.hbar {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.hbar-row:nth-child(2) .hbar { background: #7BC6FF; }
+.hbar-row:nth-child(3) .hbar { background: #86909C; }
+.hbar-row:nth-child(4) .hbar { background: #FF7D00; }
+.hbar-row:nth-child(5) .hbar { background: #00B42A; }
+
+.hbar-value {
+  font-size: 13px;
+  color: var(--gray-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.hbar-empty {
+  padding: var(--space-lg) 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-500);
+}
