@@ -1,0 +1,495 @@
+/* ============================================================
+   warehouse 模块独立样式（仅仓储管理模块生效）
+   公共变量 / 布局 / 导航 / KPI 基础风格由 /css/common.css 统一提供
+   ============================================================ */
+
+/* ===== 模块头图 ===== */
+.module-hero {
+  background: linear-gradient(135deg, #272E3B, #1D2129);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg) var(--space-xl);
+  color: var(--gray-100);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.module-hero .hero-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.module-hero .hero-desc {
+  margin-top: var(--space-sm);
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.hero-entry {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--gray-100);
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.hero-entry:hover { background: var(--color-primary-dark); }
+
+/* ===== 供应商总览 KPI ===== */
+.kpi-grid { grid-template-columns: repeat(4, 1fr); }
+
+/* ===== 供应商列表面板 ===== */
+.panel {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--gray-300);
+  margin-bottom: var(--space-md);
+}
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.supplier-toolbar { display: flex; align-items: center; gap: var(--space-sm); }
+
+.search-input {
+  width: 260px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input::placeholder { color: var(--gray-500); }
+
+.search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(64, 128, 255, 0.12);
+}
+
+/* ===== 供应商卡片网格 ===== */
+.supplier-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-md);
+}
+
+.supplier-card {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  cursor: pointer;
+  transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.supplier-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.supplier-card .s-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.supplier-card .s-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+/* 合作类型徽标 */
+.type-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.type-badge.bonded  { background: var(--color-primary-light); color: var(--color-primary); }
+.type-badge.transit { background: var(--assist-bg-purple); color: #722ED1; }
+.type-badge.normal  { background: var(--assist-bg-orange); color: var(--color-warning); }
+.type-badge.shuttle { background: var(--assist-bg-green); color: var(--color-success); }
+
+/* 信息行 */
+.s-info { display: flex; flex-direction: column; gap: 6px; }
+
+.s-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+.s-row .s-label {
+  flex-shrink: 0;
+  width: 52px;
+  color: var(--gray-500);
+  font-size: 12px;
+}
+
+.s-row .s-value { word-break: break-all; }
+
+.s-row .s-value.empty { color: var(--gray-400); }
+
+/* 卡片底部：时间 + 查看详情提示 */
+.s-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-xs);
+  padding-top: var(--space-sm);
+  border-top: 1px dashed var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.s-more {
+  color: var(--color-primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.supplier-card:hover .s-more { opacity: 1; }
+
+/* ===== 供应商详情弹窗（居中小窗）===== */
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 620px;
+  max-width: 92vw;
+  max-height: 86vh;
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  z-index: 91;
+  display: flex;
+  flex-direction: column;
+  animation: modal-in 0.22s ease-out;
+}
+
+.modal[hidden] { display: none; }
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* 经营指标：三格展示 */
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.cap-item {
+  background: var(--color-primary-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-sm) 10px;
+  text-align: center;
+}
+
+.cap-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-primary);
+  word-break: break-all;
+}
+
+.cap-value.empty { color: var(--gray-400); font-weight: 400; }
+
+.cap-label {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* ===== 详情内容 ===== */
+.d-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.d-head .s-name { font-size: 16px; }
+
+.d-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-row .s-label { width: 60px; }
+
+.d-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.d-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.d-intro {
+  padding: var(--space-sm) 10px;
+  border-radius: var(--radius-md);
+  background: var(--gray-200);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--gray-600);
+  word-break: break-all;
+}
+
+.d-intro.empty { color: var(--gray-400); }
+
+.d-footer {
+  justify-content: flex-end;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--gray-200);
+}
+
+.d-footer .btn-ghost {
+  border-color: var(--assist-bg-red);
+  color: var(--color-danger);
+}
+
+.d-footer .btn-ghost:hover {
+  background: var(--assist-bg-red);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+/* 抽屉打开时禁止页面滚动 */
+body.drawer-open { overflow: hidden; }
+
+/* 空状态 */
+.empty-state {
+  grid-column: 1 / -1;
+  padding: var(--space-xl) 0;
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 14px;
+}
+
+/* ===== 新增供应商抽屉 ===== */
+/* hidden 属性优先：防止 display:flex/duration 覆盖默认隐藏 */
+.drawer[hidden],
+.drawer-mask[hidden] { display: none; }
+
+.drawer-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(29, 33, 41, 0.4);
+  z-index: 90;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 92vw;
+  background: var(--gray-100);
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  z-index: 91;
+  display: flex;
+  flex-direction: column;
+  animation: drawer-in 0.25s ease-out;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.drawer-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.drawer-close {
+  border: none;
+  background: transparent;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.drawer-close:hover { background: var(--gray-200); color: var(--gray-800); }
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-item { display: flex; flex-direction: column; gap: 6px; }
+
+.form-label {
+  font-size: 13px;
+  color: var(--gray-700);
+  font-weight: 500;
+}
+
+.form-label .required { color: var(--color-danger); }
+
+.form-input {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: inherit;
+}
+
+.form-textarea {
+  height: auto;
+  padding: 8px 12px;
+  resize: vertical;
+  min-height: 64px;
+}
+
+.form-input::placeholder { color: var(--gray-400); }
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(64, 128, 255, 0.12);
+}
+
+.form-input.error { border-color: var(--color-danger); }
+
+/* 经营指标：三列输入 */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.form-err {
+  font-size: 12px;
+  color: var(--color-danger);
+  display: none;
+}
+
+.form-err.show { display: block; }
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+}
+
+.btn-ghost, .btn-primary {
+  height: 34px;
+  padding: 0 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.btn-ghost {
+  border: 1px solid var(--gray-300);
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+.btn-ghost:hover { border-color: var(--gray-400); color: var(--gray-800); }
+
+.btn-primary {
+  border: none;
+  background: var(--color-primary);
+  color: var(--gray-100);
+}
+
+.btn-primary:hover { background: var(--color-primary-dark); }
+
+/* 抽屉打开时禁止页面滚动 */
+body.drawer-open { overflow: hidden; }

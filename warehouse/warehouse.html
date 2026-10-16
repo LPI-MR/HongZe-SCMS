@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>仓储管理 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="warehouse.css" />
+</head>
+<body>
   <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 / 门户组件 -->
   <link rel="stylesheet" href="/css/common.css" />
 </head>
@@ -19,6 +25,113 @@
       <div id="navbar"></div>
     </aside>
 
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <!-- 模块头图 -->
+      <section class="module-hero">
+        <div class="hero-text">
+          <div class="hero-title">仓储管理</div>
+          <div class="hero-desc">仓库与供应商管理 · 合作方信息统一维护</div>
+        </div>
+        <div class="hero-right">
+          <button id="open-add" type="button" class="hero-entry">＋ 新增供应商</button>
+        </div>
+      </section>
+
+      <!-- 供应商总览 KPI -->
+      <section class="kpi-grid" id="kpi-grid"></section>
+
+      <!-- 供应商列表 -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">供应商列表</div>
+          <div class="supplier-toolbar">
+            <input id="supplier-search" class="search-input" type="text" placeholder="搜索供应商名称 / 联系人 / 地址" />
+          </div>
+        </div>
+        <div class="supplier-grid" id="supplier-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 新增供应商抽屉 -->
+  <div class="drawer-mask" id="drawer-mask" hidden></div>
+  <aside class="drawer" id="add-drawer" hidden aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-title" id="drawer-title">新增供应商</div>
+      <button id="drawer-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
+    </div>
+
+    <form id="supplier-form" class="drawer-body" novalidate>
+      <div class="form-item">
+        <label class="form-label" for="f-name">供应商名称 <span class="required">*</span></label>
+        <input id="f-name" name="name" type="text" class="form-input" placeholder="请输入供应商全称" maxlength="60" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-type">合作类型</label>
+        <select id="f-type" name="type" class="form-input">
+          <option value="保税物流">保税物流</option>
+          <option value="中转仓储">中转仓储</option>
+          <option value="普通仓储">普通仓储</option>
+          <option value="运输接驳">运输接驳</option>
+        </select>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-contact">联系人</label>
+        <input id="f-contact" name="contact" type="text" class="form-input" placeholder="请输入联系人姓名" maxlength="20" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-phone">联系电话</label>
+        <input id="f-phone" name="phone" type="text" class="form-input" placeholder="手机号或座机号" maxlength="20" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-address">地址</label>
+        <input id="f-address" name="address" type="text" class="form-input" placeholder="请输入供应商地址" maxlength="100" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">经营指标（选填）</label>
+        <div class="form-grid">
+          <input id="f-throughput" name="throughput" type="text" class="form-input" placeholder="年吞吐量，如 500万吨" maxlength="30" />
+          <input id="f-storage" name="storage" type="text" class="form-input" placeholder="仓储能力，如 静态仓容60万吨" maxlength="30" />
+          <input id="f-area" name="area" type="text" class="form-input" placeholder="占地面积，如 约1500亩" maxlength="30" />
+        </div>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-facilities">仓储设施与服务</label>
+        <textarea id="f-facilities" name="facilities" class="form-input form-textarea" rows="3" placeholder="如库区/功能区分布、铁路专用线、通关服务、园区配套等，最多 200 字" maxlength="200"></textarea>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-intro">公司简介</label>
+        <textarea id="f-intro" name="intro" class="form-input form-textarea" rows="4" placeholder="简要介绍公司背景、主营业务等，最多 200 字" maxlength="200"></textarea>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-remark">备注</label>
+        <textarea id="f-remark" name="remark" class="form-input form-textarea" rows="3" placeholder="选填，最多 100 字" maxlength="100"></textarea>
+      </div>
+
+      <div class="drawer-footer">
+        <button type="button" class="btn-ghost" id="btn-cancel">取消</button>
+        <button type="submit" class="btn-primary" id="btn-submit">保存供应商</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- 供应商详情弹窗 -->
+  <div class="drawer-mask" id="modal-mask" hidden></div>
+  <div class="modal" id="detail-modal" hidden role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="drawer-title">供应商详情</div>
+      <button id="detail-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
     <!-- 主内容区：统一门户结构 -->
     <main class="main">
       <!-- 模块标题条 -->
@@ -55,6 +168,8 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="warehouse.js"></script>
   <!-- 门户页通用模板脚本 -->
   <script src="/common/portal.js"></script>
 </body>
