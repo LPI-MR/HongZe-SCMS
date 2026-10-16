@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>汽运车队 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / KPI 基础风格，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="fleet.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <!-- 模块头图 -->
+      <section class="module-hero">
+        <div class="hero-text">
+          <div class="hero-title">汽运车队</div>
+          <div class="hero-desc">车队档案与运力信息统一维护 · 合作车队一键联系</div>
+        </div>
+        <div class="hero-right">
+          <button id="open-add" type="button" class="hero-entry">＋ 新增车队</button>
+        </div>
+      </section>
+
+      <!-- 车队总览 KPI -->
+      <section class="kpi-grid" id="kpi-grid"></section>
+
+      <!-- 车队列表 -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">车队列表</div>
+          <div class="supplier-toolbar">
+            <input id="supplier-search" class="search-input" type="text" placeholder="搜索车队名称 / 联系人 / 地址" />
+          </div>
+        </div>
+        <div class="supplier-grid" id="supplier-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 新增 / 编辑车队抽屉 -->
+  <div class="drawer-mask" id="drawer-mask" hidden></div>
+  <aside class="drawer" id="add-drawer" hidden aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-title" id="drawer-title">新增车队</div>
+      <button id="drawer-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
+    </div>
+
+    <form id="supplier-form" class="drawer-body" novalidate>
+      <div class="form-item">
+        <label class="form-label" for="f-name">车队名称 <span class="required">*</span></label>
+        <input id="f-name" name="name" type="text" class="form-input" placeholder="请输入车队/承运单位全称" maxlength="60" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-type">车队类型</label>
+        <select id="f-type" name="type" class="form-input">
+          <option value="自营车队">自营车队</option>
+          <option value="合作车队">合作车队</option>
+          <option value="外协车队">外协车队</option>
+        </select>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-contact">联系人</label>
+        <input id="f-contact" name="contact" type="text" class="form-input" placeholder="请输入联系人姓名" maxlength="20" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-phone">联系电话</label>
+        <input id="f-phone" name="phone" type="text" class="form-input" placeholder="手机号或座机号" maxlength="20" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-address">地址</label>
+        <input id="f-address" name="address" type="text" class="form-input" placeholder="请输入车队地址" maxlength="100" />
+      </div>
+
+      <div class="form-item">
+        <label class="form-label">运力信息（选填）</label>
+        <div class="form-grid">
+          <input id="f-capacity" name="capacity" type="text" class="form-input" placeholder="运输能力，如 5000吨/月" maxlength="30" />
+          <input id="f-fleet-size" name="fleetSize" type="text" class="form-input" placeholder="自有车队数量，如 35辆" maxlength="20" />
+          <input id="f-min-guarantee" name="minGuarantee" type="text" class="form-input" placeholder="最低运输保障，如 500吨/月" maxlength="30" />
+          <input id="f-max-capacity" name="maxCapacity" type="text" class="form-input" placeholder="最大运输能力，如 1万吨/月" maxlength="30" />
+        </div>
+      </div>
+
+      <div class="form-item">
+        <label class="form-label" for="f-remark">备注</label>
+        <textarea id="f-remark" name="remark" class="form-input form-textarea" rows="3" placeholder="选填，如主要车型、合作线路等，最多 100 字" maxlength="100"></textarea>
+      </div>
+
+      <div class="drawer-footer">
+        <button type="button" class="btn-ghost" id="btn-cancel">取消</button>
+        <button type="submit" class="btn-primary" id="btn-submit">保存车队</button>
+      </div>
+    </form>
+  </aside>
+
+  <!-- 车队详情弹窗 -->
+  <div class="drawer-mask" id="modal-mask" hidden></div>
+  <div class="modal" id="detail-modal" hidden role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="drawer-title">车队详情</div>
+      <button id="detail-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="fleet.js"></script>
+</body>
+</html>

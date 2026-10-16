@@ -25,7 +25,10 @@
     '合同管理 / 合同模板': '/contracts/templates.html',
     '运输调度管理': '/transport/transport.html',
     '数据分析 / 调度数据分析': '/analytics/analytics.html',
-    '数据分析 / 财务数据分析': '/analytics/analytics.html'
+    '数据分析 / 财务数据分析': '/analytics/analytics.html',
+    '仓储管理': '/warehouse/warehouse.html',
+    '汽运车队': '/fleet/fleet.html',
+    '钢厂管理': '/steel/steel.html'
   };
 
   // 当前页面路径规范化（兼容本地服务器的无后缀 clean URL）
