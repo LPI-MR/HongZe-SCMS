@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>泓泽宜通 - HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / KPI 卡，保证各模块风格统一 -->
   <link rel="stylesheet" href="css/common.css" />
+  <!-- 首页独立样式：问候条 / 模块入口 / 趋势图 / 最新动态 -->
+  <link rel="stylesheet" href="css/index.css" />
 </head>
 <body>
   <div class="layout">
@@ -22,109 +25,101 @@
 
     <!-- 主内容区 -->
     <main class="main">
-      <!-- 首页：KPI 数据面板 -->
-      <section id="homePage">
-        <div class="kpi-grid">
-          <div class="kpi-card orange">
-            <div class="kpi-info">
-              <div class="kpi-label">总交易额</div>
-              <div class="kpi-value" data-target="12854600" data-prefix="¥">¥0</div>
-              <div class="kpi-trend up">较上月 ↑ 12.5%</div>
-            </div>
-            <div class="kpi-icon orange">
-              <svg viewBox="0 0 24 24"><path d="M6 3l6 8 6-8"/><path d="M12 11v10"/><path d="M7 13h10"/><path d="M7 17h10"/></svg>
-            </div>
-          </div>
+      <!-- 问候条 -->
+      <section class="home-greet">
+        <div class="greet-info">
+          <div class="greet-title" id="greetTitle">欢迎回来</div>
+          <div class="greet-sub">泓泽宜通供应链管理系统 · 数据总览与业务入口</div>
+        </div>
+        <div class="greet-date" id="greetDate">—</div>
+      </section>
 
-          <div class="kpi-card blue">
-            <div class="kpi-info">
-              <div class="kpi-label">总订单数</div>
-              <div class="kpi-value" data-target="3586">0</div>
-              <div class="kpi-trend up">较上月 ↑ 8.2%</div>
-            </div>
-            <div class="kpi-icon">
-              <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8"/><path d="M8 12h8"/><path d="M8 16h5"/></svg>
-            </div>
+      <!-- 核心指标（真实数据聚合，点击卡片进入对应模块） -->
+      <section class="home-kpis">
+        <div class="kpi-card blue">
+          <div class="kpi-info">
+            <div class="kpi-label">合同总金额</div>
+            <div class="kpi-value"><span id="kpiAmount">¥0</span><span class="kpi-unit" id="kpiAmountUnit">万</span></div>
+            <div class="kpi-trend" id="kpiAmountNote">—</div>
           </div>
-
-          <div class="kpi-card green">
-            <div class="kpi-info">
-              <div class="kpi-label">客户数</div>
-              <div class="kpi-value" data-target="1268">0</div>
-              <div class="kpi-trend up">较上月 ↑ 3.6%</div>
-            </div>
-            <div class="kpi-icon green">
-              <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.1.7 3.5 2.4 3.5 5"/></svg>
-            </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><path d="M6 3l6 8 6-8"/><path d="M12 11v10"/><path d="M7 13h10"/><path d="M7 17h10"/></svg>
           </div>
         </div>
 
-        <div class="placeholder-card" style="margin-top: var(--space-lg);">
-          <div class="page-body" style="margin-top: 0;">数据概览图表区域（待开发）</div>
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <div class="kpi-label">合同数量</div>
+            <div class="kpi-value"><span id="kpiContracts">0</span><span class="kpi-unit" id="kpiContractsUnit">份</span></div>
+            <div class="kpi-trend" id="kpiContractsNote">—</div>
+          </div>
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24"><path d="M8 3h9a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5"/><path d="M9 8h6"/><path d="M9 12h6"/><path d="M9 16h4"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card green">
+          <div class="kpi-info">
+            <div class="kpi-label">在用矿山</div>
+            <div class="kpi-value"><span id="kpiMines">0</span><span class="kpi-unit" id="kpiMinesUnit">座</span></div>
+            <div class="kpi-trend" id="kpiMinesNote">—</div>
+          </div>
+          <div class="kpi-icon green">
+            <svg viewBox="0 0 24 24"><path d="M3 20L10 6l4 7 3-4 4 11z"/><path d="M8 20l3-6"/></svg>
+          </div>
+        </div>
+
+        <div class="kpi-card orange">
+          <div class="kpi-info">
+            <div class="kpi-label">在途航次</div>
+            <div class="kpi-value"><span id="kpiVoyages">0</span><span class="kpi-unit" id="kpiVoyagesUnit">个</span></div>
+            <div class="kpi-trend" id="kpiVoyagesNote">—</div>
+          </div>
+          <div class="kpi-icon orange">
+            <svg viewBox="0 0 24 24"><path d="M4 13h16l-2 5H6z"/><path d="M8 13V8h8v5"/><path d="M12 8V4"/><path d="M2 21c1.5-1.2 3-1.2 4.5 0s3 1.2 4.5 0 3-1.2 4.5 0 3 1.2 4.5 0"/></svg>
+          </div>
         </div>
       </section>
 
-      <!-- 其他页面占位 -->
-      <section id="otherPage" hidden>
-        <div class="placeholder-card">
-          <div class="page-path" id="pagePath">首页</div>
-          <div class="page-title" id="pageTitle">首页</div>
-          <div class="page-body">当前页面内容区域（待开发）</div>
+      <!-- 主体两栏：左模块入口 + 趋势，右最新动态 -->
+      <div class="home-body">
+        <div class="home-main">
+          <!-- 业务模块入口矩阵 -->
+          <section class="home-panel">
+            <div class="panel-head">
+              <div class="panel-title">业务模块</div>
+              <div class="panel-sub">点击卡片进入对应模块</div>
+            </div>
+            <div class="module-grid" id="moduleGrid"></div>
+          </section>
+
+          <!-- 合同金额趋势 -->
+          <section class="home-panel">
+            <div class="panel-head">
+              <div class="panel-title">合同金额趋势</div>
+              <div class="panel-sub">近 6 个月签订合同金额（万元）</div>
+            </div>
+            <div class="trend-wrap" id="trendChart"></div>
+          </section>
         </div>
-      </section>
+
+        <aside class="home-side">
+          <!-- 最新动态 -->
+          <section class="home-panel">
+            <div class="panel-head">
+              <div class="panel-title">最新动态</div>
+              <div class="panel-sub">合同 / 矿山 / 航次</div>
+            </div>
+            <ul class="activity-list" id="activityList"></ul>
+          </section>
+        </aside>
+      </div>
     </main>
   </div>
 
   <!-- 公共导航栏加载脚本 -->
   <script src="common/fetch.js"></script>
-  <script>
-    // ===== 数字滚动动画 =====
-    function animateValue(el, target) {
-      const prefix = el.dataset.prefix || '';
-      const duration = 800;
-      const start = performance.now();
-      function frame(now) {
-        const p = Math.min((now - start) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = prefix + Math.round(target * eased).toLocaleString('zh-CN');
-        if (p < 1) requestAnimationFrame(frame);
-      }
-      requestAnimationFrame(frame);
-    }
-
-    // ===== 页面切换 =====
-    const homePage = document.getElementById('homePage');
-    const otherPage = document.getElementById('otherPage');
-    let kpiAnimated = false;
-
-    function showHome() {
-      homePage.hidden = false;
-      otherPage.hidden = true;
-      if (!kpiAnimated) {
-        kpiAnimated = true;
-        document.querySelectorAll('.kpi-value').forEach(el =>
-          animateValue(el, Number(el.dataset.target))
-        );
-      }
-    }
-
-    function showOther(path) {
-      homePage.hidden = true;
-      otherPage.hidden = false;
-      const parts = path.split('/').map(s => s.trim());
-      document.getElementById('pagePath').textContent = path;
-      document.getElementById('pageTitle').textContent = parts[parts.length - 1];
-    }
-
-    // ===== 导航路由：监听 fetch.js 派发的导航事件 =====
-    document.addEventListener('navbar:navigate', e => {
-      const path = e.detail.path;
-      if (path === '首页') showHome();
-      else showOther(path);
-    });
-
-    // 初始加载首页
-    showHome();
-  </script>
+  <!-- 首页逻辑：真实数据聚合 + 模块入口 + 趋势图 + 最新动态 -->
+  <script src="index.js"></script>
 </body>
 </html>
