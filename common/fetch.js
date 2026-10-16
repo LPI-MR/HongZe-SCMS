@@ -32,6 +32,8 @@
     '合同管理 / 合同台账': '/contracts/contracts.html',
     '合同管理 / 合同模板': '/contracts/templates.html',
     '运输调度管理': '/transport/transport.html',
+    '运输调度管理 / 调度看板': '/transport/transport.html',
+    '运输调度管理 / 信息录入': '/transport/transport-entry.html',
     '数据分析 / 调度数据分析': '/analytics/analytics.html',
     '数据分析 / 财务数据分析': '/analytics/analytics.html'
   };
