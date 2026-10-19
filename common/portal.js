@@ -113,7 +113,9 @@
     const navbar = document.getElementById('navbar');
     if (!navbar) return;
 
-    const page = location.pathname.split('/').pop() || '';
+    // 兼容无后缀 clean URL（/analytics/analytics → analytics.html），与 fetch.js currentPage() 约定一致
+    let page = location.pathname.split('/').pop() || '';
+    if (page && page.indexOf('.') === -1) page += '.html';
     const paths = PAGE_NAV[page];
     if (!paths) return;
 
