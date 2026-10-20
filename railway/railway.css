@@ -61,7 +61,7 @@
 .rs-badge-ok { display: inline-block; background: #E8F7EE; color: #1F9D55; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 6px; }
 
 /* ---- 双列区：企业介绍 + 对接人 ---- */
-.rs-duo { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-md); align-items: stretch; }
+.rs-duo { display: grid; grid-template-columns: 1.5fr 1fr; gap: var(--space-md); align-items: stretch; margin-bottom: var(--space-md); }
 .rs-duo .rs-card { margin-bottom: 0; }
 .rs-intro { font-size: 13.5px; color: var(--gray-700); line-height: 1.9; }
 .rs-intro p { text-indent: 2em; }
@@ -83,6 +83,33 @@
 .rs-person-name { font-size: 14px; font-weight: 600; color: var(--gray-800); }
 .rs-person-role { font-size: 12px; color: var(--gray-500); }
 .rs-person-tel { font-size: 12.5px; color: var(--color-primary); font-weight: 500; white-space: nowrap; }
+
+/* ---- 铁路各项费用卡片 ---- */
+.rs-fees-items { list-style: none; padding: 0; margin: 0 0 6px; }
+.rs-fees-items li {
+  font-size: 13.5px; color: var(--gray-700); line-height: 1.9;
+  text-indent: 2em;
+}
+.rs-fees-items li.rs-fee-chapter {
+  font-weight: 700; color: var(--gray-800); text-indent: 0; margin-top: 2px;
+}
+/* 表格上方的章节标题（如「2、通道运输成本」） */
+.rs-fee-title {
+  font-weight: 700; color: var(--gray-800); font-size: 13.5px; line-height: 1.9;
+  margin-top: 16px;
+}
+.rs-fee-title + .rs-fees-table-wrap { margin-top: 6px; }
+.rs-fees-items li + li { margin-top: 2px; }
+.rs-fees-table-wrap { overflow-x: auto; margin-top: 12px; }
+.rs-fees-table { width: 100%; max-width: 720px; border-collapse: collapse; font-size: 13px; }
+.rs-fees-table th, .rs-fees-table td {
+  border: 1px solid var(--gray-200); padding: 8px 12px; text-align: center; white-space: nowrap;
+}
+.rs-fees-table th { background: var(--gray-100); font-weight: 600; color: var(--gray-700); }
+.rs-fees-table td.num { font-family: Consolas, monospace; letter-spacing: .3px; }
+.rs-fees-empty { font-size: 13px; color: var(--gray-400); padding: 6px 0 2px; }
+/* 编辑弹窗内的费用表格行 */
+.rs-fee-row input { min-width: 0; }
 
 /* ---- 纯图标编辑按钮 ---- */
 .rs-icon-btn {

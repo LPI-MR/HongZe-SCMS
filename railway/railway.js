@@ -6,7 +6,7 @@
   'use strict';
 
   var STORAGE_KEY = 'hz_railway_suppliers';
-  var VERSION = 'v6';
+  var VERSION = 'v12';   // v12：通道运输成本表「状态」列改为「运输通道」
 
   // ===== 种子数据（沧港铁路 / 建投多式联运）=====
   var SEED = [
@@ -31,6 +31,35 @@
       intro: [
         '国内首家地方铁路上市公司。以河北省为基地，核心运营沧港铁路货运系统，连接京沪铁路与黄骅港，承担"西煤东运"重要任务。2026年，开通黄骅港至冀中南铁矿石运输新通道，依托沧港铁路成熟既有路网资源，成功构建起黄骅港进口铁矿石经京沪铁路直达冀中南地区的海铁联运新链路。'
       ],
+      fees: {
+        items: [
+          '1、铁路运输包干服务费用包括以下内容：',
+          '（1）邯黄运输综合服务费 13 元/吨（含 9% 的税）。',
+          '（2）沧港运输综合服务费 13.75 元/吨（其中铁路运费 11.65 元/吨，含 9% 的税；取送车费 2.1 元/吨，含 6% 的税）。',
+          '（3）沧州站经国铁到乙方指定到站运费如下（含 9% 的税）：'
+        ],
+        tables: [
+          {
+            headers: ['车型', '发站', '到站', '固定单价（元/箱）'],
+            rows: [
+              ['70吨级', '沧州', '武安', '1675.84'],
+              ['70吨级', '沧州', '康城', '1657.28'],
+              ['70吨级', '沧州', '磁山', '1717.44'],
+              ['60吨级', '沧州', '武安', '1416.42'],
+              ['60吨级', '沧州', '康城', '1401.03'],
+              ['60吨级', '沧州', '磁山', '1451.79']
+            ]
+          },
+          {
+            title: '2、通道运输成本',
+            headers: ['运输通道', '综合运输成本（元/吨）', '铁路运费（元/吨）', '装卸费（元/吨）', '短倒费（元/吨）'],
+            rows: [
+              ['保税状态（黄骅港经沧港铁路至武安保税）', '87.1', '79.1', '8', '—'],
+              ['非保税状态（黄骅港经沧港铁路至武安钢厂）', '95.1', '79.1', '6', '10']
+            ]
+          }
+        ]
+      },
       persons: [
         { name: '苏轶州', role: '', tel: '18032717609' }
       ]
@@ -57,6 +86,12 @@
         '由河北建投交通投资有限责任公司100%控股。依托邯黄铁路、和邢铁路、建投铁路为核心资源，着力构建"通道+枢纽+平台"现代化物流体系。',
         '以公铁、铁海联运为核心任务，开展中欧、中亚国际班列运输业务，打通货源揽收、干线运输、仓储集散、末端配送一体化物流体系。'
       ],
+      fees: {
+        items: [
+          '运费实行包干价结算，包括从渤海西站至曹庄镇站铁路运输的各项费用（不含港杂）44 元/吨（含税 9%）、到站装卸及服务费 6.6 元/吨（含税 6%）。'
+        ],
+        tables: []
+      },
       persons: [
         { name: '杨婉莹', role: '市场开发部', tel: '19930587087' }
       ]
@@ -163,6 +198,31 @@
       + '<button class="rs-row-del" title="删除">✕</button></div>';
   }
 
+  // 费用表格行（cols 列）
+  function feeRowHtml(cols, vals) {
+    vals = vals || [];
+    var inputs = '';
+    for (var i = 0; i < cols; i++) inputs += '<input value="' + esc(vals[i] || '') + '">';
+    return '<div class="rs-row rs-fee-row">' + inputs
+      + '<button class="rs-row-del" title="删除">✕</button></div>';
+  }
+
+  // 单个费用表格的编辑块（列名 + 行 + 增删），弹窗与委托共用
+  function feeTableHtml(t) {
+    t = t || { headers: [], rows: [] };
+    var cols = t.headers.length || 1;
+    return '<div class="rs-fee-tbl" style="border:1px solid var(--gray-300);border-radius:8px;padding:10px;margin-bottom:10px;">'
+      + '<div class="rs-form-item"><label>表格标题（显示在表格上方；留空则不显示）</label>'
+      + '<input class="ft-title" value="' + esc(t.title || '') + '"></div>'
+      + '<div class="rs-form-item"><label>表格列名（英文/中文逗号分隔；留空则不保存该表格）</label>'
+      + '<input class="ft-headers" value="' + esc((t.headers || []).join('，')) + '"></div>'
+      + '<div class="ft-rows">' + (t.rows || []).map(function (r) { return feeRowHtml(cols, r); }).join('') + '</div>'
+      + '<div style="display:flex;gap:10px;align-items:center;">'
+      + '<button class="rs-row-add" data-addrow="feeRow">＋ 添加表格行</button>'
+      + '<button class="rs-row-add ft-deltbl" type="button">✕ 删除该表格</button>'
+      + '</div></div>';
+  }
+
   // ============================================================
   // 详情模式：railway-detail.html?id=xxx
   // ============================================================
@@ -180,6 +240,64 @@
         '供应商不存在或已被删除，请返回列表刷新。</div>';
       return;
     }
+
+    // 铁路各项费用板块（文字条目 + 可选多表格）
+    var fees = s.fees || {};
+    var feeTables = (fees.tables || []).filter(function (t) {
+      return t && t.headers && t.headers.length && t.rows && t.rows.length;
+    });
+    var hasItems = fees.items && fees.items.length;
+    var hasTable = feeTables.length > 0;
+
+    var feesHtml = '<section class="rs-card rs-fees">'
+      + '<div class="rs-card-head"><div class="rs-card-title">铁路各项费用</div>'
+      + '  <button class="rs-icon-btn" data-edit="fees" title="编辑">✎</button></div>';
+
+    if (hasItems) {
+      feesHtml += '<ul class="rs-fees-items">' + fees.items.map(function (it) {
+        var chapter = /^(?:[一二三四五六七八九十]+|\d+)、/.test(it);   // 「一、」「2、」层级标题加粗
+        return '<li' + (chapter ? ' class="rs-fee-chapter"' : '') + '>' + esc(it) + '</li>';
+      }).join('') + '</ul>';
+    }
+
+    feeTables.forEach(function (feeTable) {
+      // 表格标题（如「2、通道运输成本」）
+      if (feeTable.title) {
+        feesHtml += '<div class="rs-fee-title">' + esc(feeTable.title) + '</div>';
+      }
+      // 首列连续相同值纵向合并（rowspan），0 表示该行首列已被上方合并
+      var feeRows = feeTable.rows;
+      var mergeSpans = [];
+      (function () {
+        var r = 0;
+        while (r < feeRows.length) {
+          var v = feeRows[r][0] == null ? '' : String(feeRows[r][0]);
+          var span = 1;
+          while (r + span < feeRows.length && v !== '' && String(feeRows[r + span][0]) === v) span++;
+          mergeSpans.push(span);
+          for (var k = 1; k < span; k++) mergeSpans.push(0);
+          r += span;
+        }
+      })();
+
+      feesHtml += '<div class="rs-fees-table-wrap"><table class="rs-fees-table"><thead><tr>'
+        + feeTable.headers.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('')
+        + '</tr></thead><tbody>'
+        + feeRows.map(function (row, ri) {
+            var firstTd = mergeSpans[ri] > 0
+              ? '<td rowspan="' + mergeSpans[ri] + '">' + esc(row[0] == null ? '' : row[0]) + '</td>'
+              : '';
+            return '<tr>' + firstTd + feeTable.headers.slice(1).map(function (_, i) {
+              var v = row[i + 1] == null ? '' : String(row[i + 1]);
+              var num = /^[\d,]+(\.\d+)?$/.test(v);
+              return '<td' + (num ? ' class="num"' : '') + '>' + esc(v) + '</td>';
+            }).join('') + '</tr>';
+          }).join('')
+        + '</tbody></table></div>';
+    });
+
+    if (!hasItems && !hasTable) feesHtml += '<div class="rs-fees-empty">暂无费用数据，点击右上角 ✎ 添加</div>';
+    feesHtml += '</section>';
 
     detailPanel.innerHTML = ''
       // 概览头
@@ -224,7 +342,10 @@
           + '</div>';
       }).join('') + '</div>'
       + '  </section>'
-      + '</div>';
+      + '</div>'
+
+      // 铁路各项费用
+      + feesHtml;
   }
 
   // ===== 详情页各编辑器 =====
@@ -277,6 +398,37 @@
         var telInput = r.querySelector('.w-tel');
         if (telInput && (s.persons || [])[i]) telInput.value = s.persons[i].tel || '';
       });
+    }
+
+    if (key === 'fees') {
+      var fees = s.fees || {};
+      var tables = fees.tables || [];
+
+      openModal('编辑铁路各项费用',
+        '<div class="rs-form-item"><label>费用条目（每行一条）</label><textarea id="f-fees-items" style="min-height:150px">'
+        + esc((fees.items || []).join('\n')) + '</textarea></div>'
+        + '<div id="f-fee-tables">' + tables.map(feeTableHtml).join('') + '</div>'
+        + '<button class="rs-row-add" data-addrow="feeTable">＋ 添加表格</button>',
+        function () {
+          var items = $('#f-fees-items').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+          var tablesOut = [];
+          document.querySelectorAll('#f-fee-tables .rs-fee-tbl').forEach(function (blk) {
+            var hs = blk.querySelector('.ft-headers').value.split(/[,，]/).map(function (x) { return x.trim(); }).filter(Boolean);
+            if (!hs.length) return;
+            var title = blk.querySelector('.ft-title').value.trim();
+            var rows = [].slice.call(blk.querySelectorAll('.ft-rows .rs-row')).map(function (r) {
+              return [].slice.call(r.querySelectorAll('input')).map(function (i) { return i.value.trim(); });
+            }).filter(function (r) { return r.some(function (v) { return v; }); })
+              .map(function (r) {
+                var out = [];
+                for (var i = 0; i < hs.length; i++) out.push(r[i] || '');
+                return out;
+              });
+            tablesOut.push(title ? { title: title, headers: hs, rows: rows } : { headers: hs, rows: rows });
+          });
+          s.fees = { items: items, tables: tablesOut };
+          saveData(); renderDetail(); closeModal(); toast('✓ 已保存');
+        });
     }
   }
 
@@ -545,10 +697,21 @@
     var addRow = t.closest('[data-addrow]');
     if (addRow) {
       var kind = addRow.getAttribute('data-addrow');
-      $('#f-' + kind + '-rows').insertAdjacentHTML('beforeend', rowHtml(kind, '', ''));
+      if (kind === 'feeRow') {
+        // 添加到最近的表格块，按该块列名输入框当前内容确定列数
+        var blk = t.closest('.rs-fee-tbl');
+        if (!blk) return;
+        var cols = blk.querySelector('.ft-headers').value.split(/[,，]/).filter(function (x) { return x.trim(); }).length || 1;
+        blk.querySelector('.ft-rows').insertAdjacentHTML('beforeend', feeRowHtml(cols, []));
+      } else if (kind === 'feeTable') {
+        $('#f-fee-tables').insertAdjacentHTML('beforeend', feeTableHtml(null));
+      } else {
+        $('#f-' + kind + '-rows').insertAdjacentHTML('beforeend', rowHtml(kind, '', ''));
+      }
       return;
     }
 
+    if (t.closest('.ft-deltbl')) { t.closest('.rs-fee-tbl').remove(); return; }
     if (t.closest('.rs-row-del')) { t.closest('.rs-row').remove(); return; }
 
     if (t.id === 'rsModalSave' && modalMode) { modalMode(); return; }

@@ -66,6 +66,7 @@
   margin-top: 8px;
   line-height: 1.6;
   max-width: 520px;
+  text-indent: 2em;
 }
 
 /* 概览头右端港口照片：贴满卡片右侧，左缘渐变融入 */
@@ -200,33 +201,153 @@
   vertical-align: middle;
 }
 
-/* ===== 港口现货区块（静态参考数据展示） ===== */
-.spot-card { margin-bottom: var(--space-md); }
-.spot-card .card-head { flex-wrap: wrap; gap: 6px; }
-.spot-meta { font-size: 12px; color: var(--gray-500); font-weight: 400; }
-.spot-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-.spot-chip {
+/* ===== 港区分部：港区介绍 / 卫星俯瞰地图切换 ===== */
+.zv-tabs {
+  margin-left: auto;          /* 吸收剩余空间，使 tabs 与 ✎ 靠右成组 */
+  display: inline-flex;
+  gap: 6px;
+  margin-right: 4px;
+}
+.zv-tab {
   border: 1px solid var(--gray-300);
   background: #fff;
   color: var(--gray-600);
-  font-size: 13px;
-  padding: 4px 14px;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 13px;
   border-radius: 999px;
   cursor: pointer;
   transition: all 0.15s;
 }
-.spot-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.spot-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
-.spot-table-wrap { overflow-x: auto; }
-.spot-table { min-width: 960px; }
-.spot-table td { white-space: nowrap; }
-.spot-table td.spot-variety { white-space: normal; min-width: 120px; }
-.spot-table td.spot-berth { white-space: normal; min-width: 110px; }
-.spot-table .spot-no { font-weight: 600; text-align: center; }
-.spot-table .spot-num { text-align: right; font-variant-numeric: tabular-nums; }
-.spot-table .spot-na { text-align: center; color: var(--gray-400); }
-.spot-table .spot-vessel { font-weight: 500; }
-.spot-table .spot-th-num { text-align: right; }
+.zv-tab:hover { color: var(--color-primary); border-color: var(--color-primary); }
+.zv-tab.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.pm-map-note {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* ===== 港口卫星俯瞰图（Leaflet + Esri 影像） ===== */
+.zone-view-map { position: relative; }      /* 作为绘制工具条的定位基准 */
+.zone-view-map #portMap {
+  height: 480px;
+  border-radius: 10px;
+  border: 1px solid var(--gray-300);
+  z-index: 0;                 /* 形成层叠上下文，避免 Leaflet 内部图层盖过弹窗 */
+  background: var(--gray-200);
+}
+
+/* 可编辑港口：绘制工具条与绘制状态 */
+.pm-draw-bar {
+  position: absolute;
+  top: 42px;                  /* 让开地图顶部标注行 */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;              /* 盖过 Leaflet popup（700） */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pm-draw-btn {
+  border: none;
+  background: #fff;
+  color: var(--gray-700, #374151);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+  white-space: nowrap;
+}
+.pm-draw-btn:hover { background: var(--gray-100, #f3f4f6); }
+.pm-draw-btn.ok { background: var(--color-primary, #2F7BFF); color: #fff; }
+.pm-draw-btn.ok:hover { background: #2668dc; }
+.pm-draw-btn.danger { color: var(--color-danger, #e5484d); }
+.pm-draw-btn[disabled] { opacity: .5; cursor: not-allowed; }
+.pm-draw-tip {
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, .62);
+  border-radius: 6px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+#portMap.pm-drawing { cursor: crosshair; }
+.leaflet-popup-content .pm-del-zone {
+  border: none;
+  background: transparent;
+  color: var(--color-danger, #e5484d);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 0;
+}
+.pm-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+.pm-legend .pm-tip { margin-left: auto; color: var(--gray-400); }
+.pm-shape {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: -2px;
+}
+.pm-shape-zone { border: 2px dashed #2F7BFF; background: rgba(47, 123, 255, 0.15); }
+.pm-shape-berth { border: 2px solid #FF8A00; background: #FF8A00; border-radius: 50%; }
+
+/* 码头锚点标记（divIcon） */
+.pm-berth-pin { background: transparent; border: none; }
+.pm-berth-pin span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #FF8A00;
+  color: #fff;
+  font-size: 12px;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  box-sizing: border-box;
+}
+.pm-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--gray-500);
+  font-size: 13px;
+}
+/* 港区名称永久标签（蓝色胶囊） */
+.leaflet-tooltip.pm-zone-label {
+  background: rgba(47, 123, 255, 0.92);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.leaflet-tooltip-top.pm-zone-label::before { border-top-color: rgba(47, 123, 255, 0.92); }
+/* 码头名称标签（橙色胶囊，常显） */
+.leaflet-tooltip.pm-berth-label {
+  background: rgba(255, 138, 0, 0.95);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.leaflet-tooltip-right.pm-berth-label::before { border-right-color: rgba(255, 138, 0, 0.95); }
 
 /* ===== 弹窗 ===== */
 .modal-mask {

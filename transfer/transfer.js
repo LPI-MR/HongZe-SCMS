@@ -6,7 +6,7 @@
   'use strict';
 
   var STORAGE_KEY = 'hz_transfer_stations';
-  var VERSION = 'v15';
+  var VERSION = 'v18';   // v18：成本卡片改为「运输通道」单列（含完整线路描述），全表居中，表头带单位
 
   // ===== 种子数据（曹庄镇站 / 邢台南站 / 康城站）=====
   var SEED = [
@@ -31,14 +31,17 @@
         { label: '车站等级', value: '四级' }
       ],
       stationIntro: '2025年，启动铁路线延长工程，曹庄镇站轨道由450米延长至1050米，装卸能力预计560万吨/年。具备20、40英尺集装箱及整车发到作业能力，可满足整列火车直接进出装卸。现已实现东盟班列常态化运行，成为京津冀地区唯一常态化运行的"中国—东盟"陆地运输通道。',
-      scale: '货场1处，横列式布置，货物线2条，有效长度450米，装卸作业时需对整列解编为半列列车推送进入。'
+      scale: '货场1处，横列式布置，货物线2条，有效长度450米，装卸作业时需对整列解编为半列列车推送进入。',
+      costRoutes: [
+        { route: '黄骅港经曹庄镇站到武安钢厂', total: '80.6', rail: '44.6', load: '6', shuttle: '30' }
+      ]
     },
     {
       id: 'st-xingtainan',
       name: '邢台南站',
-      subtitle: '河北省邢台市·邯黄铁路',
+      subtitle: '',
       photo: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=modern%20railway%20freight%20logistics%20yard%2C%20gantry%20cranes%20over%20rail%20sidings%2C%20container%20handling%20area%20and%20warehouses%2C%20sunny%20day%2C%20realistic%20photography&image_size=landscape_16_9',
-      intro: '和邢铁路与京广铁路交汇节点，晋冀鲁豫交界区域重要货物集散中心，承担中欧、中亚班列货物集结与换装作业',
+      intro: '邯黄铁路（邢台至黄骅港铁路）上的重要中间站，主要承担煤炭、玻璃、粮食、农产品、钢材等大宗货物的运输任务，通过邯黄铁路与沿海港口实现海铁联运，是冀中南地区重要的物流节点。',
       metrics: [
         { label: '实际货运量', value: '667.2', unit: '万吨', note: '数据时间2024年' },
         { label: '货场面积', value: '25.5', unit: '万㎡' },
@@ -59,9 +62,9 @@
     {
       id: 'st-kangcheng',
       name: '康城站',
-      subtitle: '河北省武安市·邯长铁路',
+      subtitle: '',
       photo: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bulk%20cargo%20railway%20freight%20terminal%2C%20raw%20material%20stockpile%20yard%20with%20loader%20machine%2C%20hopper%20freight%20wagons%20on%20tracks%2C%20industrial%20scenery%2C%20realistic%20photography&image_size=landscape_16_9',
-      intro: '邯黄铁路西端起点站，冀中南地区矿石、钢材、煤炭等大宗货物东出黄骅港的重要始发集结站',
+      intro: '邯长铁路沿线车站，2024年6月，邯长线康城站改造工程正式开通运营，进一步提升了该站的货运功能，强化了与铁路运输的衔接，有效缓解了公路运输压力，促进了区域经济发展',
       metrics: [
         { label: '实际货运量', value: '-' },
         { label: '货场面积', value: '-' },
@@ -77,7 +80,10 @@
         { label: '车站等级', value: '三级' }
       ],
       stationIntro: '康城站是邯郸站与武安站之间的一个重要中间站，连接着京广铁路与沙午铁路方向。距离邯郸站23公里。其上下行区间均已实现电气化',
-      scale: '车站设有到发线8条（含正线2条），有效长度为871m~1044m。'
+      scale: '车站设有到发线8条（含正线2条），有效长度为871m~1044m。',
+      costRoutes: [
+        { route: '天津港经康城站到武安钢厂', total: '78.6', rail: '62.6', load: '6', shuttle: '10' }
+      ]
     }
   ];
 
@@ -196,7 +202,7 @@
       // 站点概览头
       + '<section class="station-hero">'
       + '  <div class="station-hero-info">'
-      + '    <div class="station-hero-name">' + esc(s.name) + '<span class="station-hero-sub">' + esc(s.subtitle) + '</span></div>'
+      + '    <div class="station-hero-name">' + esc(s.name) + (s.subtitle ? '<span class="station-hero-sub">' + esc(s.subtitle) + '</span>' : '') + '</div>'
       + '    <div class="station-hero-intro">' + esc(s.intro) + '</div>'
       + '  </div>'
       + (s.photo
@@ -221,7 +227,9 @@
       + '</div>'
 
       // 站场规模（文字卡）或 堆场/仓库信息表格（通栏）
-      + (s.scale ? scaleCard(s, s.scale) : yardsCard(s, s.yards));
+      + (s.scale ? scaleCard(s, s.scale) : yardsCard(s, s.yards))
+      // 既有通道运输成本（通栏；有数据才显示）
+      + (s.costRoutes && s.costRoutes.length ? costCard(s, s.costRoutes) : '');
   }
 
   function kvCard(s, key, title, rows) {
@@ -246,7 +254,7 @@
   }
 
   function scaleCard(s, text) {
-    return '<section class="card">'
+    return '<section class="card scale-card">'
       + '<div class="card-head"><div class="card-title">站场规模</div>'
       + '<button class="icon-btn" data-edit="scale" title="编辑">✎</button></div>'
       + '<div class="station-intro"><p>' + esc(text) + '</p></div>'
@@ -267,6 +275,23 @@
       + '<div class="card-head"><div class="card-title">堆场/仓库信息</div>'
       + '<button class="icon-btn" data-edit="yards" title="编辑">✎</button></div>'
       + '<table class="yard-table">' + body + '</table>'
+      + '</section>';
+  }
+
+  // 既有通道运输成本（通栏表格卡，全表居中）
+  function costCard(s, rows) {
+    var body = '<thead><tr><th style="width:34%;">运输通道</th><th>综合运输成本（元/吨）</th><th>铁路运费（元/吨）</th><th>装卸费（元/吨）</th><th>短倒费（元/吨）</th></tr></thead>'
+      + '<tbody>' + rows.map(function (r) {
+        return '<tr><td>' + esc(r.route) + '</td>'
+          + '<td>' + esc(r.total) + '</td>'
+          + '<td>' + esc(r.rail) + '</td>'
+          + '<td>' + esc(r.load) + '</td>'
+          + '<td>' + esc(r.shuttle) + '</td></tr>';
+      }).join('') + '</tbody>';
+    return '<section class="card yards-card">'
+      + '<div class="card-head"><div class="card-title">既有通道运输成本</div>'
+      + '<button class="icon-btn" data-edit="costRoutes" title="编辑">✎</button></div>'
+      + '<table class="yard-table cost-table">' + body + '</table>'
       + '</section>';
   }
 
@@ -369,6 +394,51 @@
       $('#f-yard-rows').insertAdjacentHTML('beforeend',
         yardRow({ name: '', area: '', capacity: '', location: '' }));
       bindRowRemove($('#f-yard-rows'));
+    };
+  }
+
+  // 编辑既有通道运输成本
+  function editCostRoutes() {
+    var s = currentDetail();
+    if (!s) return;
+    s.costRoutes = s.costRoutes || [];
+    function costRow(r) {
+      return '<div class="form-cost-row" style="border:1px solid var(--gray-300);border-radius:8px;padding:10px;margin-bottom:10px;">'
+        + '<input class="c-route" placeholder="运输通道（如：黄骅港经曹庄镇站到武安钢厂）" value="' + esc(r.route) + '" style="width:100%;margin-bottom:6px;">'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'
+        + '<input class="c-total" placeholder="综合运输成本（元/吨）" value="' + esc(r.total) + '">'
+        + '<input class="c-rail" placeholder="铁路运费（元/吨）" value="' + esc(r.rail) + '"></div>'
+        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">'
+        + '<input class="c-load" placeholder="装卸费（元/吨）" value="' + esc(r.load) + '">'
+        + '<input class="c-shuttle" placeholder="短倒费（元/吨）" value="' + esc(r.shuttle) + '"></div>'
+        + '<button class="row-del" style="border:none;background:transparent;color:var(--color-danger);cursor:pointer;font-size:12px;padding:4px 0 0;">✕ 删除该行</button>'
+        + '</div>';
+    }
+    var body = '<div id="f-cost-rows">' + s.costRoutes.map(costRow).join('') + '</div>'
+      + '<button class="form-add" id="f-cost-add">＋ 添加运输成本行</button>';
+    openModal('编辑既有通道运输成本', body, function () {
+      var rows = [];
+      document.querySelectorAll('#f-cost-rows .form-cost-row').forEach(function (row) {
+        var route = row.querySelector('.c-route').value.trim();
+        if (!route) return;
+        rows.push({
+          route: route,
+          total: row.querySelector('.c-total').value.trim(),
+          rail: row.querySelector('.c-rail').value.trim(),
+          load: row.querySelector('.c-load').value.trim(),
+          shuttle: row.querySelector('.c-shuttle').value.trim()
+        });
+      });
+      s.costRoutes = rows;
+      saveData();
+      renderDetail();
+      toast('运输成本数据已更新');
+    });
+    bindRowRemove($('#f-cost-rows'));
+    $('#f-cost-add').onclick = function () {
+      $('#f-cost-rows').insertAdjacentHTML('beforeend',
+        costRow({ route: '', total: '', rail: '', load: '', shuttle: '' }));
+      bindRowRemove($('#f-cost-rows'));
     };
   }
 
@@ -559,7 +629,7 @@
         photo: '',
         intro: $('#f-new-intro').value.trim(),
         metrics: [
-          { label: '年中转量', value: '—', unit: '' },
+          { label: '货运量', value: '—', unit: '' },
           { label: '堆场面积', value: '—', unit: '' },
           { label: '仓库面积', value: '—', unit: '' },
           { label: '装卸线数量', value: '—', unit: '' }
@@ -653,7 +723,7 @@
 
       var headers = [
         '序号', '站点名称', '所属线路', '所属地区', '站点性质',
-        '年中转量', '堆场面积', '仓库面积', '装卸线数量', '主营业务',
+        '年货运量/年装卸能力', '堆场面积', '仓库面积', '装卸线数量', '主营业务',
         '隶属铁路局', '车站等级', '堆场/仓库数量', '站点简介'
       ];
 
@@ -713,6 +783,7 @@
       else if (key === 'stationIntro') editStationIntro();
       else if (key === 'scale') editScale();
       else if (key === 'yards') editYards();
+      else if (key === 'costRoutes') editCostRoutes();
     });
   } else {
     // 列表模式

@@ -54,6 +54,7 @@ function sendFile(res, fp) {
       return;
     }
     res.setHeader('Content-Type', MIME[path.extname(fp).toLowerCase()] || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'no-cache');   // 开发服务器：每次使用前重新验证，避免改动后浏览器使用旧缓存
     res.end(data);
   });
 }
