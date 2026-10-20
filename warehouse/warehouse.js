@@ -45,7 +45,9 @@
   const LEGACY_HBLG_INTRO = '河北陆港保税物流有限公司立足河北、服务京津冀，依托陆港口岸与保税政策优势，开展保税仓储、中转配送、通关协办等一体化物流服务，为客户提供大宗商品存储与供应链运转支撑。';
 
   const HBLG_PROFILE = {
-    address: '河北省邯郸市武安市（武安保税物流中心）',
+    contact: '范胜华',
+    phone: '13383088811',
+    address: '河北省邯郸市武安市洺湖北路北侧（武安保税物流中心）',
     throughput: '设计年货物处理量3000万吨',
     area: '规划占地1600亩',
     intro: '河北港口集团旗下核心物流载体，运营河北省首家B型保税物流中心——武安保税物流中心，业务涵盖保税物流、铁路运输、钢材交易、再生钢铁、混矿加工、供应链金融、跨境电商、仓储交割八大板块。"河北陆港—天津等港口"铁水联运线路入选国家级典型案例，2024年完成联运量21.6万标箱，2021—2024年累计74.97万标箱，货源以武安地区钢厂原料等大宗货物为主。',
@@ -54,8 +56,8 @@
 
   const NYYS_PROFILE = {
     address: '河北省邯郸市武安市南环东路1001号',
-    contact: '李勇旺',
-    phone: '0310-6287117',
+    contact: '南木',
+    phone: '13333008572',
     throughput: '300万吨级智慧物流园（规划）',
     area: '约146亩（仓储用地）',
     intro: '成立于2011年6月，注册资本5250万元，注册地位于邯郸武安市南环东路1001号。主营道路货物运输（普通、罐车、冷藏、大件、集装箱）、货运站场经营、铁路货物运输服务与汽车维修等，投资建设南洋（移山）智慧物流园，旗下全资持有武安市南洋石油销售有限公司。',
@@ -72,8 +74,8 @@
       id: 'sup-001',
       name: '河北陆港保税物流有限公司',
       type: '保税物流',
-      contact: '',
-      phone: '',
+      contact: HBLG_PROFILE.contact,
+      phone: HBLG_PROFILE.phone,
       address: HBLG_PROFILE.address,
       throughput: HBLG_PROFILE.throughput,
       storage: '',
@@ -112,8 +114,12 @@
     }
   }
 
-  // 旧版示例指标值（migrate 时视为占位，需替换为真实资料）
-  const LEGACY_CAPS = ['500万吨/年', '静态仓容60万吨', '约1500亩'];
+  // 旧版占位值（migrate 时替换为最新资料）：示例指标 / 粗略地址 / 旧联系方式
+  const LEGACY_VALUES = [
+    '500万吨/年', '静态仓容60万吨', '约1500亩',
+    '河北省邯郸市武安市（武安保税物流中心）',
+    '李勇旺', '0310-6287117'
+  ];
 
   // 数据迁移：为已有记录按公司名补充公开资料（不覆盖用户已填写的内容）
   function migrate(list) {
@@ -124,7 +130,7 @@
       Object.keys(p).forEach(k => {
         if (k === 'intro') {
           if (!s.intro || s.intro === LEGACY_HBLG_INTRO) { s.intro = p.intro; changed = true; }
-        } else if (!s[k] || LEGACY_CAPS.includes(s[k])) { s[k] = p[k]; changed = true; }
+        } else if (!s[k] || LEGACY_VALUES.includes(s[k])) { s[k] = p[k]; changed = true; }
       });
     });
     if (changed) save(list);
