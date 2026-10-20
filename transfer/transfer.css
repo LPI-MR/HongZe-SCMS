@@ -67,6 +67,7 @@
   margin-top: 8px;
   line-height: 1.6;
   max-width: 520px;
+  text-indent: 2em;
 }
 
 /* 概览头右端站点照片：贴满卡片右侧，左缘渐变融入 */
@@ -181,6 +182,10 @@
 
 /* 堆场/仓库信息（通栏表格·蓝白色调，同港区分部表格） */
 .yards-card { margin-bottom: var(--space-md); }
+/* 站场规模文字卡（与下方通栏卡片保持统一间距） */
+.scale-card { margin-bottom: var(--space-md); }
+/* 既有通道运输成本（全表居中；选择器加 .yard-table 前缀以覆盖其后 .yard-table td 的左对齐） */
+.yard-table.cost-table th, .yard-table.cost-table td { text-align: center; vertical-align: middle; }
 .yard-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .yard-table th, .yard-table td {
   border: 1px solid #333;

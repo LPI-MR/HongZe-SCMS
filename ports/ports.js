@@ -137,35 +137,6 @@
     }
   ];
 
-  // ===== 港口现货参考数据（静态展示数据，来源：中国矿产·中矿国链港口现货） =====
-  // 缺测值（原表「–」）统一记为 null，展示为「–」；no 为原表序号（同序号=同船多品种）
-  var SPOT_SEED = {
-    source: '中国矿产·中矿国链港口现货',
-    dataDate: '2026-05-25',
-    rows: [
-      { no: 1,  port: '京唐港', variety: '卡拉拉精粉',       fe: '62.33',  sio2: '12.06',  al2o3: '0.12',  p: '0.032', s: '0.067', mn: null,    moisture: '8.5',   vessel: 'SM SAMCHEONPO（三千浦）',   berth: '一公司' },
-      { no: 2,  port: '黄骅港', variety: '米纳斯精粉',       fe: '66.92',  sio2: '2.8',    al2o3: '0.53',  p: '0.025', s: null,    mn: '0.03',  moisture: '8.7',   vessel: 'SHANDONG DREAM（山东梦想）', berth: '矿石2场940-990米、矿石700-740米，矿石11场' },
-      { no: 3,  port: '黄骅港', variety: '卡拉拉精粉',       fe: '62.1',   sio2: '12.38',  al2o3: '0.2',   p: '0.03',  s: '0.036', mn: null,    moisture: '8.69',  vessel: 'JIN WEN FENG（锦文峰）',     berth: '' },
-      { no: 4,  port: '青岛港', variety: 'KBH南非铁精粉',    fe: '62.45',  sio2: '2.16',   al2o3: '0.46',  p: '0.19',  s: '0.041', mn: null,    moisture: '6.54',  vessel: 'ANASTASIA（安纳斯塔西娅）',  berth: '重象口' },
-      { no: 5,  port: '青岛港', variety: 'SFGB',             fe: '54.94',  sio2: '14.54',  al2o3: '2.11',  p: '0.068', s: null,    mn: '0.287', moisture: '8.3',   vessel: 'ORE ZHOUSHAN（矿石舟山）',   berth: '' },
-      { no: 6,  port: '青岛港', variety: '塞拉利昂烧结精粉', fe: '61.22',  sio2: '6.27',   al2o3: '3.38',  p: '0.041', s: '0.005', mn: null,    moisture: '10.62', vessel: 'SEABREEZE（海洋清风）',       berth: '' },
-      { no: 7,  port: '日照港', variety: 'KMG块',            fe: '51.66',  sio2: '22.51',  al2o3: '1.31',  p: '0.01',  s: '0.018', mn: null,    moisture: '2.07',  vessel: 'DEE4 OAK（橡树）',           berth: '' },
-      { no: 8,  port: '日照港', variety: 'YGBZ块',           fe: '62.11',  sio2: '8.95',   al2o3: '0.86',  p: '0.03',  s: '0.01',  mn: null,    moisture: '1.31',  vessel: 'MALINDI（马林迪）',           berth: '' },
-      { no: 9,  port: '日照港', variety: '塞拉利昂DSO粉',    fe: '55.21',  sio2: '3.07',   al2o3: '6.55',  p: '0.068', s: '0.004', mn: null,    moisture: '12.64', vessel: 'SAMC TRANSPORTER（海瀛撮运）', berth: '' },
-      { no: 10, port: '岚山港', variety: '罗伊山NEXUS粉',    fe: '57.218', sio2: '7.378',  al2o3: '3.175', p: '0.047', s: '0.035', mn: null,    moisture: '9.89',  vessel: 'MV HUI ZHEN HAI（惠珍海）',   berth: '' },
-      { no: 11, port: '岚山港', variety: 'LONS块',           fe: '49.5',   sio2: '18.46',  al2o3: '1.53',  p: '0.05',  s: null,    mn: '0.162', moisture: '4.5',   vessel: 'SHINE ON（照耀）',           berth: '装港指标' },
-      { no: 11, port: '岚山港', variety: 'LONS筛后块',       fe: '49.72',  sio2: '17.652', al2o3: '1.62',  p: '0.0466', s: null,   mn: '0.148', moisture: '2.71',  vessel: 'SHINE ON（照耀）',           berth: '卸港CCIC' },
-      { no: 11, port: '岚山港', variety: 'LONS筛后粉',       fe: '51.56',  sio2: '16.576', al2o3: '2.211', p: '0.0562', s: null,   mn: '0.254', moisture: '8.39',  vessel: 'SHINE ON（照耀）',           berth: '卸港CCIC' },
-      { no: 12, port: '岚山港', variety: 'LONS块',           fe: '53.75',  sio2: '14.23',  al2o3: '1.97',  p: '0.059', s: null,    mn: '0.215', moisture: '4.8',   vessel: 'PAN DREAM（潘梦）',           berth: '' },
-      { no: 13, port: '岚山港', variety: 'KMG粉',            fe: '47.95',  sio2: '24.92',  al2o3: '2.63',  p: '0.01',  s: '0.012', mn: null,    moisture: '4.07',  vessel: 'GREAT LINK（大联）',           berth: '' },
-      { no: 14, port: '连云港', variety: '卡拉拉精粉',       fe: '62.16',  sio2: '12.27',  al2o3: '0.1',   p: '0.028', s: '0.034', mn: null,    moisture: '8.08',  vessel: 'SIFNOS I（锡弗诺斯）',         berth: '' },
-      { no: 15, port: '连云港', variety: 'LONS筛后块',       fe: '49.89',  sio2: '17.78',  al2o3: '1.95',  p: '0.066', s: null,    mn: '0.015', moisture: '0.54',  vessel: 'ALONA（阿罗那）',             berth: '卸港CCIC' },
-      { no: 15, port: '连云港', variety: 'LONS筛后粉',       fe: '54.17',  sio2: '15.18',  al2o3: '2.29',  p: '0.08',  s: null,    mn: '0.015', moisture: '5.01',  vessel: 'ALONA（阿罗那）',             berth: '卸港CCIC' },
-      { no: 16, port: '镇江港', variety: '罗伊山NEXUS粉',    fe: '57.218', sio2: '7.378',  al2o3: '3.175', p: '0.047', s: '0.035', mn: null,    moisture: '9.89',  vessel: 'MV HUI ZHEN HAI（惠珍海）',   berth: '' },
-      { no: 17, port: '湛江港', variety: 'SFGB',             fe: '54.64',  sio2: '15.29',  al2o3: '2.18',  p: '0.065', s: null,    mn: '0.293', moisture: '8.6',   vessel: 'GRAND WISDOM（裕智）',         berth: '' }
-    ]
-  };
-
   // ===== 状态 =====
   var ports = [];
 
@@ -269,6 +240,8 @@
       return;
     }
 
+    var pmData = PORT_MAPS[p.name];   // 该港口是否配置俯瞰图数据
+
     detailPanel.innerHTML = ''
       // 港口概览头
       + '<section class="port-hero">'
@@ -297,8 +270,12 @@
       + kvCard(p, 'capacity', '集疏运体系', p.capacity)
       + '</div>'
 
-      // 港区分部（通栏）
-      + zonesCard(p, p.zones);
+      // 港区分部（通栏；配置了俯瞰图数据的港口附「港区介绍/卫星俯瞰地图」切换）
+      + zonesCard(p, p.zones, pmData);
+
+    pmPendingData = pmData;   // 地图懒加载：首次切到「卫星俯瞰地图」时初始化
+    pmPendingPort = p.name;
+    pmInitedFor = null;
   }
 
   function kvCard(p, key, title, rows) {
@@ -312,7 +289,7 @@
       + '</section>';
   }
 
-  function zonesCard(p, rows) {
+  function zonesCard(p, rows, pmData) {
     var body = rows && rows.length
       ? '<thead><tr><th style="width:104px;">港区名称</th><th style="width:190px;">位置</th><th>功能定位</th><th style="width:32%;">主要设施</th></tr></thead>'
         + '<tbody>' + rows.map(function (z) {
@@ -322,11 +299,424 @@
             + '<td>' + esc(z.facilities) + '</td></tr>';
         }).join('') + '</tbody>'
       : '<tbody><tr><td style="text-align:center;color:var(--gray-400);">暂无港区数据，点击右上角 ✎ 添加</td></tr></tbody>';
+    var tabs = '<div class="zv-tabs">'
+      + '<button class="zv-tab active" data-zview="intro" type="button">港区介绍</button>'
+      + (pmData ? '<button class="zv-tab" data-zview="map" type="button">卫星俯瞰地图</button>' : '')
+      + '</div>';
+    var mapView = pmData
+      ? '<div class="zone-view-map" style="display:none">'
+        + '<div class="pm-map-note"><span class="spot-meta">卫星影像：Esri World Imagery · 区域为示意范围</span></div>'
+        + '<div id="portMap"></div>'
+        + (pmData.editable
+          ? '<div class="pm-draw-bar">'
+            + '<button class="pm-draw-btn" data-pm="start" type="button">＋ 绘制港区</button>'
+            + '<button class="pm-draw-btn ok" data-pm="done" type="button" style="display:none" disabled>✓ 完成</button>'
+            + '<button class="pm-draw-btn danger" data-pm="cancel" type="button" style="display:none">✕ 取消</button>'
+            + '<span class="pm-draw-tip" style="display:none">单击地图依次添加顶点（至少 3 个），双击或点「完成」结束</span>'
+            + '</div>'
+          : '')
+        + '<div class="pm-legend">'
+        + '<span><i class="pm-shape pm-shape-zone"></i>港区区域</span>'
+        + '<span><i class="pm-shape pm-shape-berth"></i>码头位置</span>'
+        + '<span class="pm-tip">双击放大 · 拖动平移 · 点击区域查看说明' + (pmData.editable ? ' · 码头⚓可拖动调节位置' : '') + '</span>'
+        + '</div></div>'
+      : '';
     return '<section class="card zones-card">'
-      + '<div class="card-head"><div class="card-title">港区分部</div>'
+      + '<div class="card-head"><div class="card-title">港区分部</div>' + tabs
       + '<button class="icon-btn" data-edit="zones" title="编辑">✎</button></div>'
-      + '<table class="zone-table">' + body + '</table>'
+      + '<div class="zone-view-table"><table class="zone-table">' + body + '</table></div>'
+      + mapView
       + '</section>';
+  }
+
+  // ===== 港口卫星俯瞰图（Leaflet + Esri 卫星影像，按港口名匹配渲染） =====
+  // 坐标系 WGS-84；港区/码头以虚线多边形区域标注（参照高德地图 POI 区域样式）。
+  // 黄骅港各多边形顶点按 Esri World Imagery 卫星影像实测地物描点：
+  // 综合码头/散货一期码头岸线取船舶靠泊岸缘，煤炭港区取挖入式港池四角，
+  // 散货二期取吹填区水线，为实际地理位置的示意范围。
+  // 天津港各多边形按港区围堤与码头岸线走向绘制的示意范围。
+  var PORT_MAPS = {
+    '黄骅港': {
+      center: [38.3500, 117.8850],
+      zoom: 13,
+      // 港区多边形已按最终确认结果移除（原综合/散货/煤炭/河口四个港区不再展示），仅保留码头锚点
+      zones: [],
+      // 主要码头锚点（橙色 ⚓，常显名称；坐标为实地拖动定位后固化）
+      berths: [
+        {
+          name: '黄骅港综合码头',
+          area: [[38.34327, 117.86682]],
+          note: '多用途码头（散杂货/集装箱泊位8个，最大可靠泊10万吨级船舶）及通用散货码头，设计年吞吐量1800万吨'
+        },
+        {
+          name: '矿石码头',
+          area: [[38.32752, 117.84210]],
+          note: '散货港区矿石码头一期1-4号泊位，4个20万吨级专业化矿石泊位，年设计吞吐量5000万吨'
+        },
+        {
+          name: '神华码头',
+          area: [[38.32254, 117.88004]],
+          note: '国能黄骅港务（原神华集团）煤炭专业化装船码头一至五期，最大10万吨级泊位，配套翻车机房与筒仓群'
+        }
+      ]
+    },
+    '天津港': {
+      // 一港八区：北疆、东疆、南疆、海河、大沽口、高沙岭、大港、北塘
+      center: [38.9400, 117.7400],
+      zoom: 11,
+      // 港区区域（蓝色虚线多边形 + 中心常显名称；坐标为实地描绘后固化）
+      zones: [
+        {
+          name: '北疆港区',
+          // 海河闸北侧起沿实际海岸线向东北延伸至汉沽方向
+          area: [[38.98941, 117.72606], [38.98434, 117.74220], [38.98781, 117.74323], [38.98701, 117.74769], [38.98193, 117.74563], [38.98167, 117.74906], [38.98487, 117.75009], [38.98407, 117.75524], [38.97953, 117.75455], [38.97873, 117.75799], [38.98327, 117.75764], [38.98247, 117.76211], [38.97740, 117.76211], [38.97606, 117.76588], [38.98007, 117.76520], [38.97419, 117.78751], [38.97740, 117.78992], [38.98407, 117.77859], [39.02062, 117.76932], [39.02409, 117.75593], [39.02969, 117.75970], [39.02996, 117.76588], [39.04596, 117.75833], [39.04969, 117.76073], [39.04569, 117.77481], [39.06862, 117.77378], [39.07821, 117.74117], [39.05236, 117.73636], [39.04969, 117.74220], [39.02782, 117.73602], [39.02596, 117.74185], [38.98914, 117.72503]],
+          desc: '以集装箱运输为主，兼顾件杂货、滚装汽车运输，是天津港集装箱作业核心港区。'
+        },
+        {
+          name: '东疆港区',
+          // 人工岛及以北岸段
+          area: [[39.06782, 117.77515], [39.05822, 117.80571], [38.97446, 117.82871], [38.97553, 117.80674], [38.98674, 117.79060], [39.04516, 117.77515], [39.06755, 117.77584]],
+          desc: '北方国际航运核心区功能载体，东疆保税港区所在地，兼具邮轮母港与集装箱装卸功能。'
+        },
+        {
+          name: '南疆港区',
+          // 海河以南自河口向东南延伸的散货作业带
+          area: [[38.98727, 117.71576], [38.97099, 117.75764], [38.96325, 117.80743], [38.95791, 117.80811], [38.95337, 117.84382], [38.95150, 117.84382], [38.94483, 117.88467], [38.92747, 117.87952], [38.96111, 117.74288], [38.96832, 117.72331], [38.97713, 117.71473], [38.98674, 117.71542]],
+          desc: '以煤炭、矿石、原油等大宗散货运输为主，是大秦铁路、朔黄铁路煤炭下水重要节点。'
+        },
+        {
+          name: '大沽口港区',
+          // 南疆以南临港经济区沿岸
+          area: [[38.95738, 117.71885], [38.96031, 117.72537], [38.95230, 117.73842], [38.94456, 117.77035], [38.92934, 117.76382], [38.92613, 117.77927], [38.94002, 117.78374], [38.92907, 117.82219], [38.91411, 117.81532], [38.91224, 117.82494], [38.92587, 117.83215], [38.91732, 117.85721], [38.87991, 117.83215], [38.87270, 117.84519], [38.86655, 117.84107], [38.87777, 117.81910], [38.89007, 117.82700], [38.89728, 117.79953], [38.92240, 117.81052], [38.92720, 117.79026], [38.91438, 117.78236], [38.92240, 117.75009], [38.94002, 117.75387], [38.94723, 117.73464], [38.95738, 117.71851]],
+          desc: '临港经济区配套港区，以散杂货、钢材等运输为主，服务临港产业发展。'
+        },
+        {
+          name: '高沙岭港区',
+          // 独流减河以北沿岸
+          area: [[38.89808, 117.67593], [38.89621, 117.68383], [38.89060, 117.68177], [38.87350, 117.75215], [38.86842, 117.75387], [38.85612, 117.74769], [38.87029, 117.68932], [38.84543, 117.67971], [38.85131, 117.65739], [38.89755, 117.67525]],
+          desc: '以通用散杂货运输为主，兼顾滚装运输，服务南港工业区及周边装备制造产业。'
+        },
+        {
+          name: '大港港区',
+          // 独流减河以南沿岸块（北）
+          area: [[38.75258, 117.70615], [38.75178, 117.72057], [38.73464, 117.71782], [38.73437, 117.70924], [38.72205, 117.70889], [38.72259, 117.70580], [38.75285, 117.70546]],
+          desc: '以石油化工、散杂货运输为主，是天津港南翼综合性港区。'
+        },
+        {
+          name: '大港港区',
+          // 独流减河以南沿岸块（南，含南港工业区）
+          area: [[38.75794, 117.64297], [38.75767, 117.68761], [38.72794, 117.68761], [38.72928, 117.67868], [38.75071, 117.67971], [38.75071, 117.63783], [38.74375, 117.63027], [38.70946, 117.62787], [38.70973, 117.61070], [38.71134, 117.60384], [38.75231, 117.60384], [38.75660, 117.57877], [38.76115, 117.58152], [38.75820, 117.60246], [38.75820, 117.60830], [38.71402, 117.60864], [38.71402, 117.62444], [38.74482, 117.62512], [38.75794, 117.64332]],
+          desc: '以石油化工、散杂货运输为主，是天津港南翼综合性港区。'
+        },
+        {
+          name: '北塘港区',
+          // 永定新河口以北至中心渔港岸段
+          area: [[39.08514, 117.77859], [39.07448, 117.80914], [39.08221, 117.81361], [39.09287, 117.78099], [39.08541, 117.77790]],
+          desc: '永定新河口以北作业区，含中心渔港，以物资中转、渔业及旅游客运功能为主。'
+        }
+      ],
+      // 主要码头位置（锚点 + 常显名称；坐标为实地调节后固化）
+      berths: [
+        {
+          name: '天津港集装箱码头',
+          // 北疆港区前缘集装箱泊位带（五洲国际、太平洋国际等）
+          area: [[39.01145, 117.76554]],
+          note: '天津港集装箱码头群（五洲国际、太平洋国际等），可靠泊20万吨级集装箱船舶，年吞吐能力超千万标箱'
+        },
+        {
+          name: '天津港邮轮母港',
+          // 东疆港区东端邮轮泊位
+          area: [[38.97809, 117.81464]],
+          note: '天津国际邮轮母港，北方最大邮轮母港，可靠泊世界大型豪华邮轮'
+        },
+        {
+          name: '天津港矿石码头',
+          // 南疆港区散货泊位带（远航国际矿石码头）
+          area: [[38.94686, 117.85137]],
+          note: '远航国际矿石码头，20万吨级专业化矿石泊位，服务首钢、河钢等钢厂原料进口'
+        }
+      ]
+    }
+  };
+
+  // 动态加载 Leaflet（CDN 失败时自动切换备用源），加载完成后执行回调
+  var pmWaiters = [];
+  var pmLoading = false;
+  function loadLeaflet(cb) {
+    if (window.L) { cb(); return; }
+    pmWaiters.push(cb);
+    if (pmLoading) return;
+    pmLoading = true;
+
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css',
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js'
+    ];
+    var fallbacks = [
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.css',
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js'
+    ];
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = sources[0];
+    link.onerror = function () { link.href = fallbacks[0]; };
+    document.head.appendChild(link);
+
+    var script = document.createElement('script');
+    var triedFallback = false;
+    script.onload = function () {
+      pmWaiters.forEach(function (w) { w(); });
+      pmWaiters = [];
+    };
+    script.onerror = function () {
+      if (!triedFallback) {
+        triedFallback = true;
+        script.src = fallbacks[1];
+      } else {
+        pmLoading = false;
+        var box = document.getElementById('portMap');
+        if (box) box.innerHTML = '<div class="pm-error">地图组件加载失败，请检查网络后刷新重试</div>';
+      }
+    };
+    script.src = sources[1];
+    document.head.appendChild(script);
+  }
+
+  var pmInstance = null;
+  var pmPendingData = null;   // 待初始化的俯瞰图数据（首次切到地图视图时初始化）
+  var pmPendingPort = null;   // 待初始化的港口名（可编辑港口的自绘数据按港口持久化）
+  var pmInitedFor = null;     // 已初始化的地图容器元素（重渲染后重新初始化）
+
+  // 可编辑港口的自绘数据持久化：{ [港口名]: { added: [{name,desc,area}], removed: [基础区域索引], berthPos: { 码头名: [lat,lng] } } }
+  var PM_CUSTOM_KEY = 'hz_port_map_custom';
+  function pmCustomAll() {
+    try { return JSON.parse(localStorage.getItem(PM_CUSTOM_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function pmCustomSave(all) {
+    try { localStorage.setItem(PM_CUSTOM_KEY, JSON.stringify(all)); } catch (e) { /* 忽略存储异常 */ }
+  }
+
+  function initPortMap(mapData, portName) {
+    var box = document.getElementById('portMap');
+    if (!box) return;
+    loadLeaflet(function () {
+      box = document.getElementById('portMap');
+      if (!box) return;
+      if (pmInstance) { pmInstance.remove(); pmInstance = null; }   // 重渲染时先销毁旧实例
+
+      var editable = !!mapData.editable;   // 仅配置了 editable 的港口开放绘制与拖动
+      var map = L.map(box, { scrollWheelZoom: false, attributionControl: true });
+      pmInstance = map;
+      box._pmMap = map;   // 容器上挂载实例引用（调试/扩展用）
+      map.setView(mapData.center, mapData.zoom);
+
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        attribution: '影像 © Esri — Source: Esri, Maxar, Earthstar Geographics'
+      }).addTo(map);
+
+      var zoneLayer = L.layerGroup().addTo(map);
+      var berthLayer = L.layerGroup().addTo(map);
+
+      // ===== 港区区域：基础数据 + 自绘数据合并（不可编辑港口合并项恒为空，即只读展示） =====
+      var cst = editable && portName ? (pmCustomAll()[portName] || { added: [], removed: [], berthPos: {} }) : { added: [], removed: [], berthPos: {} };
+
+      function saveCustom() {
+        if (!editable || !portName) return;
+        var all = pmCustomAll();
+        all[portName] = cst;
+        pmCustomSave(all);
+      }
+
+      function zoneShape(z, kind, idx) {
+        var tools = '';
+        if (editable) {
+          tools = '<div style="margin-top:6px;text-align:right;">'
+            + (kind === 'custom' ? '<button class="pm-del-zone" data-rename-zone="' + idx + '">重命名</button>&nbsp;' : '')
+            + '<button class="pm-del-zone" data-kind="' + kind + '" data-idx="' + idx + '">删除该区域</button></div>';
+        }
+        return L.polygon(z.area, {
+          color: '#2F7BFF', weight: 2, dashArray: '7 5',
+          fillColor: '#2F7BFF', fillOpacity: 0.10
+        })
+          .bindTooltip('⚓ ' + z.name, { permanent: true, direction: 'center', className: 'pm-zone-label' })
+          .bindPopup('<b>' + esc(z.name) + '</b><br>' + esc(z.desc || '自绘区域') + tools);
+      }
+
+      function drawZones() {
+        zoneLayer.clearLayers();
+        mapData.zones.forEach(function (z, i) {
+          if (cst.removed.indexOf(i) < 0) zoneLayer.addLayer(zoneShape(z, 'base', i));
+        });
+        cst.added.forEach(function (z, j) {
+          zoneLayer.addLayer(zoneShape(z, 'custom', j));
+        });
+      }
+
+      drawZones();
+
+      // popup 内「重命名」（仅自绘区域）与「删除该区域」
+      map.on('popupopen', function (e) {
+        var el = e.popup.getElement();
+        if (!el) return;
+        var rbtn = el.querySelector('[data-rename-zone]');
+        if (rbtn) {
+          rbtn.onclick = function () {
+            var j = parseInt(rbtn.getAttribute('data-rename-zone'), 10);
+            var cur = cst.added[j];
+            if (!cur) return;
+            openModal('重命名港区区域',
+              '<div class="form-row"><label>港区名称</label><input id="pm-zone-rename" value="' + esc(cur.name) + '"></div>'
+              + '<div class="form-row"><label>功能说明</label><input id="pm-zone-redesc" value="' + esc(cur.desc || '') + '"></div>',
+              function () {
+                var name = document.getElementById('pm-zone-rename').value.trim();
+                if (!name) { toast('名称不能为空'); return false; }
+                cur.name = name;
+                cur.desc = document.getElementById('pm-zone-redesc').value.trim();
+                saveCustom();
+                drawZones();
+                toast('已保存');
+              });
+          };
+        }
+        var btn = el.querySelector('.pm-del-zone[data-kind]');
+        if (!btn) return;
+        btn.onclick = function () {
+          var kind = btn.getAttribute('data-kind');
+          var idx = parseInt(btn.getAttribute('data-idx'), 10);
+          if (kind === 'base') {
+            if (cst.removed.indexOf(idx) < 0) cst.removed.push(idx);
+          } else {
+            cst.added.splice(idx, 1);
+          }
+          saveCustom();
+          map.closePopup();
+          drawZones();
+        };
+      });
+
+      // ===== 码头：锚点标记 + 常显名称（可编辑港口锚点可拖动调节位置） =====
+      function berthMarker(b) {
+        var lat = 0, lon = 0;
+        b.area.forEach(function (pt) { lat += pt[0]; lon += pt[1]; });
+        var n = b.area.length;
+        var pos = (cst.berthPos && cst.berthPos[b.name]) || [lat / n, lon / n];
+        var mk = L.marker(pos, {
+          draggable: editable,
+          icon: L.divIcon({ className: 'pm-berth-pin', html: '<span>⚓</span>', iconSize: [22, 22], iconAnchor: [11, 11] })
+        });
+        if (editable) {
+          mk.on('dragend', function () {
+            var ll = mk.getLatLng();
+            cst.berthPos = cst.berthPos || {};
+            cst.berthPos[b.name] = [ll.lat, ll.lng];
+            saveCustom();
+            toast('已保存「' + b.name + '」位置');
+          });
+        }
+        var resetBtn = editable && cst.berthPos && cst.berthPos[b.name]
+          ? '<div style="margin-top:6px;text-align:right;"><button class="pm-del-zone" data-reset-berth="' + esc(b.name) + '">重置位置</button></div>'
+          : '';
+        mk.bindTooltip(b.name, { permanent: true, direction: 'right', offset: [10, 0], className: 'pm-berth-label' })
+          .bindPopup('<b>' + esc(b.name) + '</b><br>' + esc(b.note) + resetBtn);
+        return mk;
+      }
+
+      function drawBerths() {
+        berthLayer.clearLayers();
+        mapData.berths.forEach(function (b) { berthLayer.addLayer(berthMarker(b)); });
+      }
+
+      drawBerths();
+
+      // popup 内「重置位置」（码头锚点恢复默认位置）
+      map.on('popupopen', function (e) {
+        var el = e.popup.getElement();
+        var rbtn = el && el.querySelector('[data-reset-berth]');
+        if (!rbtn) return;
+        rbtn.onclick = function () {
+          var name = rbtn.getAttribute('data-reset-berth');
+          delete cst.berthPos[name];
+          saveCustom();
+          map.closePopup();
+          drawBerths();
+        };
+      });
+
+      // ===== 自绘港区区域：仅可编辑港口开放（单击取点 → 完成/双击闭合 → 自动保存） =====
+      var bar = editable && box.parentElement.querySelector('.pm-draw-bar');
+      if (!bar) return;
+      var bStart = bar.querySelector('[data-pm="start"]');
+      var bDone = bar.querySelector('[data-pm="done"]');
+      var bCancel = bar.querySelector('[data-pm="cancel"]');
+      var tip = bar.querySelector('.pm-draw-tip');
+      var drawing = false, pts = [], prevLine = null, prevDots = [];
+
+      function clearPreview() {
+        if (prevLine) { map.removeLayer(prevLine); prevLine = null; }
+        prevDots.forEach(function (d) { map.removeLayer(d); });
+        prevDots = [];
+      }
+
+      function preview() {
+        clearPreview();
+        pts.forEach(function (p) {
+          prevDots.push(L.circleMarker(p, { radius: 3, color: '#2F7BFF', weight: 2, fillColor: '#fff', fillOpacity: 1 }).addTo(map));
+        });
+        if (pts.length >= 2) {
+          prevLine = L.polyline(pts, { color: '#2F7BFF', weight: 2, dashArray: '5 5' }).addTo(map);
+        }
+        bDone.disabled = pts.length < 3;
+      }
+
+      function setDraw(on) {
+        drawing = on;
+        bStart.style.display = on ? 'none' : '';
+        bDone.style.display = on ? '' : 'none';
+        bCancel.style.display = on ? '' : 'none';
+        tip.style.display = on ? '' : 'none';
+        box.classList.toggle('pm-drawing', on);
+        if (on) { map.doubleClickZoom.disable(); }
+        else {
+          map.doubleClickZoom.enable();
+          pts = [];
+          clearPreview();
+        }
+        bDone.disabled = pts.length < 3;
+      }
+
+      function finishDraw() {
+        if (pts.length < 3) return;
+        var area = pts.slice();
+        setDraw(false);
+        // 自动保存：自动命名，不打断操作
+        var name = '自绘区域 ' + (cst.added.length + 1);
+        cst.added.push({ name: name, desc: '自绘区域', area: area });
+        saveCustom();
+        drawZones();
+        toast('已保存「' + name + '」（点击区域可重命名）');
+      }
+
+      map.on('click', function (e) {
+        if (!drawing) return;
+        pts.push([e.latlng.lat, e.latlng.lng]);
+        preview();
+      });
+      map.on('dblclick', function () {
+        if (!drawing) return;
+        // 双击会附带两次 click，若末两点几乎重合则去掉重复点
+        if (pts.length >= 4) {
+          var a = pts[pts.length - 1], b = pts[pts.length - 2];
+          if (Math.abs(a[0] - b[0]) < 1e-6 && Math.abs(a[1] - b[1]) < 1e-6) pts.pop();
+        }
+        finishDraw();
+      });
+
+      bStart.onclick = function () { setDraw(true); };
+      bCancel.onclick = function () { setDraw(false); };
+      bDone.onclick = finishDraw;
+    });
   }
 
   // ===== 弹窗（列表 / 详情共用） =====
@@ -733,6 +1123,31 @@
   // ===== 初始化 =====
   loadData();
 
+  // 港区分部视图切换：港区介绍 ⇄ 卫星俯瞰地图
+  function switchZoneView(btn) {
+    var scope = btn.closest('.zones-card');
+    if (!scope) return;
+    var mode = btn.getAttribute('data-zview');
+    scope.querySelectorAll('.zv-tab').forEach(function (b) { b.classList.toggle('active', b === btn); });
+    var tv = scope.querySelector('.zone-view-table');
+    var mv = scope.querySelector('.zone-view-map');
+    if (mode === 'map') {
+      if (tv) tv.style.display = 'none';
+      if (mv) {
+        mv.style.display = '';
+        if (pmPendingData && pmInitedFor !== mv) {
+          initPortMap(pmPendingData, pmPendingPort);   // 容器可见后再初始化，避免 0 尺寸
+          pmInitedFor = mv;
+        } else if (pmInstance) {
+          pmInstance.invalidateSize();  // 再次显示时刷新尺寸
+        }
+      }
+    } else {
+      if (tv) tv.style.display = '';
+      if (mv) mv.style.display = 'none';
+    }
+  }
+
   if (detailPanel) {
     // 详情模式
     renderDetail();
@@ -742,6 +1157,8 @@
     });
 
     document.addEventListener('click', function (e) {
+      var zvBtn = e.target.closest('[data-zview]');
+      if (zvBtn) { switchZoneView(zvBtn); return; }
       var editBtn = e.target.closest('[data-edit]');
       if (!editBtn) return;
       var key = editBtn.getAttribute('data-edit');
@@ -767,76 +1184,7 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // ===== 港口现货区块（静态参考数据展示，独立于港口档案 Tab） =====
-  var spotFilter = '全部';
-
-  // 数值单元格：缺测（原表「–」）显示灰色占位
-  function spotNumCell(v) {
-    return (v === null || v === undefined || v === '')
-      ? '<td class="spot-na">–</td>'
-      : '<td class="spot-num">' + esc(v) + '</td>';
-  }
-
-  function renderSpotMarket() {
-    var box = $('#spotSection');
-    if (!box) return;
-
-    // 按数据出现顺序提取港口清单，生成筛选胶囊
-    var seen = {};
-    var portList = [];
-    SPOT_SEED.rows.forEach(function (r) {
-      if (!seen[r.port]) { seen[r.port] = true; portList.push(r.port); }
-    });
-    var chips = ['全部'].concat(portList).map(function (p) {
-      return '<button type="button" class="spot-chip' + (p === spotFilter ? ' active' : '') + '" data-spot="' + esc(p) + '">' + esc(p) + '</button>';
-    }).join('');
-
-    var rows = SPOT_SEED.rows.filter(function (r) {
-      return spotFilter === '全部' || r.port === spotFilter;
-    });
-
-    var body = '';
-    for (var i = 0; i < rows.length; i++) {
-      var r = rows[i];
-      // 相邻同序号且同船名（一船多品种）行合并：序号与船名使用 rowspan，与原表层级一致
-      var span = 1;
-      while (i + span < rows.length && rows[i + span].no === r.no && rows[i + span].vessel === r.vessel) span++;
-      var mergeOpen = (i === 0 || rows[i - 1].no !== r.no || rows[i - 1].vessel !== r.vessel);
-      body += '<tr>'
-        + (mergeOpen ? '<td class="spot-no"' + (span > 1 ? ' rowspan="' + span + '"' : '') + '>' + r.no + '</td>' : '')
-        + '<td>' + esc(r.port) + '</td>'
-        + '<td class="spot-variety">' + esc(r.variety) + '</td>'
-        + spotNumCell(r.fe) + spotNumCell(r.sio2) + spotNumCell(r.al2o3)
-        + spotNumCell(r.p) + spotNumCell(r.s) + spotNumCell(r.mn) + spotNumCell(r.moisture)
-        + (mergeOpen ? '<td class="spot-vessel"' + (span > 1 ? ' rowspan="' + span + '"' : '') + '>' + esc(r.vessel) + '</td>' : '')
-        + '<td class="spot-berth">' + esc(r.berth || '—') + '</td>'
-        + '</tr>';
-    }
-
-    box.innerHTML =
-      '<section class="card spot-card">'
-      + '<div class="card-head"><div class="card-title">港口现货</div>'
-      + '<div class="spot-meta">数据来源：' + esc(SPOT_SEED.source) + ' · 数据日期：' + esc(SPOT_SEED.dataDate) + ' · 共 ' + SPOT_SEED.rows.length + ' 条</div></div>'
-      + '<div class="spot-chips">' + chips + '</div>'
-      + '<div class="spot-table-wrap"><table class="zone-table spot-table">'
-      + '<thead><tr><th style="width:44px;">序号</th><th style="width:76px;">港口</th><th>品种</th>'
-      + '<th class="spot-th-num">Fe%</th><th class="spot-th-num">SiO₂%</th><th class="spot-th-num">Al₂O₃%</th>'
-      + '<th class="spot-th-num">P%</th><th class="spot-th-num">S%</th><th class="spot-th-num">Mn%</th><th class="spot-th-num">水分%</th>'
-      + '<th style="width:210px;">船名</th><th style="width:150px;">货位</th></tr></thead>'
-      + '<tbody>' + body + '</tbody></table></div>'
-      + '</section>';
-  }
-
-  // 现货筛选：仅过滤表格行，不刷新页面
-  $('#spotSection').addEventListener('click', function (e) {
-    var chip = e.target.closest('[data-spot]');
-    if (!chip) return;
-    spotFilter = chip.getAttribute('data-spot');
-    renderSpotMarket();
-  });
-
   // ===== 初始化 =====
   loadData();
-  renderAll();
-  renderSpotMarket();
+  if (tbody) renderAll();   // 仅列表模式有台账表格；详情页（无 .ledger-table）跳过，避免空引用报错
 })();

@@ -218,3 +218,77 @@
   .ledger-table .status-tag, .coa-sec { transition: none !important; }
   .coa-sec:hover { background: transparent; }
 }
+
+/* ============================================================
+   港口现货区块（自 ports 模块迁移，含卡片 / 表格基础样式）
+   ============================================================ */
+#spotSection .card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  margin-bottom: var(--space-md);
+}
+#spotSection .card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#spotSection .card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#spotSection .card-title::before {
+  content: '';
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--color-primary);
+}
+.spot-meta { font-size: 12px; color: var(--gray-500); font-weight: 400; }
+.spot-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.spot-chip {
+  border: 1px solid var(--gray-300);
+  background: #fff;
+  color: var(--gray-600);
+  font-size: 13px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.spot-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.spot-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.spot-table-wrap { overflow-x: auto; }
+.spot-table { min-width: 960px; width: 100%; border-collapse: collapse; font-size: 13px; }
+.spot-table th, .spot-table td {
+  border: 1px solid #333;
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.7;
+}
+.spot-table th {
+  background: var(--color-primary-light);
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  text-align: center;
+}
+.spot-table td { color: var(--gray-800); background: #fff; font-weight: 400; white-space: nowrap; }
+.spot-table tbody tr:nth-child(even) td { background: #F3F8FF; }
+.spot-table tbody tr:hover td { background: #EBF3FF; }
+.spot-table td.spot-variety { white-space: normal; min-width: 120px; }
+.spot-table td.spot-berth { white-space: normal; min-width: 110px; }
+.spot-table .spot-no { font-weight: 600; text-align: center; }
+.spot-table .spot-num { text-align: right; font-variant-numeric: tabular-nums; }
+.spot-table .spot-na { text-align: center; color: var(--gray-400); }
+.spot-table .spot-vessel { font-weight: 500; }
+.spot-table .spot-th-num { text-align: right; }
