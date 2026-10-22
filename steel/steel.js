@@ -371,18 +371,21 @@
 
   // 地图标记（坐标对应 steel.html 内邯郸市真实区划地图；label 为展板用简称）
   // anchor: start 标签在点右侧 / end 标签在点左侧；dy: 标签纵向微调（密集区避让）
+  // 标记坐标按各厂址真实经纬度换算（WGS84，来源：排污许可证/竣工验收报告/企业水保监测方案等公开文件），
+  // 底图为 GCJ-02 投影（x=(lng-113.47)×473.6+24, y=(37.02-lat)×473.6+80，已含约 +0.0046°/+0.0024° 火星偏移）。
+  // 裕华/冀南/金鼎三厂在上团城乡实际相邻（相距不足1km），为避免圆点互相遮挡做了少量示意性拉开
   var MARKERS = [
-    { id: 'steel-001', x: 271.5, y: 169.3, label: '普阳钢铁', anchor: 'end', dy: -4 },
-    { id: 'steel-002', x: 479, y: 277.8, label: '邯钢本部', anchor: 'start', cls: 'hq' },
-    { id: 'steel-003', x: 346.9, y: 197.6, label: '新兴铸管', anchor: 'start', dy: 10 },
-    { id: 'steel-004', x: 337.5, y: 188.2, label: '裕华钢铁', anchor: 'start', dy: 4 },
-    { id: 'steel-005', x: 361.1, y: 211.8, label: '文安钢铁', anchor: 'start', dy: 14 },
-    { id: 'steel-006', x: 507.3, y: 192.9, label: '永洋特钢', anchor: 'start' },
-    { id: 'steel-007', x: 144.1, y: 287.2, label: '天津铁厂', anchor: 'start' },
-    { id: 'steel-008', x: 299.8, y: 221.2, label: '太行钢铁', anchor: 'end' },
-    { id: 'steel-009', x: 342.2, y: 183.5, label: '冀南钢铁', anchor: 'end' },
-    { id: 'steel-010', x: 370.5, y: 174, label: '金鼎钢铁', anchor: 'start' },
-    { id: 'steel-011', x: 365.8, y: 192.9, label: '新金钢铁', anchor: 'end', dy: 7 }
+    { id: 'steel-001', x: 242.4, y: 214.3, label: '普阳钢铁', anchor: 'end', dy: -4 },
+    { id: 'steel-002', x: 485.5, y: 277.2, label: '邯钢本部', anchor: 'start', cls: 'hq' },
+    { id: 'steel-003', x: 343.7, y: 268.4, label: '新兴铸管', anchor: 'start' },
+    { id: 'steel-004', x: 317, y: 209, label: '裕华钢铁', anchor: 'end' },
+    { id: 'steel-005', x: 360.2, y: 239.8, label: '文安钢铁', anchor: 'start', dy: 10 },
+    { id: 'steel-006', x: 455.6, y: 192.7, label: '永洋特钢', anchor: 'start' },
+    { id: 'steel-007', x: 156.7, y: 282.2, label: '天津铁厂', anchor: 'start' },
+    { id: 'steel-008', x: 316.2, y: 271.3, label: '太行钢铁', anchor: 'end' },
+    { id: 'steel-009', x: 332, y: 219, label: '冀南钢铁', anchor: 'start', dy: -6 },
+    { id: 'steel-010', x: 322, y: 231, label: '金鼎钢铁', anchor: 'end' },
+    { id: 'steel-011', x: 376.2, y: 223, label: '新金钢铁', anchor: 'start', dy: 6 }
   ];
 
   // 区县分组（新录入钢厂默认归入武安市）
@@ -410,10 +413,8 @@
     return el;
   }
 
-  // 地图标记点（与档案联动：删除钢厂后标记同步消失）
-  function renderMap() {
-    var layer = document.getElementById('map-markers');
-    if (!layer) return;
+  // 标记点绘制（主地图与放大视图共用；可点击查看详情）
+  function drawMarkers(layer) {
     layer.innerHTML = '';
 
     MARKERS.forEach(function (m) {
@@ -434,10 +435,19 @@
       tip.textContent = s.name + '（点击查看详情）';
       g.appendChild(tip);
 
-      g.addEventListener('click', function () { openDetail(s); });
+      // stopPropagation：避免点击标记时冒泡触发地图放大
+      g.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openDetail(s);
+      });
       layer.appendChild(g);
     });
+  }
 
+  function renderMap() {
+    var layer = document.getElementById('map-markers');
+    if (!layer) return;
+    drawMarkers(layer);
     renderDistrictList();
   }
 
@@ -475,6 +485,46 @@
     var s = suppliers.find(function (x) { return x.id === chip.getAttribute('data-id'); });
     if (s) openDetail(s);
   });
+
+  /* ==================== 地图放大预览 ==================== */
+
+  var zoomMask = document.getElementById('map-zoom-mask');
+  var zoomModal = document.getElementById('map-zoom-modal');
+  var zoomBody = document.getElementById('map-zoom-body');
+
+  // 打开放大视图：克隆主地图（避免 id 重复），重绘标记并绑定点击
+  function openMapZoom() {
+    var src = document.getElementById('handan-map');
+    if (!src || zoomModal.hidden === false) return;
+
+    var clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    var layer = clone.querySelector('#map-markers');
+    if (layer) layer.id = 'map-zoom-markers';
+    var districts = clone.querySelector('#map-districts');
+    if (districts) districts.removeAttribute('id');
+
+    zoomBody.innerHTML = '';
+    zoomBody.appendChild(clone);
+    var zoomLayer = document.getElementById('map-zoom-markers');
+    if (zoomLayer) drawMarkers(zoomLayer);
+
+    zoomMask.hidden = false;
+    zoomModal.hidden = false;
+    document.body.classList.add('drawer-open');
+  }
+
+  function closeMapZoom() {
+    zoomMask.hidden = true;
+    zoomModal.hidden = true;
+    zoomBody.innerHTML = '';
+    if (drawer.hidden && modal.hidden) document.body.classList.remove('drawer-open');
+  }
+
+  document.getElementById('map-zoom-btn').addEventListener('click', openMapZoom);
+  document.querySelector('.map-stage').addEventListener('click', openMapZoom);
+  document.getElementById('map-zoom-close').addEventListener('click', closeMapZoom);
+  zoomMask.addEventListener('click', closeMapZoom);
 
   /* ==================== 新增 / 编辑钢厂抽屉 ==================== */
 
@@ -670,11 +720,12 @@
     if (s) openDetail(s);
   });
 
-  // Esc：优先关闭详情弹窗，再关闭抽屉
+  // Esc：优先关闭详情弹窗，再关闭抽屉，最后关闭地图放大视图
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape') return;
     if (!modal.hidden) { closeDetail(); return; }
     if (!drawer.hidden) closeDrawer();
+    if (!zoomModal.hidden) closeMapZoom();
   });
 
   /* ==================== 搜索 ==================== */

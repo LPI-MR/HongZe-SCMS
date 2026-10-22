@@ -494,3 +494,181 @@ body.drawer-open { overflow: hidden; }
 
 /* 抽屉打开时禁止页面滚动 */
 body.drawer-open { overflow: hidden; }
+
+/* ===== 供应商位置分布地图（与钢厂管理页同源样式）===== */
+.map-tip { font-size: 12px; color: var(--gray-500); }
+
+.map-layout {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: stretch;
+}
+
+.map-stage { flex: 1.6; min-width: 0; }
+
+#handan-map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+
+.map-district-names text { pointer-events: none; }
+
+.map-marker { cursor: pointer; }
+
+.map-marker circle {
+  fill: var(--color-primary);
+  stroke: #FFFFFF;
+  stroke-width: 2.5;
+  transition: r 0.15s ease;
+}
+
+.map-marker:hover circle { fill: var(--color-primary-dark); }
+
+.map-marker text {
+  font-size: 14px;
+  fill: #2A3A50;
+  paint-order: stroke;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 3px;
+  pointer-events: none;
+}
+
+.map-side {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+}
+
+.map-side-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.map-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--gray-600);
+}
+
+.map-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 位置一览列表（点击查看详情） */
+.loc-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--gray-200);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.loc-item:hover { background: var(--color-primary-light); }
+
+.loc-item + .loc-item { margin-top: var(--space-xs); }
+
+.loc-item .loc-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.loc-item .loc-addr {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--gray-500);
+}
+
+/* ===== 地图放大预览（与钢厂管理页同源样式）===== */
+.map-zoom-btn {
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  background: var(--gray-100);
+  color: var(--color-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.map-zoom-btn:hover {
+  background: var(--color-primary);
+  color: var(--gray-100);
+}
+
+/* 主地图可点击放大 */
+.map-stage #handan-map { cursor: zoom-in; }
+
+.map-zoom-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(29, 33, 41, 0.45);
+  z-index: 88;
+}
+
+.map-zoom-mask[hidden] { display: none; }
+
+.map-zoom-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(1160px, 94vw);
+  max-height: 92vh;
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  z-index: 89;
+  display: flex;
+  flex-direction: column;
+  animation: modal-in 0.22s ease-out;
+}
+
+.map-zoom-modal[hidden] { display: none; }
+
+.map-zoom-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
+}
+
+.map-zoom-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg);
+}
+
+.map-zoom-body svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 900px) {
+  .map-layout { flex-direction: column; }
+  .map-side { min-width: 0; }
+}

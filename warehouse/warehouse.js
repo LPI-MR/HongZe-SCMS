@@ -223,7 +223,128 @@
   function renderAll() {
     renderKpi();
     renderList();
+    renderMap();
   }
+
+  /* ==================== 供应商位置分布地图 ==================== */
+
+  // 地图标记（坐标对应 warehouse.html 内邯郸市真实区划地图，与钢厂管理页同源投影）
+  // 陆港保税位于武安城区南部洺湖北路北侧（洺湖公园以北），南洋移山位于南环东路1001号；
+  // 坐标按公开位置信息估算（武安城区约东经114.19-114.21、北纬36.66-36.70），两圆点轻微拉开避免遮挡
+  const WAREHOUSE_MARKERS = [
+    { id: 'sup-001', name: '河北陆港保税物流有限公司', x: 367, y: 252, label: '陆港保税', anchor: 'end' },
+    { id: 'sup-002', name: '河北南洋移山物流有限公司', x: 375, y: 238, label: '南洋移山', anchor: 'start' }
+  ];
+
+  // 定位供应商档案：优先按 id（seed 记录）；用户手动录入的记录 id 为随机值，按名称回退匹配
+  function supplierOf(m) {
+    return suppliers.find(x => x.id === m.id) ||
+           suppliers.find(x => x.name === m.name);
+  }
+
+  // SVG 命名空间创建
+  function svgEl(tag, attrs) {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.keys(attrs).forEach(k => el.setAttribute(k, attrs[k]));
+    return el;
+  }
+
+  // 绘制标记点（主地图与放大视图共用）
+  function drawMarkers(layer) {
+    layer.innerHTML = '';
+
+    WAREHOUSE_MARKERS.forEach(m => {
+      const s = supplierOf(m);
+      if (!s) return;
+
+      const g = svgEl('g', { class: 'map-marker' });
+      g.appendChild(svgEl('circle', { cx: m.x, cy: m.y, r: 7 }));
+      const text = svgEl('text', {
+        x: m.anchor === 'end' ? m.x - 12 : m.x + 12,
+        y: m.y + 5,
+        'text-anchor': m.anchor === 'end' ? 'end' : 'start'
+      });
+      text.textContent = m.label;
+      g.appendChild(text);
+
+      const tip = svgEl('title', {});
+      tip.textContent = s.name + '（点击查看详情）';
+      g.appendChild(tip);
+
+      // stopPropagation：避免点击标记时冒泡触发地图放大
+      g.addEventListener('click', e => {
+        e.stopPropagation();
+        openDetail(s.id);
+      });
+      layer.appendChild(g);
+    });
+  }
+
+  // 地图标记点（与档案联动：删除供应商后标记同步消失）
+  function renderMap() {
+    const layer = document.getElementById('map-markers');
+    if (!layer) return;
+    drawMarkers(layer);
+    renderLocationList();
+  }
+
+  // 右侧位置一览（点击查看详情）
+  function renderLocationList() {
+    const box = document.getElementById('location-list');
+    if (!box) return;
+
+    box.innerHTML = WAREHOUSE_MARKERS.map(m => {
+      const s = supplierOf(m);
+      if (!s) return '';
+      return '<div class="loc-item" data-id="' + esc(s.id) + '" title="点击查看详情">' +
+        '<div class="loc-name">' + esc(s.name) + '</div>' +
+        '<div class="loc-addr">' + esc(s.address || '地址待补充') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // 位置一览点击 → 详情
+  document.getElementById('location-list').addEventListener('click', e => {
+    const item = e.target.closest('.loc-item');
+    if (!item) return;
+    openDetail(item.getAttribute('data-id'));
+  });
+
+  /* ==================== 地图放大预览 ==================== */
+
+  const zoomMask = document.getElementById('map-zoom-mask');
+  const zoomModal = document.getElementById('map-zoom-modal');
+  const zoomBody = document.getElementById('map-zoom-body');
+
+  function openMapZoom() {
+    const src = document.getElementById('handan-map');
+    if (!src || zoomModal.hidden === false) return;
+    const clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    const layer = clone.querySelector('#map-markers');
+    if (layer) layer.id = 'map-zoom-markers';
+    const districts = clone.querySelector('#map-districts');
+    if (districts) districts.removeAttribute('id');
+    zoomBody.innerHTML = '';
+    zoomBody.appendChild(clone);
+    const zoomLayer = document.getElementById('map-zoom-markers');
+    if (zoomLayer) drawMarkers(zoomLayer);
+    zoomMask.hidden = false;
+    zoomModal.hidden = false;
+    document.body.classList.add('drawer-open');
+  }
+
+  function closeMapZoom() {
+    zoomMask.hidden = true;
+    zoomModal.hidden = true;
+    zoomBody.innerHTML = '';
+    if (detailModal.hidden && drawer.hidden) document.body.classList.remove('drawer-open');
+  }
+
+  document.getElementById('map-zoom-btn').addEventListener('click', openMapZoom);
+  document.querySelector('.map-stage').addEventListener('click', openMapZoom);
+  document.getElementById('map-zoom-close').addEventListener('click', closeMapZoom);
+  zoomMask.addEventListener('click', closeMapZoom);
 
   /* ==================== 新增 / 编辑供应商抽屉 ==================== */
 
@@ -415,6 +536,7 @@
     if (e.key !== 'Escape') return;
     if (!detailModal.hidden) closeDetail();
     else if (!drawer.hidden) closeDrawer();
+    else if (!zoomModal.hidden) closeMapZoom();
   });
 
   /* ==================== 初始化 ==================== */
