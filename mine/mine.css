@@ -1,81 +1,14 @@
 /* ============================================================
    mine 模块独立样式（仅矿山管理模块生效）
    公共变量 / 布局 / 导航 / 卡片等风格由 /css/common.css 统一提供
-   布局骨架与 contracts 模块风格保持一致，类名独立定义避免跨模块耦合
+   结构：分段控件 / 介绍卡片 / 介绍详情弹层 / 基础信息事实看板 /
+         产品矩阵与参数弹层 / 响应式与动效降级
    ============================================================ */
 
-/* 按钮 / 页面标题 / 统计卡 / 检索卡 / 列表卡等通用组件样式
+/* 按钮 / 统计卡 / 状态标签 / 抽屉骨架等通用组件样式
    已上收至 /css/common.css 组件层，本模块仅保留矿山特有定义 */
 
-/* ===== 矿山检索（基础样式由 common.css 组件层提供）===== */
-.search-form {
-  grid-template-columns: minmax(200px, 1.4fr) minmax(180px, 1.2fr) minmax(150px, 1fr) minmax(120px, 0.8fr) auto;
-}
-
-/* ===== 矿山列表表格（基础样式由 common.css 组件层提供）===== */
-.ledger-table { min-width: 1080px; }      /* 9 列最小宽度，窄屏时横向滚动 */
-
-/* 列对齐与列宽（矿山列表特有列） */
-.ledger-table .col-code { width: 110px; font-variant-numeric: tabular-nums; }
-.ledger-table .col-name { min-width: 200px; }
-.ledger-table .col-products { min-width: 200px; }
-.ledger-table .col-action { width: 150px; text-align: center; }
-
-/* 可排序表头：hover 提示 + 排序箭头 */
-.ledger-table .col-sortable { cursor: pointer; user-select: none; }
-.ledger-table .col-sortable:hover { color: var(--color-primary); }
-
-.sort-arrow {
-  display: inline-block;
-  margin-left: 4px;
-  font-size: 10px;
-  color: var(--gray-400);
-}
-
-.sort-arrow.asc { color: var(--color-primary); }
-.sort-arrow.asc::after { content: '▲'; }
-.sort-arrow.desc { color: var(--color-primary); }
-.sort-arrow.desc::after { content: '▼'; }
-
-/* 矿山名称：可点击进入详情 */
-.mine-link {
-  color: var(--color-primary);
-  cursor: pointer;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.mine-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
-
-/* 主流产品标签：最多显示 3 个，超出显示 +N */
-.product-tags {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  max-width: 260px;
-  overflow: hidden;
-}
-
-.product-tag {
-  flex-shrink: 0;
-  padding: 2px var(--space-sm);
-  border-radius: var(--radius-sm);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 12px;        /* Caption */
-  line-height: 18px;
-  max-width: 90px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.product-tag.more {
-  background: var(--gray-200);
-  color: var(--gray-500);
-}
-
-/* 状态标签变体（基础样式由 common.css 组件层提供） */
+/* ===== 状态标签变体（基础样式由 common.css 组件层提供） ===== */
 .status-tag.active {
   background: #E6FFEA;
   color: var(--color-success);
@@ -86,10 +19,7 @@
   color: var(--gray-500);
 }
 
-/* 操作列变体（详情 / 编辑 / 停用，基础样式由 common.css 组件层提供） */
-.row-act.detail { color: var(--color-primary); }
-.row-act.detail:hover { background: var(--color-primary-light); border-color: var(--color-primary); }
-
+/* 操作按钮变体（编辑 / 停用启用，基础样式由 common.css 组件层提供） */
 .row-act.edit { color: var(--color-primary); }
 .row-act.edit:hover { background: var(--color-primary-light); border-color: var(--color-primary); }
 
@@ -100,377 +30,1123 @@
 .row-act.toggle.on { color: var(--color-success); }
 .row-act.toggle.on:hover { background: var(--assist-bg-green); border-color: var(--color-success); }
 
-/* 分页 / 抽屉骨架（mask / 标题 / 表单栅格 / 底部操作等）
-   已上收至 /css/common.css 组件层，此处仅保留矿山抽屉特有内容 */
-
-/* 主流产品快捷标签 */
-.product-pills {
+/* ============================================================
+   顶部标签栏（三板块切换分段控件；视口锁定布局下常驻固定区）
+   ============================================================ */
+.tabs-bar {
+  flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-sm) 0;
 }
 
-.product-pill {
-  padding: 3px var(--space-sm);
-  border: 1px solid var(--gray-300);
-  border-radius: 14px;
+/* 分段控件：三等分轨道 + 滑动指示块 */
+.tabs-seg {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  width: min(420px, 100%);
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--gray-300);
+}
+
+/* 滑动指示块：占轨道 1/3 宽，随选中标签平移 */
+.seg-indicator {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  height: calc(100% - 6px);
+  border-radius: 8px;
   background: var(--gray-100);
-  font-size: 12px;        /* Caption */
+  box-shadow: 0 1px 3px rgba(29, 33, 41, 0.12);
+  transition: transform 0.28s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: transform;
+}
+
+.seg-btn {
+  position: relative;
+  z-index: 1;
+  height: 34px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;        /* Body2 */
   font-family: inherit;
   color: var(--gray-600);
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  transition: color 0.2s;
 }
 
-.product-pill:hover { border-color: var(--color-primary); color: var(--color-primary); }
-
-.product-pill.selected {
-  background: var(--color-primary-light);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.product-custom { margin-top: var(--space-sm); }
-
-/* 已选产品回显：胶囊 + 可移除 */
-.product-selected {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-top: var(--space-sm);
-}
-
-.product-selected:empty { display: none; }
-
-.selected-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: 2px var(--space-sm);
-  border-radius: 14px;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.selected-tag .tag-remove {
-  border: none;
-  background: transparent;
-  padding: 0;
-  font-size: 14px;
-  line-height: 1;
-  color: var(--color-primary);
-  cursor: pointer;
-}
-
-.selected-tag .tag-remove:hover { color: var(--color-danger); }
+.seg-btn:hover { color: var(--color-primary); }
+.seg-btn:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+.seg-btn.active { color: var(--gray-800); font-weight: 500; }
 
 /* ============================================================
-   矿山详情页（mine-detail.html）
+   视口锁定布局（苹果/特斯拉式「固定主视觉 + 板块内滚动」）
+   本页 .ledger 根容器锁定为视口高度，页面不产生整页滚动；
+   固定区（页面标题 / 标签栏 / 板块头 / chips）常驻视口，
+   各板块仅内容列表独立滚动。
    ============================================================ */
-.detail-wrap {
+.ledger {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);   /* .main 上下 padding 32px × 2 */
+  min-height: 480px;            /* 过矮窗口兜底：允许页面滚动 */
+  overflow: hidden;
+}
+
+.ledger-header { flex-shrink: 0; }
+
+.tabs-pane { display: none; }
+
+.tabs-pane.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  animation: paneFade 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes paneFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 板块固定区：不随内容滚动 */
+.fact-toolbar,
+.mine-chips { flex-shrink: 0; }
+
+/* 板块滚动区：唯一滚动容器（细滚动条，与弹层正文一致） */
+.intro-grid,
+.fact-list,
+#productGroups {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: var(--space-lg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+.intro-grid::-webkit-scrollbar,
+.fact-list::-webkit-scrollbar,
+#productGroups::-webkit-scrollbar { width: 6px; }
+
+.intro-grid::-webkit-scrollbar-thumb,
+.fact-list::-webkit-scrollbar-thumb,
+#productGroups::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+/* ============================================================
+   板块一 · 矿山介绍（品牌叙事卡片）
+   ============================================================ */
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-lg);
+  align-content: start;   /* 行高由内容决定：禁止滚动区把单行卡片拉伸满容器 */
+}
+
+.intro-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 390px;      /* 显式高度约束：图 210 + 文字区约 180；显式尺寸可靠参与 grid 行高解析 */
   background: var(--gray-100);
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.intro-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(29, 33, 41, 0.12);
+}
+
+/* 卡片配图：固定图高 210px（App Store 卡片范式；固定高度可参与 grid 行高内在计算，
+   避免 aspect-ratio 在行高解析阶段贡献 0 导致图片区塌陷）+ 悬停微缩放 */
+.intro-media {
+  flex-shrink: 0;
+  height: 210px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.intro-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.intro-card:hover .intro-media img { transform: scale(1.02); }
+
+/* 同名类冲突修正：卡片文字区(.intro-body)与弹层正文(.intro-body)同名，
+   弹层滚动区规则会污染卡片文字区（overflow-y:auto），此处恢复卡片内不滚动 */
+.intro-card .intro-body { overflow: visible; }
+
+/* 图片加载失败：隐藏图片保持灰色占位，卡片结构稳定 */
+.intro-media img.img-error { visibility: hidden; }
+
+.intro-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   padding: var(--space-lg);
 }
 
-/* 顶部：名称 + 编号 + 状态 + 操作 */
-.detail-top {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding-bottom: var(--space-md);
-  border-bottom: 1px solid var(--gray-200);
-  flex-wrap: wrap;
-}
-
-.detail-name {
-  font-size: 20px;        /* H2 */
+.intro-name {
+  margin: 0;
+  font-size: 17px;
   font-weight: 600;
   color: var(--gray-800);
   line-height: 1.3;
 }
 
-.detail-code {
-  font-size: 13px;
-  color: var(--gray-500);
-  font-variant-numeric: tabular-nums;
+/* 纯叙事简介：无任何结构化数据（位置/产能/产品）
+   普通块级流（勿用 -webkit-box/line-clamp：其内在高度在 grid 行高计算阶段塌陷为 0） */
+.intro-text {
+  margin: var(--space-sm) 0 0;
+  font-size: 14px;        /* Body2 */
+  line-height: 1.7;
+  color: var(--gray-600);
 }
 
-.detail-top .spacer { flex: 1; }
-
-/* 主体：左信息 + 右位置图 */
-.detail-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: var(--space-lg);
+.intro-foot {
+  display: flex;
+  justify-content: flex-end;
   padding-top: var(--space-md);
+  margin-top: auto;       /* 查看详情贴卡底：等高行内各卡按钮对齐 */
 }
 
-@media (max-width: 1100px) {
-  .detail-body { grid-template-columns: 1fr; }
-}
-
-/* 左侧信息分组（与抽屉三分组一致） */
-.detail-section { margin-bottom: var(--space-lg); }
-.detail-section:last-child { margin-bottom: 0; }
-
-.detail-section .section-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gray-700);
-  padding-bottom: var(--space-xs);
-  border-bottom: 1px solid var(--gray-200);
-  margin-bottom: var(--space-md);
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-}
-
-@media (max-width: 640px) {
-  .info-grid { grid-template-columns: 1fr; }
-}
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-  min-width: 0;
-}
-
-.info-label { font-size: 12px; color: var(--gray-500); }
-
-.info-value {
-  font-size: 14px;
-  color: var(--gray-700);
-  word-break: break-all;
-}
-
-/* 产品标签（详情页复用） */
-.info-value .product-tags { max-width: none; }
-
-/* 右侧位置图卡片 */
-.geo-card {
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-md);
-  padding: var(--space-md);
-  align-self: start;
-}
-
-.geo-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--gray-700);
-  margin-bottom: var(--space-sm);
-}
-
-.geo-map { width: 100%; height: auto; display: block; }
-
-.geo-coord {
-  margin-top: var(--space-sm);
-  font-size: 12px;
-  color: var(--gray-500);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-/* 地图散点脉冲动画（详情页当前位置） */
-.geo-pulse {
-  animation: geo-pulse 1.6s ease-out infinite;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-@keyframes geo-pulse {
-  0%   { opacity: 0.7; transform: scale(0.6); }
-  100% { opacity: 0;   transform: scale(2.4); }
-}
-
-/* 下方 Tab 页签：关联货物批次 / 关联运输计划（本期占位） */
-.detail-tabs {
-  display: flex;
-  gap: var(--space-xs);
-  margin-top: var(--space-lg);
-  border-bottom: 1px solid var(--gray-300);
-}
-
-.detail-tab {
-  padding: var(--space-sm) var(--space-md);
+.intro-more {
   border: none;
   background: transparent;
-  font-size: 14px;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 13px;
   font-family: inherit;
-  color: var(--gray-600);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: color 0.2s, border-color 0.2s;
-}
-
-.detail-tab:hover { color: var(--color-primary); }
-.detail-tab:active { color: var(--color-primary-dark, var(--color-primary)); }
-.detail-tab:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; border-radius: 4px; }
-
-.detail-tab.active {
   color: var(--color-primary);
-  font-weight: 500;
-  border-bottom-color: var(--color-primary);
-}
-
-.tab-panel {
-  padding: var(--space-lg) 0 var(--space-sm);
-  font-size: 14px;
-  color: var(--gray-500);
-  text-align: center;
-}
-
-/* ===== 详情页轻交互（苹果式：极浅反馈，不干扰阅读） ===== */
-/* 信息项悬停：极浅背景渐显（gray-100 为白色 token，故用 50/200 两级灰） */
-.info-item { transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1); border-radius: 6px; }
-.info-item:hover { background: var(--gray-50, #FAFBFC); }
-
-/* 位置图卡片：悬停微升 */
-.geo-card {
-  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
-              box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-.geo-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(29, 33, 41, 0.1);
-}
-
-/* 返回/编辑按钮已有组件层四态；Tab 面板淡入 */
-.tab-panel { animation: tabFade 0.25s cubic-bezier(0.25, 0.1, 0.25, 1); }
-@keyframes tabFade {
-  from { opacity: 0; transform: translateY(2px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .info-item, .geo-card { transition: none !important; }
-  .geo-card:hover { transform: none !important; }
-  .tab-panel { animation: none; }
-}
-
-/* ===== 详情分组可点击态 + 分组详情浮窗（PRD FR-2） ===== */
-/* 分组卡片可点击：padding 内收原垂直间距，hover 热区扩大但视觉占位不变 */
-.detail-section {
   cursor: pointer;
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-lg);
-  margin-bottom: var(--space-sm);   /* 24px 原间距 = 8px 间距 + 16px 上下 padding */
-  transition: background-color 0.15s cubic-bezier(0.25, 0.1, 0.25, 1),
-              box-shadow 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s, color 0.2s;
 }
-.detail-section:last-child { margin-bottom: calc(-1 * var(--space-md)); }
-.detail-section:hover { background: var(--gray-50, #FAFBFC); box-shadow: 0 1px 4px rgba(29, 33, 41, 0.05); }
-.detail-section:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
-/* 标题右侧「查看详情」提示：hover / 聚焦时渐显 */
-.detail-section .section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.detail-section .section-title::after {
-  content: '查看详情 ›';
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--color-primary);
-  opacity: 0;
-  transition: opacity 0.15s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-.detail-section:hover .section-title::after,
-.detail-section:focus-visible .section-title::after { opacity: 1; }
+.intro-more:hover { background: var(--color-primary-light); color: var(--color-primary-dark); }
+.intro-more:active { background: #DCE8FF; }
+.intro-more:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
-/* 居中浮窗（分组详情）：遮罩淡入 + 弹窗上移缩放进入 */
-.section-modal-mask {
+/* ============================================================
+   板块一 · 矿山介绍详情弹层（沉浸式：Hero 卫星影像 + 叙事正文，内容区独立滚动）
+   ============================================================ */
+.intro-modal-mask {
   position: fixed;
   inset: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(29, 33, 41, 0.4);
+  background: rgba(29, 33, 41, 0.5);
   animation: modalMaskFade 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
-.section-modal-mask[hidden] { display: none; }
 
-.section-modal {
-  width: min(560px, calc(100vw - 48px));
-  max-height: 80vh;
+.intro-modal-mask[hidden] { display: none; }
+
+.intro-modal {
+  position: relative;
+  width: min(1160px, calc(100vw - 48px));
+  height: min(94vh, 1000px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background: var(--gray-100);
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 24px 48px rgba(29, 33, 41, 0.18);
   animation: modalIn 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-.section-modal-header {
+.intro-modal-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: rgba(29, 33, 41, 0.4);
+  color: #FFFFFF;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.intro-modal-close:hover { background: rgba(29, 33, 41, 0.6); }
+.intro-modal-close:active { transform: scale(0.94); }
+.intro-modal-close:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
+
+/* Hero：全宽卫星影像（16:9 生成图），弹性布局内固定高度，仅正文区滚动（Hero 静止不动） */
+.intro-hero {
+  position: relative;
+  flex-shrink: 0;
+  height: clamp(280px, 38vh, 400px);
+  overflow: hidden;
+  background: var(--gray-800);
+}
+
+.intro-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  animation: heroIn 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes heroIn {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Hero 底部深色渐变压暗，托住白色标题 */
+.intro-hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(29, 33, 41, 0.05) 40%, rgba(29, 33, 41, 0.62) 100%);
+}
+
+.intro-hero-caption {
+  position: absolute;
+  left: var(--space-xl);
+  right: var(--space-xl);
+  bottom: var(--space-lg);
+  color: #FFFFFF;
+}
+
+.intro-hero-caption h2 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  line-height: 1.25;
+  text-shadow: 0 1px 8px rgba(29, 33, 41, 0.35);
+}
+
+/* 叙事性 tagline（非结构化信息） */
+.intro-hero-caption p {
+  margin-top: var(--space-xs);
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.82);
+  letter-spacing: 1px;
+}
+
+/* 正文：纯文章 + 实拍图，最大宽 760px 居中，弹层内独立滚动 */
+.intro-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-xl) var(--space-xl) var(--space-xl);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+.intro-body::-webkit-scrollbar { width: 6px; }
+.intro-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+.im-inner {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* 导语段：稍大字号 + 充分行距， Apple 式开场 */
+.im-lead {
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--gray-800);
+}
+
+.im-section { margin-top: var(--space-xl); }
+
+.im-section h3 {
+  margin: 0 0 var(--space-sm);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--gray-800);
+  letter-spacing: 0.3px;
+}
+
+.im-section p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--gray-600);
+}
+
+/* 实拍图：圆角 + 极轻阴影 + 图注 */
+.im-figure {
+  margin: var(--space-xl) 0 0;
+}
+
+.im-figure img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  display: block;
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  background: var(--gray-200);
+}
+
+.im-figure img.img-error { visibility: hidden; }
+
+.im-figure figcaption {
+  margin-top: var(--space-sm);
+  font-size: 12px;
+  color: var(--gray-500);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* 正文末尾图源说明（v7：真实图源 Wikimedia / NASA） */
+.im-credit {
+  margin: var(--space-xl) 0 0;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--gray-200);
+  font-size: 12px;
+  color: var(--gray-400);
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   板块二 · 基础信息（工具条 + 事实卡）
+   ============================================================ */
+
+/* 工具条：排序说明 + 操作按钮 */
+.fact-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.fact-toolbar-note {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.fact-toolbar-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* 矿山事实卡列表 */
+.fact-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.fact-card {
+  position: relative;
+  background: var(--gray-100);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  transition: box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.fact-card:hover { box-shadow: 0 4px 16px rgba(29, 33, 41, 0.08); }
+
+/* 卡片左缘主色条：档案条目标识 */
+.fact-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-lg);
+  bottom: var(--space-lg);
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--color-primary);
+  opacity: 0.9;
+}
+
+/* 卡头：序号 + 名称 + 编号 + 状态 + 操作 */
+.fact-no {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+.fact-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.fact-name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.3;
+}
+
+.fact-code {
+  font-size: 13px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.fact-acts {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* 关键指标区：年产量最大号突出，其余等权 */
+.fact-sec-label {
+  margin-top: var(--space-lg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--gray-500);
+}
+
+.fact-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--gray-200);
   border-bottom: 1px solid var(--gray-200);
 }
 
-.section-modal-title {
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+/* 运营年限：主指标放大 + 主色数字 */
+.metric.primary .metric-value {
+  font-size: 30px;
+  color: var(--color-primary);
+}
+
+.metric-unit {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray-500);
+  margin-left: 4px;
+  white-space: nowrap;   /* 单位不拆行（如「万吨/年」整体换行） */
+}
+
+/* 文本型指标（品位等）：缩小字号避免窄列折行 */
+.metric-value.txt {
   font-size: 16px;
+  line-height: 1.5;
+  padding-top: 5px;
+  word-break: break-word;
+}
+
+/* 事实区：地理位置 | 运营信息 两栏 */
+.fact-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+}
+
+.fact-block { min-width: 0; }
+
+.fact-block-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: var(--gray-500);
+  margin-bottom: var(--space-sm);
+}
+
+.fact-line {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  font-size: 14px;
+  color: var(--gray-700);
+  line-height: 1.6;
+}
+
+.fact-line + .fact-line { margin-top: var(--space-xs); }
+
+.fact-line .line-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--gray-500);
+  line-height: 22px;
+  width: 60px;
+}
+
+.fact-line .line-value {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+  padding-top: 1px;
+}
+
+/* 经纬度等宽数字 */
+.fact-coord {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   板块三 · 产品详情（矿山切换 + 分组产品卡 + 参数弹层）
+   ============================================================ */
+
+/* 矿山切换 chips：固定主视觉组成部分（位于滚动区上方，不随内容滚动） */
+.mine-chips {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.mine-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: 999px;
+  background: var(--gray-100);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              border-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.mine-chip i {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.mine-chip:hover { border-color: var(--gray-400); background: var(--gray-200); }
+.mine-chip:active { transform: scale(0.97); }
+.mine-chip:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* 选中态：反白胶囊 */
+.mine-chip.on {
+  background: var(--gray-800);
+  border-color: var(--gray-800);
+  color: #FFFFFF;
+}
+
+.mine-chip.on i { color: rgba(255, 255, 255, 0.65); }
+
+/* 按矿分组的产品矩阵（单矿聚焦：矿头 banner + 折叠分类组） */
+.prod-group { margin-bottom: var(--space-lg); }
+.prod-group:last-child { margin-bottom: 0; }
+
+.prod-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-xs);
+}
+
+.prod-group-title { min-width: 0; }
+
+.prod-group-name {
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
   color: var(--gray-800);
 }
 
-.section-modal-body {
-  padding: var(--space-xs) var(--space-lg) var(--space-md);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gray-300) transparent;
+/* 品类构成摘要：铁矿石×7 · 铜×3 … */
+.prod-group-summary {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gray-500);
+  letter-spacing: 0.3px;
 }
-.section-modal-body::-webkit-scrollbar { width: 6px; }
-.section-modal-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
 
-/* 浮窗字段行：label 定宽灰色，value 弹性区 */
-.modal-field {
-  display: flex;
-  gap: var(--space-md);
-  padding: 10px 0;
-  border-bottom: 1px solid var(--gray-200);
-  font-size: 14px;
-}
-.modal-field:last-child { border-bottom: none; }
-.mf-label { width: 120px; flex-shrink: 0; font-size: 13px; color: var(--gray-500); }
-.mf-value {
-  flex: 1;
-  min-width: 0;
-  color: var(--gray-700);
-  word-break: break-all;
+.prod-group-total {
+  margin-left: auto;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gray-800);
   font-variant-numeric: tabular-nums;
 }
 
+.prod-group-total i {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray-500);
+  margin-left: 4px;
+}
+
+/* 业务大类折叠分组（Apple 轻量分组头范式：透明行式组头 + 内容卡组） */
+.prod-cat-group { margin-top: 20px; }
+
+.prod-cat-group:first-of-type { margin-top: var(--space-xs); }
+
+/* 组头：透明行式按钮，点击展开 / 收起（aria-expanded 同步） */
+.prod-cat-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  margin: 0 0 var(--space-sm);
+  padding: 12px 4px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.prod-cat-head:hover { background: rgba(29, 33, 41, 0.04); }
+.prod-cat-head:active { background: rgba(29, 33, 41, 0.08); }
+.prod-cat-head:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
+
+/* 折叠指示：收起指向右 / 展开向下（macOS 讨论组范式） */
+.prod-cat-chevron {
+  flex-shrink: 0;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--gray-500);
+  transform: rotate(-90deg);
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.prod-cat-group.open .prod-cat-chevron { transform: rotate(0deg); }
+
+.prod-cat-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-800);
+  letter-spacing: 0.3px;
+}
+
+.prod-cat-count {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--gray-500);
+}
+
+.prod-cat-body[hidden] { display: none; }
+
+.prod-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-md);
+}
+
+.prod-card {
+  background: var(--gray-100);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;   /* 整卡可点击：打开参数弹层 */
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
+              box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.prod-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(29, 33, 41, 0.12);
+}
+
+.prod-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.prod-card:active { transform: translateY(0); }
+
+.prod-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.prod-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prod-cat {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.prod-output {
+  margin-top: var(--space-sm);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.prod-output i {
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray-500);
+  margin-left: 4px;
+}
+
+/* 矿内占比：迷你进度条 + 百分比 */
+.prod-share {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.prod-share-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.prod-share-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--color-primary);
+  transition: width 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.prod-share-num {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 产品卡底部引导行：点击查看参数 */
+.prod-more {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--gray-200);
+  font-size: 12px;        /* Caption */
+  color: var(--gray-500);
+  transition: color 0.2s;
+}
+
+.prod-more i {
+  font-style: normal;
+  font-size: 14px;
+  line-height: 1;
+  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.prod-card:hover .prod-more { color: var(--color-primary); }
+.prod-card:hover .prod-more i { transform: translateX(2px); }
+
+/* ============================================================
+   产品参数弹层（居中浮层：品位大字 + 参数网格 + 专业描述）
+   ============================================================ */
+.prod-modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(29, 33, 41, 0.5);
+  animation: modalMaskFade 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.prod-modal-mask[hidden] { display: none; }
+
+.prod-modal {
+  position: relative;
+  width: min(560px, calc(100vw - 48px));
+  max-height: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: var(--gray-100);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(29, 33, 41, 0.18);
+  animation: prodModalIn 0.24s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes prodModalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 弹层遮罩淡入（intro-modal-mask 与 prod-modal-mask 共用） */
 @keyframes modalMaskFade {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* 介绍详情弹层入场（上移 + 缩放归位） */
 @keyframes modalIn {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .detail-section,
-  .detail-section .section-title::after { transition: none !important; }
-  .section-modal-mask, .section-modal { animation: none !important; }
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* 看板返回条（看板页顶部） */
-.dash-header {
+.prod-modal-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  z-index: 3;
+  width: 32px;
+  height: 32px;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  margin-bottom: var(--space-md);
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--gray-200);
+  color: var(--gray-700);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.prod-modal-close:hover { background: var(--gray-300); }
+.prod-modal-close:active { transform: scale(0.94); }
+.prod-modal-close:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.prod-modal-body {
+  overflow-y: auto;
+  padding: var(--space-xl);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+.prod-modal-body::-webkit-scrollbar { width: 6px; }
+.prod-modal-body::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+/* 弹层头部：类别 + 所属矿山 / 产品名 */
+.pm-head { padding-right: 40px; }
+
+.pm-cat {
+  font-size: 12px;        /* Caption */
+  color: var(--gray-500);
+  letter-spacing: 0.5px;
+}
+
+.pm-title {
+  margin: var(--space-xs) 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.25;
+}
+
+/* 品位大字：主色突出 */
+.pm-grade {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: 12px;
+  background: var(--color-primary-light);
+}
+
+.pm-grade-label {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.pm-grade-value {
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--color-primary);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-grade-value.empty {
+  font-size: 20px;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+/* 参数网格：两列 */
+.pm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm) var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.pm-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--gray-200);
+}
+
+/* 关键杂质跨整行 */
+.pm-cell:first-child { grid-column: 1 / -1; }
+
+.pm-cell-label {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.pm-cell-value {
+  font-size: 14px;        /* Body2 */
+  color: var(--gray-800);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+/* 专业描述 */
+.pm-desc {
+  margin: var(--space-lg) 0 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--gray-600);
+  border-left: 3px solid var(--color-primary-light);
+  padding-left: var(--space-md);
+}
+
+/* 空状态 */
+.tab-empty {
+  padding: var(--space-xl) 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+/* ============================================================
+   编辑抽屉补充（骨架与表单基础样式由 common.css 组件层提供）
+   ============================================================ */
+
+/* ============================================================
+   响应式
+   ============================================================ */
+
+/* 窄视口防撑破：.main 为 flex:1 项，min-width 置 0 避免被宽内容撑开 */
+.main { min-width: 0; }
+
+@media (max-width: 900px) {
+  .fact-grid { grid-template-columns: 1fr; }
+  .fact-metrics { grid-template-columns: repeat(2, 1fr); }
+  .pm-grid { grid-template-columns: 1fr; }
+  .pm-cell:first-child { grid-column: auto; }
+}
+
+@media (max-width: 768px) {
+  .tabs-seg { width: 100%; }
+  .intro-grid { grid-template-columns: 1fr; }
+  .intro-body { padding: var(--space-lg) var(--space-md); }
+  .intro-hero-caption { left: var(--space-md); right: var(--space-md); }
+  .fact-toolbar { flex-direction: column; align-items: stretch; }
+  .fact-toolbar-actions { justify-content: flex-end; }
+  .fact-card { padding: var(--space-md); }
+  .fact-metrics { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 弹层移动端全屏化 */
+@media (max-width: 640px) {
+  .intro-modal-mask { align-items: stretch; }
+  .intro-modal {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+  .prod-modal-mask { align-items: stretch; }
+  .prod-modal {
+    width: 100vw;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+/* ============================================================
+   动效降级（用户偏好减少动效）
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .seg-indicator { transition: none; }
+  .tabs-pane.active { animation: none; }
+  .intro-card,
+  .intro-media img,
+  .prod-card,
+  .mine-chip,
+  .prod-cat-head,
+  .prod-cat-chevron,
+  .prod-share-bar,
+  .prod-more i,
+  .intro-modal-close,
+  .prod-modal-close { transition: none !important; }
+  .intro-card:hover { transform: none; box-shadow: var(--shadow-card); }
+  .intro-card:hover .intro-media img { transform: none; }
+  .prod-card:hover { transform: none; box-shadow: var(--shadow-card); }
+  .prod-card:hover .prod-more i { transform: none; }
+  .intro-modal-mask,
+  .intro-modal,
+  .intro-hero img,
+  .prod-modal-mask,
+  .prod-modal { animation: none !important; }
 }

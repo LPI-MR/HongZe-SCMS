@@ -21,148 +21,92 @@
       <div id="navbar"></div>
     </aside>
 
-    <!-- 主内容区：本模块独立设计 -->
+    <!-- 主内容区：三板块结构（矿山介绍 / 基础信息 / 产品详情） -->
     <main class="main">
       <section class="ledger">
-        <!-- 页面标题 + 模块级入口 -->
+        <!-- 页面标题 -->
         <div class="ledger-header">
           <div>
             <div class="page-title">矿山管理</div>
             <div class="page-desc">矿山主数据库：货物来源的权威数据源，支撑海运与运输方案复用</div>
           </div>
-          <div>
-            <button class="btn btn-ghost banner-action" id="mineDashBtn" type="button">数据看板</button>
+        </div>
+
+        <!-- 顶部标签栏：三板块切换（sticky 毛玻璃 + 分段控件，支持键盘方向键） -->
+        <div class="tabs-bar" role="tablist" aria-label="矿山管理视图切换">
+          <div class="tabs-seg" id="tabsSeg">
+            <span class="seg-indicator" id="segIndicator" aria-hidden="true"></span>
+            <button class="seg-btn active" type="button" role="tab" id="tabIntro" data-tab="intro" aria-selected="true" aria-controls="paneIntro">矿山介绍</button>
+            <button class="seg-btn" type="button" role="tab" id="tabInfo" data-tab="info" aria-selected="false" aria-controls="paneInfo">基础信息</button>
+            <button class="seg-btn" type="button" role="tab" id="tabProducts" data-tab="products" aria-selected="false" aria-controls="paneProducts">产品详情</button>
           </div>
         </div>
 
-        <!-- 台账统计卡（实时汇总全部矿山数据） -->
-        <div class="ledger-kpis">
-          <div class="stat-card">
-            <div class="stat-label">矿山总数</div>
-            <div class="stat-value" id="tTotal">0</div>
-            <div class="stat-note">全部登记矿山</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">在用矿山</div>
-            <div class="stat-value" id="tActive">0</div>
-            <div class="stat-note">状态为在用</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">覆盖省份数</div>
-            <div class="stat-value" id="tProvinces">0</div>
-            <div class="stat-note">所在地省份去重</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">主流产品种类</div>
-            <div class="stat-value" id="tProducts">0</div>
-            <div class="stat-note">产品品类去重数</div>
+        <!-- ===== 板块一：矿山介绍（品牌叙事卡片，按总产量从高到低） ===== -->
+        <div class="tabs-pane active" id="paneIntro" role="tabpanel" aria-labelledby="tabIntro">
+          <div class="intro-grid" id="introGrid">
+            <!-- 矿山叙事卡片由 mine.js 数据驱动渲染 -->
           </div>
         </div>
 
-        <!-- 矿山检索 -->
-        <div class="search-card">
-          <!-- 检索小标题 -->
-          <div class="search-banner">
-            <span class="banner-title">矿山检索</span>
+        <!-- ===== 板块二：基础信息（运营事实档案：工具条 + 事实卡） ===== -->
+        <div class="tabs-pane" id="paneInfo" role="tabpanel" aria-labelledby="tabInfo">
+
+          <!-- 工具条：排序说明 + 新增 / 导出 -->
+          <div class="fact-toolbar">
+            <span class="fact-toolbar-note">按总产量从高到低排序 · 共 <span id="factCount">0</span> 座矿山</span>
+            <div class="fact-toolbar-actions">
+              <button class="btn btn-ghost" id="exportBtn" type="button">导出 Excel</button>
+              <button class="btn btn-primary" id="addMineBtn" type="button">新增矿山</button>
+            </div>
           </div>
 
-          <!-- 检索表单 -->
-          <form class="search-form" id="searchForm">
-            <div class="search-field">
-              <label class="field-label" for="searchName">矿山名称</label>
-              <input class="field-input" type="text" id="searchName" placeholder="输入名称模糊搜索" />
-            </div>
-
-            <div class="search-field">
-              <label class="field-label" for="searchLocation">所在地</label>
-              <input class="field-input" type="text" id="searchLocation" placeholder="省份 / 城市 / 区县" />
-            </div>
-
-            <div class="search-field">
-              <label class="field-label" for="searchProduct">主流产品</label>
-              <select class="field-input" id="searchProduct">
-                <option value="">全部</option>
-                <!-- 选项由 mine.js 依据现有矿山产品聚合生成 -->
-              </select>
-            </div>
-
-            <div class="search-field">
-              <label class="field-label" for="searchStatus">状态</label>
-              <select class="field-input" id="searchStatus">
-                <option value="">全部</option>
-                <option value="active">在用</option>
-                <option value="inactive">停用</option>
-              </select>
-            </div>
-
-            <div class="search-actions">
-              <button class="btn btn-primary" type="submit">查询</button>
-              <button class="btn btn-ghost" type="reset" id="searchReset">重置</button>
-            </div>
-          </form>
+          <!-- 矿山事实卡（每矿一张，按总产量降序，由 mine.js 渲染） -->
+          <div class="fact-list" id="factList"></div>
         </div>
 
-        <!-- 矿山列表 -->
-        <div class="ledger-card">
-          <!-- 列表小标题 -->
-          <div class="ledger-banner">
-            <span class="banner-title">矿山列表</span>
-            <span class="banner-stat">共 <em id="mineCount">0</em> 座，总产能 <em id="mineCapacity">0</em> 万吨/年</span>
-            <button class="btn btn-ghost banner-action" id="exportBtn" type="button">导出 Excel</button>
-            <button class="btn btn-primary banner-action" id="addMineBtn" type="button">新增矿山</button>
-          </div>
+        <!-- ===== 板块三：产品详情（矿山切换 + 折叠分组 + 参数弹层） ===== -->
+        <div class="tabs-pane" id="paneProducts" role="tabpanel" aria-labelledby="tabProducts">
 
-          <div class="table-wrap">
-            <table class="ledger-table">
-              <thead>
-                <tr>
-                  <th class="col-index">序号</th>
-                  <th class="col-code">矿山编号</th>
-                  <th class="col-sortable" data-sort="mine_name">矿山名称<span class="sort-arrow" id="sortName"></span></th>
-                  <th class="col-products">主流产品</th>
-                  <th>所在地</th>
-                  <th class="col-num col-sortable" data-sort="annual_capacity">产能(万吨/年)<span class="sort-arrow" id="sortCapacity"></span></th>
-                  <th>状态</th>
-                  <th class="col-date">创建时间</th>
-                  <th class="col-action">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- 暂无数据，由 mine.js 数据驱动渲染 -->
-                <tr class="empty-row">
-                  <td colspan="9">暂无矿山数据</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <!-- 矿山切换标签（固定主视觉，由 mine.js 渲染，选中态高亮） -->
+          <div class="mine-chips" id="mineChips" aria-label="按矿山筛选产品矩阵"></div>
 
-          <!-- 分页控制 -->
-          <div class="pager">
-            <div class="pager-left">
-              <select class="pager-size" id="pageSize">
-                <option value="10" selected>10 条/页</option>
-                <option value="20">20 条/页</option>
-                <option value="50">50 条/页</option>
-              </select>
-              <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
-            </div>
-            <div class="pager-right">
-              <button type="button" class="pager-btn" id="pgFirst">首页</button>
-              <button type="button" class="pager-btn" id="pgPrev">上一页</button>
-              <span class="pager-info">
-                第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
-                / <span id="pgPages">1</span> 页
-              </span>
-              <button type="button" class="pager-btn" id="pgNext">下一页</button>
-              <button type="button" class="pager-btn" id="pgLast">末页</button>
-            </div>
-          </div>
+          <!-- 单矿聚焦的产品矩阵（独立滚动区，产品卡可点击查看参数） -->
+          <div id="productGroups"></div>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- 新增 / 编辑矿山抽屉（基础信息 / 地理位置 / 产品与产能 三分组） -->
+  <!-- 矿山介绍 · 沉浸式详情弹层（顶部 Hero 卫星影像 + 视差 + 纯叙事正文） -->
+  <div class="intro-modal-mask" id="introModalMask" hidden role="dialog" aria-modal="true" aria-labelledby="imTitle">
+    <article class="intro-modal">
+      <button class="intro-modal-close" id="introModalClose" type="button" aria-label="关闭">&times;</button>
+
+      <!-- 顶部 Hero：全宽真实卫星 / 高空位置影像 -->
+      <div class="intro-hero">
+        <img id="imHeroImg" alt="" decoding="async" />
+        <div class="intro-hero-shade" aria-hidden="true"></div>
+        <div class="intro-hero-caption">
+          <h2 id="imTitle"></h2>
+          <p id="imTagline"></p>
+        </div>
+      </div>
+
+      <!-- 正文：纯文章 + 图片（无任何结构化数据） -->
+      <div class="intro-body" id="introBody"></div>
+    </article>
+  </div>
+
+  <!-- 产品详情 · 参数弹层（居中浮层：品位大字 + 参数网格 + 专业描述，内容由 mine.js 渲染） -->
+  <div class="prod-modal-mask" id="prodModalMask" hidden role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+    <div class="prod-modal">
+      <button class="prod-modal-close" id="prodModalClose" type="button" aria-label="关闭">&times;</button>
+      <div class="prod-modal-body" id="prodModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 新增 / 编辑矿山抽屉（基础信息 / 矿区位置 两组；产品与产能字段归产品详情板块维护） -->
   <div class="drawer-mask" id="editorMask" hidden>
     <aside class="drawer">
       <div class="drawer-header">
@@ -194,7 +138,7 @@
               </select>
             </div>
             <div class="form-item">
-              <label class="field-label" for="fOperator">开采/运营主体</label>
+              <label class="field-label" for="fOperator">运营主体</label>
               <input class="field-input" type="text" id="fOperator" placeholder="矿山实际运营公司名称" />
             </div>
             <div class="form-item">
@@ -205,64 +149,9 @@
               <label class="field-label" for="fContactPhone">联系电话</label>
               <input class="field-input" type="text" id="fContactPhone" placeholder="矿山对接电话" />
             </div>
-          </div>
-        </div>
-
-        <!-- 分组二：地理位置 -->
-        <div class="drawer-section">
-          <div class="section-title">地理位置</div>
-          <div class="form-grid">
             <div class="form-item">
-              <label class="field-label" for="fProvince">所在省份 <i class="required">*</i></label>
-              <input class="field-input" type="text" id="fProvince" placeholder="如：西澳大利亚州" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fCity">所在城市 <i class="required">*</i></label>
-              <input class="field-input" type="text" id="fCity" placeholder="如：皮尔巴拉地区" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fDistrict">所在区县</label>
-              <input class="field-input" type="text" id="fDistrict" placeholder="可空" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fAddress">详细地址</label>
-              <input class="field-input" type="text" id="fAddress" placeholder="具体位置描述" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fLongitude">经度（WGS84）</label>
-              <input class="field-input" type="number" step="0.000001" min="-180" max="180" id="fLongitude" placeholder="-180 ~ 180" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fLatitude">纬度（WGS84）</label>
-              <input class="field-input" type="number" step="0.000001" min="-90" max="90" id="fLatitude" placeholder="-90 ~ 90" />
-            </div>
-          </div>
-        </div>
-
-        <!-- 分组三：产品与产能 -->
-        <div class="drawer-section">
-          <div class="section-title">产品与产能</div>
-          <div class="form-item">
-            <label class="field-label">主流产品 <i class="required">*</i></label>
-            <!-- 快捷标签多选 + 自定义输入（Q-MINE-02：从品类字典多选，允许补充） -->
-            <div class="product-pills" id="productPills"></div>
-            <div class="product-custom">
-              <input class="field-input" type="text" id="fProductCustom" placeholder="自定义产品，回车添加" />
-            </div>
-            <div class="product-selected" id="productSelected"></div>
-          </div>
-          <div class="form-grid">
-            <div class="form-item">
-              <label class="field-label" for="fAnnualCapacity">年产能（万吨/年）</label>
-              <input class="field-input" type="number" min="0" step="0.01" id="fAnnualCapacity" placeholder="0.00" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fReserve">保有储量（万吨）</label>
-              <input class="field-input" type="number" min="0" step="0.01" id="fReserve" placeholder="0.00" />
-            </div>
-            <div class="form-item">
-              <label class="field-label" for="fOreGrade">品位 / 品位范围</label>
-              <input class="field-input" type="text" id="fOreGrade" placeholder="如：TFe 55%-65%" />
+              <label class="field-label" for="fCommissionedYear">投产年份</label>
+              <input class="field-input" type="number" min="1900" max="2035" id="fCommissionedYear" placeholder="如：2013" />
             </div>
             <div class="form-item">
               <label class="field-label" for="fStatus">状态</label>
@@ -274,7 +163,34 @@
           </div>
           <div class="form-item">
             <label class="field-label" for="fRemark">备注</label>
-            <textarea class="field-input remark-input" id="fRemark" rows="3" placeholder="其他说明信息（图片上传功能 P2 再议，本期预留文本）"></textarea>
+            <textarea class="field-input remark-input" id="fRemark" rows="3" placeholder="其他说明信息"></textarea>
+          </div>
+        </div>
+
+        <!-- 分组二：矿区位置（专业命名：州省/国别 · 矿区区域 · 详细位置 · 坐标） -->
+        <div class="drawer-section">
+          <div class="section-title">矿区位置</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="fProvince">州省 / 国别 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="fProvince" placeholder="如：西澳大利亚州 / 几内亚" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fCity">矿区区域 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="fCity" placeholder="如：皮尔巴拉地区" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fAddress">详细位置</label>
+              <input class="field-input" type="text" id="fAddress" placeholder="矿区具体位置描述" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fLongitude">经度（WGS84）</label>
+              <input class="field-input" type="number" step="0.000001" min="-180" max="180" id="fLongitude" placeholder="-180 ~ 180" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="fLatitude">纬度（WGS84）</label>
+              <input class="field-input" type="number" step="0.000001" min="-90" max="90" id="fLatitude" placeholder="-90 ~ 90" />
+            </div>
           </div>
         </div>
 
