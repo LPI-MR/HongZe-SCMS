@@ -6,8 +6,7 @@
   'use strict';
 
   var STORAGE_KEY = 'hz_ports_data';
-  var VERSION = 'v12';
-  var VERSION = 'v12';   // v12：新增港口现货参考数据（spotMarket 展示区块）
+  var VERSION = 'v13';   // v13：种子补全黄骅港/天津港详情字段（指标/基本信息/港区分部），升级版本使旧缓存自动重置
 
   // ===== 种子数据（黄骅港 / 天津港）=====
   var SEED = [
