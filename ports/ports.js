@@ -438,7 +438,8 @@
     }
   };
 
-  // 动态加载 Leaflet（CDN 失败时自动切换备用源），加载完成后执行回调
+  // 动态加载 Leaflet：本地 vendor 文件优先（离线可用、不受预览环境外部请求限制影响），
+  // 缺失或失败时按 jsdelivr → unpkg → bootcdn → npmmirror 顺序逐个兜底，加载完成后执行回调
   var pmWaiters = [];
   var pmLoading = false;
   function loadLeaflet(cb) {
@@ -447,37 +448,45 @@
     if (pmLoading) return;
     pmLoading = true;
 
-    var sources = [
+    var cssList = [
+      '/vendor/leaflet/leaflet.min.css',
       'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css',
-      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js'
-    ];
-    var fallbacks = [
       'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.css',
-      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js'
+      'https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.css',
+      'https://registry.npmmirror.com/leaflet@1.9.4/files/dist/leaflet.min.css'
     ];
+    var jsList = [
+      '/vendor/leaflet/leaflet.min.js',
+      'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js',
+      'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js',
+      'https://cdn.bootcdn.net/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+      'https://registry.npmmirror.com/leaflet@1.9.4/files/dist/leaflet.min.js'
+    ];
+
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = sources[0];
-    link.onerror = function () { link.href = fallbacks[0]; };
+    var li = 0;
+    link.onerror = function () { li += 1; if (li < cssList.length) link.href = cssList[li]; };
+    link.href = cssList[0];
     document.head.appendChild(link);
 
     var script = document.createElement('script');
-    var triedFallback = false;
+    var si = 0;
     script.onload = function () {
       pmWaiters.forEach(function (w) { w(); });
       pmWaiters = [];
     };
     script.onerror = function () {
-      if (!triedFallback) {
-        triedFallback = true;
-        script.src = fallbacks[1];
+      si += 1;
+      if (si < jsList.length) {
+        script.src = jsList[si];
       } else {
         pmLoading = false;
         var box = document.getElementById('portMap');
         if (box) box.innerHTML = '<div class="pm-error">地图组件加载失败，请检查网络后刷新重试</div>';
       }
     };
-    script.src = sources[1];
+    script.src = jsList[0];
     document.head.appendChild(script);
   }
 
@@ -510,10 +519,47 @@
       box._pmMap = map;   // 容器上挂载实例引用（调试/扩展用）
       map.setView(mapData.center, mapData.zoom);
 
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      // 卫星影像：ArcGIS 世界影像为主源；连续加载失败（网络受限）时自动切换高德卫星瓦片兜底，
+      // 高德源为 GCJ-02 坐标，与 WGS84 标注存在数百米偏差，仅作降级显示；两源均失败时给出提示
+      function pmImageryTip(text) {
+        var b = document.getElementById('portMap');
+        if (b && !b.querySelector('.pm-imagery-tip')) {
+          var t = document.createElement('div');
+          t.className = 'pm-imagery-tip';
+          t.textContent = text;
+          b.appendChild(t);
+        }
+      }
+      var pmImagery = [
+        { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attr: '影像 © Esri — Source: Esri, Maxar, Earthstar Geographics' },
+        { url: 'https://webst0{s}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}',
+          attr: '影像 © 高德地图（兜底源，标注可能存在数百米偏差）' }
+      ];
+      var pmImgIdx = 0;
+      var pmTileErr = 0;
+      var baseLayer = L.tileLayer(pmImagery[0].url, {
         maxZoom: 18,
-        attribution: '影像 © Esri — Source: Esri, Maxar, Earthstar Geographics'
+        attribution: pmImagery[0].attr,
+        subdomains: ['1', '2', '3', '4']
       }).addTo(map);
+      baseLayer.on('tileerror', function () {
+        pmTileErr += 1;
+        if (pmImgIdx === 0 && pmTileErr >= 3) {
+          pmImgIdx = 1;
+          pmTileErr = 0;
+          map.removeLayer(baseLayer);
+          baseLayer = L.tileLayer(pmImagery[1].url, {
+            maxZoom: 18,
+            attribution: pmImagery[1].attr,
+            subdomains: ['1', '2', '3', '4']
+          }).addTo(map);
+          baseLayer.on('tileerror', function () {
+            pmTileErr += 1;
+            if (pmTileErr === 6) pmImageryTip('卫星影像加载失败，港区边界标注仍可正常查看');
+          });
+        }
+      });
 
       var zoneLayer = L.layerGroup().addTo(map);
       var berthLayer = L.layerGroup().addTo(map);
