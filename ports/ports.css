@@ -325,6 +325,22 @@
   color: var(--gray-500);
   font-size: 13px;
 }
+
+/* 卫星影像降级/失败提示（覆盖在地图右下角，不拦截鼠标操作） */
+.pm-imagery-tip {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 900;
+  max-width: 70%;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 4px);
+  background: rgba(29, 33, 41, 0.72);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+}
 /* 港区名称永久标签（蓝色胶囊） */
 .leaflet-tooltip.pm-zone-label {
   background: rgba(47, 123, 255, 0.92);

@@ -86,6 +86,8 @@
       <!-- 顶部 Hero：全宽真实卫星 / 高空位置影像 -->
       <div class="intro-hero">
         <img id="imHeroImg" alt="" decoding="async" />
+        <!-- Apple 式渐进虚化：同源模糊副本，mask 自上而下淡入（顶部清晰 → 底部融化） -->
+        <img id="imHeroBlur" class="hero-blur" alt="" aria-hidden="true" decoding="async" />
         <div class="intro-hero-shade" aria-hidden="true"></div>
         <div class="intro-hero-caption">
           <h2 id="imTitle"></h2>
