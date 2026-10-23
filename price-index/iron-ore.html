@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>铁矿石价格指数 - 泓泽宜通 HongZe-SCMS</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="iron-ore.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <!-- 页面标题 -->
+      <section class="dash-header">
+        <div>
+          <div class="page-title">铁矿石价格指数</div>
+          <div class="page-desc">数据参考我的钢铁网（Mysteel）：Mysteel 62% 澳粉指数与主要接卸港现货价格，每日更新</div>
+        </div>
+        <div>
+          <button class="btn btn-ghost" id="backBtn" type="button">返回价格指数</button>
+        </div>
+      </section>
+
+      <!-- 指数概览卡片（iron-ore.js 渲染） -->
+      <section class="kpi-grid" id="kpiGrid"></section>
+
+      <!-- 近七天指数趋势图（SVG 折线，零依赖） -->
+      <section class="chart-card chart-card-full">
+        <div class="chart-head">
+          <div class="chart-title">近七天价格指数趋势</div>
+          <div class="chart-sub">Mysteel 62% Fe 澳粉指数（美元/干吨，CIF 中国）</div>
+        </div>
+        <svg id="trendChart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet" role="img"></svg>
+        <div class="chart-foot">
+          <span class="legend-dot"></span>日度指数
+          <span class="foot-source">数据来源：我的钢铁网（Mysteel）· 更新时间 2026-10-20</span>
+        </div>
+      </section>
+
+      <!-- 各港口近七日现货价格表（iron-ore.js 渲染） -->
+      <section class="chart-card chart-card-full">
+        <div class="chart-head">
+          <div class="chart-title">各港口铁矿石近七日价格</div>
+          <div class="chart-sub">港口现货成交/提货价（元/湿吨，含税），格内小字为较前一日涨跌</div>
+        </div>
+        <div class="table-scroll">
+          <table class="price-table" id="priceTable"></table>
+        </div>
+        <div class="chart-foot">
+          <span class="legend-up">■</span>上涨
+          <span class="legend-down">■</span>下跌
+          <span class="legend-flat">■</span>持平
+          <span class="foot-source">周末现货市场休市，价格沿用最近交易日 · 数据参考：我的钢铁网（Mysteel）</span>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 页面脚本：指数数据 / 趋势图 / 价格表 -->
+  <script src="/common/fetch.js"></script>
+  <script src="iron-ore.js"></script>
+</body>
+</html>
