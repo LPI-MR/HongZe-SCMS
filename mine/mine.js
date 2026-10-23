@@ -49,7 +49,7 @@
 
   // ===== 本地持久化 =====
   const LS_MINES = 'hz_mines';               // 矿山主数据（本模块权威存储键，其他模块只读复用）
-  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v8：完整产品矩阵 + 本地化真实图源 assets）
+  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v9：介绍弹层文案五节式扩充）
 
   function loadJSON(key, fallback) {
     try {
@@ -76,7 +76,7 @@
   //   已本地化为 /mine/assets/ 下的真实影像（来源 Wikimedia Commons / NASA，下载自公开图库）；
   //   为空时回退 prompt 走生成 API（用户自建矿山场景）
   // 参数来源：力拓 2025 Q3 生产报告 / BHP FY25 运营公报 / Vale 2025 生产销售报告 / FMG FY25 季报 / 西芒杜 JORC 公告
-  const SEED_VER = 'v8';
+  const SEED_VER = 'v9';
 
   // 用户自建矿山的介绍板块默认回退值
   const DEFAULT_TAGLINE = '矿山的自然与人文';
@@ -104,8 +104,10 @@
         hero_prompt: 'dramatic high altitude satellite view of Pilbara iron ore mining region, Western Australia, vast red ochre earth with winding haul roads and terraced open pits, realistic satellite photography',
         story: [
           { h: '红土深处的世纪矿区', p: '在西澳大利亚西北部，皮尔巴拉的红色大地绵延数百公里，哈默斯利山脉静卧其间，藏着这个星球最丰富的铁矿床之一。自二十世纪六十年代起，这里的声音只有风、矿车，以及远程操纵中心里安静的调度指令。' },
-          { h: '从荒野到全球供应链', p: '1966 年投产以来，矿山、铁路与港口被一步步编织成一条完整的动脉：矿石在采场剥离、破碎，由长列车穿越荒漠，在海岸线昼夜不停地装上远洋货轮。数千公里之外钢厂高炉的每一次呼吸，都与这片红土遥相呼应。' },
-          { h: '无人化与巨型化', p: '今天，这里运营着全球规模领先的自动矿车运输体系，两百吨级的巨兽在无人驾驶状态下日夜穿梭。站在采场边缘俯瞰，阶梯状的矿坑螺旋而下——人类的工程尺度与地质时间，在此并置。' }
+          { h: '从荒野到全球供应链', p: '1966 年，哈默斯利铁矿在汤姆普莱斯山正式投产，开启了皮尔巴拉现代铁矿工业的序幕。此后半个多世纪里，矿山、铁路与港口被一步步编织成一条完整的动脉：矿石在采场剥离、破碎，由长列车穿越荒漠，在海岸线昼夜不停地装上远洋货轮。数千公里之外钢厂高炉的每一次呼吸，都与这片红土遥相呼应。' },
+          { h: '封存地球历史的岩层', p: '皮尔巴拉的矿床大多赋存于二十多亿年前形成的条带状铁建造中——那是地球早期海洋反复沉降与氧化的年轮。站在采场边缘俯瞰，阶梯状的矿坑螺旋而下，每一层台阶都切开一段地质时间：人类的工程尺度与亿万年造山运动，在此并置成一幅罕见的画面。' },
+          { h: '无人化与巨型化', p: '今天，这里运营着全球规模领先的自动矿车运输体系，两百吨级的巨兽在无人驾驶状态下日夜穿梭；横贯荒漠的重载铁路采用自动行驶技术，列车像钟摆一样在矿区与港口之间精确往复。而在一千多公里外的珀斯，运营中心里的工程师注视着大屏上的实时数据流——整座矿区的每一次爆破、装载与发运，都汇聚成这场安静的远程交响。' },
+          { h: '与红土共生的约定', p: '矿山与原住民社区的合作被视为运营的基石：从就业培训到文化遗产保护，从水资源回用到逐步退役矿坑的复垦计划，这片土地的未来被写进了长期规划。朝着 2050 年运营净零排放的目标，电动矿卡与可再生能源电站正在取代柴油与煤电——红土之上，一场静悄悄的能源转型已经开始。' }
         ],
         gallery: [
           'giant open pit iron ore mine terraces at golden hour, haul trucks on winding red earth roads, Pilbara Western Australia, realistic photography',
@@ -150,8 +152,10 @@
         hero_prompt: 'high altitude satellite view of Mount Newman iron ore mining complex in Pilbara outback, red desert terrain with open pits and railway lines radiating, realistic satellite photography',
         story: [
           { h: '纽曼山的红色地平线', p: '在皮尔巴拉内陆深处，纽曼山的矿坑如同大地敞开的剖面，露出数十亿年前的条带状铁建造。这里的每一层岩石，都封存着地球早期海洋的呼吸。' },
-          { h: '矿路港一体的效率样本', p: '1969 年投产的纽曼山，如今是必和必拓西澳产能体系的核心。矿山、铁路与黑德兰港被当作一条连续的流水线来运营：矿石从爆破、破碎到装船，全程以小时计算。' },
-          { h: '最长的列车', p: '连接矿区与港口的铁路上，行驶着世界上最长的货运列车之一——两公里余的车身满载矿石，缓缓驶过无边的红色荒漠。对许多澳大利亚人而言，这样的列车本身就是工业时代的图腾。' }
+          { h: '鲸背山的地球史', p: '当地人叫它"鲸背山"——一道隆起于荒漠之上的岩脊，铁元素含量之高，让整座山丘在卫星影像上都泛着暗红色的光泽。地质学家在这里读到的是一部压缩的地球编年史：条带状铁建造记录着二十多亿年前海洋与大气此消彼长的漫长博弈，而人类只用了一代人的时间，就读懂了它的价值。' },
+          { h: '矿路港一体的效率样本', p: '1969 年投产的纽曼山，如今是必和必拓西澳产能体系的核心。矿山、铁路与黑德兰港被当作一条连续的流水线来运营：矿石从爆破、破碎到装船，全程以小时计算。港口泊位上的装船机昼夜不息，远洋货轮在锚地排成静默的队列——这条流水线的尽头，是亚洲与欧洲的钢铁厂。' },
+          { h: '最长的列车', p: '连接矿区与港口的铁路上，行驶着世界上最长的货运列车之一——两公里余的车身满载矿石，缓缓驶过无边的红色荒漠，沿着优化到极致的运行图自动巡航。对许多澳大利亚人而言，这样的列车早已超越运输工具本身，成为这个国家工业时代的图腾。' },
+          { h: '走向水的未来', p: '在世界上最干旱的矿区之一，水比矿石更昂贵：严格的水资源循环体系在这里全年运转，电池驱动的巨型矿卡与通勤班车正在接受测试；与原住民社区共同管理的土地与文化遗产项目，则让矿山的边界超出了采场。当全球钢铁业开始寻找减碳路径，这条流水线上的每一次试验，都可能成为行业的下一个标准。' }
         ],
         gallery: [
           'open pit iron ore mine aerial view at dusk, massive haul trucks on red terraces, Pilbara Australia, realistic photography',
@@ -191,7 +195,9 @@
         story: [
           { h: '雨林高原上的红色山脊', p: '巴西北部帕拉州，亚马逊雨林的绿色海洋中隆起一片红色山脊——卡拉加斯。上世纪六十年代，一架飞机的罗盘在这片高原上空莫名偏转，意外揭开了全球品位最高的铁矿床之一。' },
           { h: '高品位的代名词', p: '这里的矿石铁含量天然极高、杂质极低，几乎无需复杂选矿即可入炉。半个世纪以来，"卡拉加斯"四个字在钢铁行业里，就是品质本身的度量衡。' },
-          { h: '矿与林的边界', p: '采场之外，是受严格保护的原生雨林与自然保护区。开采与守护之间的张力，构成了这座矿山最独特的现代叙事——繁荣与克制，被要求同时成立。' }
+          { h: '矿与林的边界', p: '采场之外，是受严格保护的原生雨林与自然保护区：矿山与国家森林在这片高原上长期共存，生态监测队伍常年穿行于矿区边缘的密林。开采与守护之间的张力，构成了这座矿山最独特的现代叙事——繁荣与克制，被要求同时成立。' },
+          { h: '通往大西洋的钢铁动脉', p: '为了让高原上的矿石抵达海洋，一条纵贯雨林的重载铁路被修建起来：列车从卡拉加斯出发，穿越数百公里的雨林与草原，抵达大西洋海岸的装船码头，矿石在那里换船远航。这条动脉与矿脉一样，被写进了巴西工业化的历史。' },
+          { h: '富饶与责任同行', p: '矿区周边的城镇因矿而生：学校、诊所与职业培训中心随矿山一起成长，当地家庭的生活轨迹与这片红土紧紧相连。而在产业前端，更低碳的球团与压块产品、风电与森林保护项目，正在把"绿色矿石"从口号变成产品——雨林高原的高品位传奇，正在书写它的下一章。' }
         ],
         gallery: [
           'Carajas open pit iron ore mine aerial view, red terraces against endless green Amazon rainforest, Brazil, realistic photography',
@@ -230,8 +236,10 @@
         hero_prompt: 'aerial satellite view of Solomon Hub iron ore mine in Chichester Ranges Western Australia, red ochre pit terraces in arid mountain ranges, realistic satellite photography',
         story: [
           { h: '奇切斯特岭的新来者', p: '在西澳皮尔巴拉的奇切斯特岭，所罗门枢纽是主要铁矿商中最年轻的矿区之一。2013 年才投产的它，用十年时间走完了前辈们半个世纪的规模之路。' },
+          { h: '十年，一条增长曲线', p: '从首船矿石离港到跻身全球主要铁矿供应商之列，这座矿区只用了不到十年：所罗门的采场沿奇切斯特岭一字排开，破碎站与堆场昼夜运转，矿石经铁路源源送往黑德兰港。在一个由百年巨头主导的行业里，这样的增长曲线几乎是个例外。' },
           { h: '成本主义的胜利', p: '极致的低成本是这里唯一的信条：扁平的组织、高效的运输体系、大胆的装备策略。当行业周期步入低谷，这种成本结构便成为最锋利的武器——活下去，并且扩张。' },
-          { h: '面向未来的配方', p: '所罗门的矿石定义了"高性价比配方矿"的路线，深刻影响着亚洲钢厂的配矿逻辑。在这里，效率不是口号，而是被精确计算的日常。' }
+          { h: '品质的下一章', p: '以高性价比矿起家的运营者，正在向高品位矿床发起冲击：西皮尔巴拉的新矿区逐步投产，磁铁矿精矿项目把产品品位推向新的高度。曾经的"经济型配方矿"路线，如今叠加了更高品质的选项——亚洲钢厂的配矿表上，这里的名字正变得越来越灵活。' },
+          { h: '绿色的野心', p: '这家以西澳为家的公司把绿色能源写进了自己的名字：电动矿卡与自动列车已在矿区试运行，氢能与氨能项目在皮尔巴拉的烈日下铺开，目标是让铁矿石的开采与运输率先摆脱柴油。年轻，意味着没有历史包袱——在能源转型的赛道上，这座最年轻的矿区想再一次率先冲线。' }
         ],
         gallery: [
           'iron ore mining machinery working at dusk inside open pit, Chichester Ranges Western Australia, realistic photography',
@@ -265,8 +273,10 @@
         hero_prompt: 'aerial satellite view of Simandou mountain range in Guinea West Africa, lush green ridges with early mining infrastructure and red earth roads, realistic satellite photography',
         story: [
           { h: '被等待了三十年的山脉', p: '几内亚东南部，西芒杜山脉绵延一百余公里，山脊之下沉睡着探明于上世纪九十年代的高品位铁矿。此后的三十多年里，它一直被称作"全球最大的未开发高品位铁矿"——直到现在。' },
-          { h: '穿越雨林的长征', p: '要把山里的矿石送到海边，需要一条六百余公里长的铁路和一座全新的深水港，以及穿过雨林与高原的全部工程勇气。这条钢铁动脉的铺通，本身就是这个时代最宏大的基建叙事之一。' },
-          { h: '改写供应格局', p: '2025 年，西芒杜正式投产。当第一船矿石驶离西非海岸，全球高品位铁矿供应的版图被重新绘制——亚洲钢厂的配矿表上，从此多了一个举足轻重的变量。' }
+          { h: '世界级矿床的前世今生', p: '九十年代的地质勘探队在这片热带高原上钻下了第一批岩芯，化验结果令业界震动：山脊各区块的矿石品位极高、杂质极低，可与全球任何一座旗舰矿山比肩。然而政局更迭、权属协调与基础设施的缺失，让这座山脉在图纸上沉睡了三十年——它成了铁矿石行业最著名的"未完成的梦"。' },
+          { h: '穿越雨林的长征', p: '要把山里的矿石送到海边，需要一条六百余公里长的跨几内亚铁路和一座全新的深水港，以及穿过雨林与高原的全部工程勇气：桥隧翻越山地、站场衔接矿区、码头临海而建。这条钢铁动脉的铺通，本身就是这个时代最宏大的基建叙事之一。' },
+          { h: '改写供应格局', p: '2025 年，西芒杜正式投产。当第一船矿石驶离西非海岸，全球高品位铁矿供应的版图被重新绘制——亚洲钢厂的配矿表上，从此多了一个举足轻重的变量。对于寻求高品位资源以降低焦比与排放的钢铁业而言，这座山脉的意义远不止新增供应。' },
+          { h: '山脉之外的答卷', p: '铁路与港口被设计为共享基础设施，沿线城镇第一次被钢铁动脉串起；矿石收益也被约定反哺这个西非国家的道路、电力与教育。被等待了三十年的西芒杜，如今要回答的是另一个问题：一座世界级矿山，如何成为一个国家的长期机遇。' }
         ],
         gallery: [
           'Simandou mountain range in Guinea, green forested ridges with mining terraces under construction, realistic photography',
@@ -495,6 +505,7 @@
   // 禁项（PRD 3）：地理位置文字、产能数据、产品列表、状态标签等结构化内容一律不出现
   const introMask = $('introModalMask');
   const imHero = $('imHeroImg');
+  const imHeroBlur = $('imHeroBlur');   // 渐进虚化副本（与主图同源，CSS mask 控制淡入）
   const imBody = $('introBody');
   let lastFocus = null;   // 关闭后焦点还原到触发按钮
 
@@ -520,9 +531,11 @@
     if (lead) html += '<p class="im-lead">' + esc(lead) + '</p>';
 
     let figIdx = 0;
+    // 图文节奏：第 2、4 节后各穿插一张实拍图（叙事—图—叙事—图—收尾）
     sections.forEach((s, i) => {
       html += '<section class="im-section"><h3>' + esc(s.h || '') + '</h3><p>' + esc(s.p || '') + '</p></section>';
-      if (i < 2 && (galleryUrls ? galleryUrls[figIdx] : gallery[figIdx])) {
+      // 守卫只看回退源是否存在：figUrl 内部已实现「真实图源优先、超出回退生成」
+      if ((i === 1 || i === 3) && (gallery[figIdx] || (galleryUrls && galleryUrls[figIdx]))) {
         html += '<figure class="im-figure">' +
           '<img src="' + esc(figUrl(figIdx)) + '" alt="矿山现场影像" loading="lazy" decoding="async" />' +
           '<figcaption>现场影像 · ' + (CN[figIdx] || figIdx + 1) + '</figcaption>' +
@@ -537,12 +550,15 @@
   }
 
   function openIntroModal(m) {
-    imHero.src = imgUrlOr(m.hero_url, m.hero_prompt, IMG_HERO_SIZE);
+    const heroSrc = imgUrlOr(m.hero_url, m.hero_prompt, IMG_HERO_SIZE);
+    imHero.src = heroSrc;
+    imHeroBlur.src = heroSrc;
     imHero.alt = m.mine_name + '矿区高空影像';
     $('imTitle').textContent = m.mine_name || '';
     $('imTagline').textContent = m.tagline || DEFAULT_TAGLINE;
     imBody.innerHTML = buildIntroArticle(m);
     bindImgError(imHero);
+    bindImgError(imHeroBlur);
     imBody.querySelectorAll('img').forEach(bindImgError);
 
     lastFocus = document.activeElement;
