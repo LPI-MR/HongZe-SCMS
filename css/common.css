@@ -1108,6 +1108,9 @@ textarea.field-input {
   .btn:hover:not(:disabled):not([disabled]),
   .kpi-card:hover, .stat-card:hover,
   .pager-btn:hover:not(:disabled):not([disabled]) { transform: none !important; }
+}
+
+/* ============================================================
    详情页框架（*-detail.html 通用：顶部名称条 + 信息分组栅格）
    实体特有内容（hero / 指标 / 卡片 / 表格）由各模块 css 提供
    ============================================================ */
