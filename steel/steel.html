@@ -38,7 +38,7 @@
       <section class="panel map-panel">
         <div class="panel-header">
           <div class="panel-title">邯郸钢企地区分布</div>
-          <div class="map-tip">邯郸市行政区划 · 点击标记查看钢厂详情</div>
+          <div class="map-tip">邯郸市行政区划 · 点击标记查看钢厂详情 · 点击地图或 <button type="button" class="map-zoom-btn" id="map-zoom-btn">放大查看</button></div>
         </div>
         <div class="map-layout">
           <!-- 邯郸市行政区划地图（区县边界依据公开 GeoJSON 数据绘制，颜色深浅表示钢企聚集度） -->
@@ -205,6 +205,16 @@
       <button id="detail-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
     </div>
     <div class="modal-body" id="detail-body"></div>
+  </div>
+
+  <!-- 地图放大预览弹窗（内容由 steel.js 克隆主地图生成） -->
+  <div class="map-zoom-mask" id="map-zoom-mask" hidden></div>
+  <div class="map-zoom-modal" id="map-zoom-modal" hidden role="dialog" aria-modal="true" aria-label="邯郸钢企地区分布放大视图">
+    <div class="map-zoom-head">
+      <div class="drawer-title">邯郸钢企地区分布 · 放大视图</div>
+      <button id="map-zoom-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
+    </div>
+    <div class="map-zoom-body" id="map-zoom-body"></div>
   </div>
 
   <!-- 公共导航栏加载脚本 -->
