@@ -365,6 +365,31 @@
 }
 .leaflet-tooltip-right.pm-berth-label::before { border-right-color: rgba(255, 138, 0, 0.95); }
 
+/* 铁路站点标记（蓝色圆钉 + 铁路徽标，样式参考用户示例图） */
+.pm-station-pin { background: transparent; border: none; }
+.pm-station-pin svg {
+  display: block;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35));
+}
+/* 站点名称标签（蓝色胶囊文本框，样式同码头标签，颜色取站点图标蓝） */
+.leaflet-tooltip.pm-station-label {
+  background: rgba(46, 107, 230, 0.95);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.leaflet-tooltip-right.pm-station-label::before { border-right-color: rgba(46, 107, 230, 0.95); }
+/* 图例：铁路站点（蓝色圆点） */
+.pm-shape-station {
+  background: #2E6BE6;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 /* ===== 弹窗 ===== */
 .modal-mask {
   display: none;
