@@ -46,7 +46,34 @@
   transition: background-color 0.2s;
 }
 
+/* 头图右侧入口支持 <a> 链接（跳转供应商子模块） */
+a.hero-entry { text-decoration: none; }
+
 .hero-entry:hover { background: var(--color-primary-dark); }
+
+/* ===== 保税仓库库存卡：可出库实时总览（只有已报关未出库的量可出库） ===== */
+.stock-avail {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--assist-bg-green);
+  color: var(--color-success);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ore-today .avail { color: var(--color-success); }
+.ore-today .avail.zero { color: var(--color-danger); }
+.ore-today .und { color: var(--color-warning); }
+
+/* 无可出库量：出库按钮灰显，点击时 alert 提示先报关 */
+.ore-act.out.off {
+  background: var(--gray-200);
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
 
 /* ===== 供应商总览 KPI ===== */
 .kpi-grid { grid-template-columns: repeat(4, 1fr); }
@@ -244,7 +271,7 @@
 /* 经营指标：三格展示 */
 .cap-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));  /* 自适应：3~4 项指标自动均分 */
   gap: var(--space-sm);
 }
 
@@ -448,12 +475,69 @@ body.drawer-open { overflow: hidden; }
 
 .form-input.error { border-color: var(--color-danger); }
 
-/* 经营指标：三列输入 */
+/* 经营指标输入：自适应列数（吞吐量/仓储能力/仓库规模/占地面积 4 项自动换行） */
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--space-sm);
 }
+
+/* 矿石分垛编辑行：垛别 / 品类 / 库存量 / 删除 */
+.stack-rows { display: flex; flex-direction: column; gap: var(--space-sm); margin-bottom: var(--space-sm); }
+.stack-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1.1fr 28px;
+  gap: var(--space-sm);
+  align-items: center;
+}
+.stack-row .st-del {
+  width: 28px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.stack-row .st-del:hover { background: var(--assist-bg-red); color: var(--color-danger); }
+
+/* 分垛添加按钮（虚线框，同新增样式族） */
+.form-add {
+  border: 1px dashed var(--gray-400);
+  background: transparent;
+  color: var(--color-primary);
+  border-radius: var(--radius-md);
+  padding: 7px;
+  width: 100%;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.form-add:hover { border-color: var(--color-primary); }
+
+/* 详情弹窗：矿石分垛明细表（蓝白风格，与模块整体一致） */
+.stack-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.stack-table th, .stack-table td {
+  border: 1px solid var(--gray-300);
+  padding: 8px 10px;
+  text-align: left;
+  line-height: 1.6;
+}
+.stack-table th {
+  background: var(--color-primary-light);
+  color: var(--gray-800);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stack-table td { color: var(--gray-700); background: #fff; }
+.stack-table tbody tr:nth-child(even) td { background: #F3F8FF; }
+.stack-table .st-name { font-weight: 600; color: var(--gray-800); white-space: nowrap; }
 
 .form-err {
   font-size: 12px;
@@ -498,116 +582,131 @@ body.drawer-open { overflow: hidden; }
 /* 抽屉打开时禁止页面滚动 */
 body.drawer-open { overflow: hidden; }
 
-/* ===== 供应商位置分布地图（与钢厂管理页同源样式）===== */
-.map-tip { font-size: 12px; color: var(--gray-500); }
+/* ===== 仓库库存实时总览（按仓库×品类汇总垛位库存）===== */
+.stock-tip { font-size: 12px; color: var(--gray-500); }
 
-.map-layout {
-  display: flex;
-  gap: var(--space-lg);
-  align-items: stretch;
+.stock-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-md);
 }
 
-.map-stage { flex: 1.6; min-width: 0; }
-
-#handan-map {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-md);
-}
-
-.map-district-names text { pointer-events: none; }
-
-.map-marker { cursor: pointer; }
-
-.map-marker circle {
-  fill: var(--color-primary);
-  stroke: #FFFFFF;
-  stroke-width: 2.5;
-  transition: r 0.15s ease;
-}
-
-.map-marker:hover circle { fill: var(--color-primary-dark); }
-
-.map-marker text {
-  font-size: 14px;
-  fill: #2A3A50;
-  paint-order: stroke;
-  stroke: rgba(255, 255, 255, 0.9);
-  stroke-width: 3px;
-  pointer-events: none;
-}
-
-.map-side {
-  flex: 1;
-  min-width: 220px;
+.stock-card {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  padding: var(--space-sm) 0;
 }
 
-.map-side-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray-700);
-}
-
-.map-legend {
+.stock-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  padding-bottom: var(--space-xs);
-  border-bottom: 1px solid var(--gray-300);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px dashed var(--gray-200);
 }
 
-.map-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--gray-600);
+.stock-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1.4;
+  word-break: break-all;
 }
 
-.map-legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+.stock-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
   flex-shrink: 0;
 }
 
-/* 位置一览列表（点击查看详情） */
-.loc-item {
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: var(--gray-200);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.loc-item:hover { background: var(--color-primary-light); }
-
-.loc-item + .loc-item { margin-top: var(--space-xs); }
-
-.loc-item .loc-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--gray-800);
-}
-
-.loc-item .loc-addr {
-  margin-top: 2px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--gray-500);
-}
-
-/* ===== 地图放大预览（与钢厂管理页同源样式）===== */
-.map-zoom-btn {
-  height: 24px;
-  padding: 0 10px;
-  border: 1px solid var(--color-primary);
+.stock-scale {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
   border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.stock-total {
+  font-size: 12px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.stock-total b {
+  color: var(--color-primary);
+  font-size: 14px;
+}
+
+/* 品类库存占比条 */
+.ore-list { display: flex; flex-direction: column; gap: 8px; }
+
+.ore-row {
+  display: grid;
+  grid-template-columns: 84px 1fr 76px 56px;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ore-name {
+  font-size: 13px;
+  color: var(--gray-700);
+  word-break: break-all;
+}
+
+.ore-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.ore-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--color-primary);
+  transition: width 0.3s ease;
+}
+
+.ore-val {
+  font-size: 13px;
+  color: var(--gray-800);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ore-val.empty { color: var(--gray-400); }
+
+.stock-empty {
+  padding: var(--space-sm) 0;
+  font-size: 13px;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+.stock-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-xs);
+  border-top: 1px dashed var(--gray-200);
+}
+
+.stock-edit {
+  height: 28px;
+  padding: 0 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-md);
   background: var(--gray-100);
   color: var(--color-primary);
   font-size: 12px;
@@ -615,63 +714,398 @@ body.drawer-open { overflow: hidden; }
   transition: background-color 0.2s, color 0.2s;
 }
 
-.map-zoom-btn:hover {
+.stock-edit:hover {
   background: var(--color-primary);
   color: var(--gray-100);
 }
 
-/* 主地图可点击放大 */
-.map-stage #handan-map { cursor: zoom-in; }
-
-.map-zoom-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(29, 33, 41, 0.45);
-  z-index: 88;
+@media (max-width: 700px) {
+  .ore-row { grid-template-columns: 70px 1fr 60px 56px; }
 }
 
-.map-zoom-mask[hidden] { display: none; }
-
-.map-zoom-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(1160px, 94vw);
-  max-height: 92vh;
-  background: var(--gray-100);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
-  z-index: 89;
-  display: flex;
-  flex-direction: column;
-  animation: modal-in 0.22s ease-out;
+/* 品类行第二行：该品类今日出入明细 */
+.ore-today {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
 }
 
-.map-zoom-modal[hidden] { display: none; }
+.ore-today b { font-weight: 500; }
+.ore-today .tin { color: var(--color-success); }
+.ore-today .tout { color: var(--color-danger); }
+.ore-today.none { color: var(--gray-400); }
+.ore-today.none b { color: var(--gray-400); font-weight: 400; }
 
-.map-zoom-head {
+/* ===== 库存卡片：今日出入 ===== */
+.stock-today {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--gray-200);
-  flex-shrink: 0;
+  margin-top: var(--space-sm);
+  padding-top: 10px;
+  border-top: 1px dashed var(--gray-300);
+  font-size: 12px;
+  color: var(--gray-500);
 }
 
-.map-zoom-body {
-  flex: 1;
+.stock-today b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.stock-today .tin { color: var(--color-success); }
+.stock-today .tout { color: var(--color-danger); }
+
+/* ===== 进销存台账 ===== */
+.io-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.io-date { width: 150px; }
+
+.io-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.io-btn.in {
+  background: var(--color-primary);
+  color: var(--gray-100);
+}
+
+.io-btn.in:hover { background: var(--color-primary-dark); }
+
+.io-btn.out {
+  background: var(--color-danger);
+  color: var(--gray-100);
+}
+
+.io-btn.out:hover { opacity: 0.88; }
+
+.io-btn.ghost {
+  background: var(--gray-100);
+  border-color: var(--gray-300);
+  color: var(--gray-600);
+}
+
+.io-btn.ghost:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* 盘点日 KPI（当前剩余 / 入库合计 / 出库合计 / 流水笔数） */
+.io-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.io-kpi {
+  background: var(--color-primary-light);
+  border-radius: var(--radius-md);
+  padding: 10px var(--space-sm);
+  text-align: center;
+}
+
+.io-kpi-num {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+.io-kpi-num.in { color: var(--color-success); }
+.io-kpi-num.out { color: var(--color-danger); }
+
+.io-kpi-label {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* 分品类盘点表（复用 stack-table 基础风格） */
+.io-table { width: 100%; }
+
+.io-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.io-table td.num.in { color: var(--color-success); font-weight: 500; }
+.io-table td.num.out { color: var(--color-danger); font-weight: 500; }
+
+.io-table tr.io-total td {
+  font-weight: 600;
+  border-top: 2px solid var(--gray-300);
+  background: var(--color-primary-light);
+}
+
+.io-empty {
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 13px;
+}
+
+/* 当日流水明细 */
+.io-sub-title {
+  margin: var(--space-md) 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.io-records {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
   overflow-y: auto;
-  padding: var(--space-lg);
 }
 
-.map-zoom-body svg {
+.io-rec {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  color: var(--gray-600);
+  flex-wrap: wrap;
+}
+
+.io-rec-type {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-100);
+}
+
+.io-rec-type.in { background: var(--color-success); }
+.io-rec-type.out { background: var(--color-danger); }
+.io-rec-type.cd { background: var(--color-primary); }
+
+/* 报关台账：状态格（进度条 + 徽标上下排列） */
+.cd-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.io-rec-ore { font-weight: 600; color: var(--gray-800); }
+.io-rec-ton { font-variant-numeric: tabular-nums; }
+.io-rec-sup { color: var(--gray-500); }
+.io-rec-note {
+  margin-left: auto;
+  color: var(--gray-500);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+/* 登记弹窗提示条 */
+.io-hint {
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--gray-600);
+}
+
+.io-hint:empty { display: none; }
+
+/* ===== 库存卡片：品类行快捷入/出 ===== */
+.stock-head-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ore-acts {
+  display: inline-flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.ore-act {
+  width: 24px;
+  height: 22px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.ore-act.in { background: var(--assist-bg-green); color: var(--color-success); }
+.ore-act.in:hover { background: var(--color-success); color: var(--gray-100); }
+
+.ore-act.out { background: var(--assist-bg-red); color: var(--color-danger); }
+.ore-act.out:hover { background: var(--color-danger); color: var(--gray-100); }
+
+/* ===== 品类管理弹窗 ===== */
+.modal-sm { width: 460px; }
+
+.ore-add-row { display: flex; gap: 8px; }
+
+.ore-add-row .form-input { flex: 1; }
+
+.ore-catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.ore-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-primary-light);
+  border-radius: 14px;
+  padding: 4px 6px 4px 12px;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.ore-item-name { white-space: nowrap; }
+
+.ore-item-tag {
+  font-size: 11px;
+  color: var(--color-primary);
+  background: var(--gray-100);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+.ore-item-del {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gray-500);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.ore-item-del:hover { background: var(--assist-bg-red); color: var(--color-danger); }
+
+.ore-catalog-tip {
+  margin-top: var(--space-xs);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--gray-500);
+}
+
+/* ===== 保税报关节点 ===== */
+.cd-warehouse + .cd-warehouse { margin-top: var(--space-lg); }
+
+.cd-wh-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.cd-wh-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.cd-wh-kpis {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-right: auto;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.cd-wh-kpis b {
+  font-weight: 600;
+  color: var(--gray-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.cd-wh-kpis b.ok { color: var(--color-success); }
+.cd-wh-kpis b.warn { color: var(--color-warning); }
+
+.cd-table { width: 100%; }
+
+.cd-table td.num.ok { color: var(--color-success); font-weight: 500; }
+
+.cd-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cd-progress {
+  flex-shrink: 0;
+  width: 120px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.cd-progress i {
   display: block;
-  width: 100%;
-  height: auto;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--color-primary);
 }
 
-@media (max-width: 900px) {
-  .map-layout { flex-direction: column; }
-  .map-side { min-width: 0; }
+.cd-progress.full i { background: var(--color-success); }
+
+.cd-progress-txt {
+  font-size: 12px;
+  color: var(--gray-500);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cd-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+.cd-badge.ok { background: var(--assist-bg-green); color: var(--color-success); }
+.cd-badge.warn { background: var(--assist-bg-orange); color: var(--color-warning); }
+.cd-badge.done { background: var(--color-primary-light); color: var(--color-primary); }
+
+@media (max-width: 700px) {
+  .cd-progress { width: 80px; }
+  .cd-progress-txt { display: none; }
 }
