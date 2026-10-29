@@ -26,6 +26,8 @@
     '铁路供应商管理': '/railway/railway.html',
     '中转站点管理': '/transfer/transfer.html',
     '仓储管理': '/warehouse/warehouse.html',
+    '仓储管理 / 库存管理': '/warehouse/warehouse.html',
+    '仓储管理 / 供应商列表': '/warehouse/suppliers.html',
     '汽运车队': '/fleet/fleet.html',
     '钢厂管理': '/steel/steel.html',
     '合同管理 / 数据看板': '/contracts/dashboard.html',

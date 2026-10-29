@@ -111,10 +111,22 @@
     <span class="label">6. 中转站点管理</span>
   </a>
 
-  <a class="nav-item" data-path="仓储管理">
-    <svg class="icon" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M7 21v-6h10v6"/><path d="M7 18h10"/><path d="M3 21h18"/></svg>
-    <span class="label">7. 仓储管理</span>
-  </a>
+  <!-- 仓储管理（含二级菜单：库存管理 / 供应商列表） -->
+  <div class="nav-group">
+    <a class="nav-item has-children">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M3 21V9l9-6 9 6v12"/><path d="M7 21v-6h10v6"/><path d="M7 18h10"/><path d="M3 21h18"/></svg>
+      <span class="label">7. 仓储管理</span>
+      <svg class="arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+    <div class="subnav">
+      <div class="subnav-inner">
+        <div class="subnav-list">
+          <a class="nav-sub-item" data-path="仓储管理 / 库存管理" href="/warehouse/warehouse.html">库存管理</a>
+          <a class="nav-sub-item" data-path="仓储管理 / 供应商列表" href="/warehouse/suppliers.html">供应商列表</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <a class="nav-item" data-path="汽运车队">
     <svg class="icon" viewBox="0 0 24 24"><path d="M2 6h12v11H2z"/><path d="M14 10h4l3 3.5V17h-7"/><circle cx="6.5" cy="18.5" r="1.8"/><circle cx="17" cy="18.5" r="1.8"/></svg>
