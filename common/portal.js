@@ -67,14 +67,6 @@
         ['数据衔接', '为合同定价与成本测算提供指数参考']
       ]
     },
-    business: {
-      features: [
-        ['订单台账', '业务订单创建、跟踪与全流程管理'],
-        ['执行跟踪', '订单执行状态与节点管理'],
-        ['结算管理', '订单结算与应收应付台账'],
-        ['模块衔接', '与合同、运输模块打通，闭环业务链路']
-      ]
-    },
     transport: {
       features: [
         ['调度台账', '多式联运任务创建与车辆调度管理'],
@@ -103,7 +95,9 @@
     'steel.html': ['钢厂管理'],
     'customers.html': ['客户管理'],
     'price-index.html': ['价格指数管理 / 汽运价格指数', '价格指数管理 / 火运价格指数', '价格指数管理 / 铁矿石价格指数'],
-    'business.html': ['业务管理'],
+    'orders.html': ['业务管理 / 订单台账'],
+    'tracking.html': ['业务管理 / 执行跟踪'],
+    'settlement.html': ['业务管理 / 结算管理'],
     'transport.html': ['运输调度管理'],
     'analytics.html': ['数据分析 / 调度数据分析', '数据分析 / 财务数据分析']
   };
@@ -176,7 +170,7 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  // 渲染规划能力清单
+  // 渲染功能清单
   function renderFeatures(features) {
     const box = document.getElementById('portalFeatures');
     if (!box) return;
@@ -196,9 +190,11 @@
     const box = document.getElementById('portalStats');
     if (!box) return;
 
-    const contracts = Array.isArray(loadJSON('hz_contracts', [])) ? loadJSON('hz_contracts', []) : [];
-    const mines = Array.isArray(loadJSON('hz_mines', [])) ? loadJSON('hz_mines', []) : [];
-    const voyages = Array.isArray(loadJSON('hz_ocean_voyages', [])) ? loadJSON('hz_ocean_voyages', []) : [];
+    // 共享数据键为 { __version, list } 包装结构，统一解包取 list（裸数组兼容）
+    const unwrap = v => Array.isArray(v) ? v : (v && Array.isArray(v.list) ? v.list : []);
+    const contracts = unwrap(loadJSON('hz_contracts', []));
+    const mines = unwrap(loadJSON('hz_mines', []));
+    const voyages = unwrap(loadJSON('hz_ocean_voyages', []));
 
     const stats = [
       { label: '在管合同', value: contracts.length + ' 份' },

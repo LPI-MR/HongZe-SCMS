@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>执行跟踪 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务板块独立样式：订单台账 / 执行跟踪 / 结算管理共用 -->
+  <link rel="stylesheet" href="business.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <!-- 执行跟踪 -->
+      <section class="ledger">
+        <!-- 页面标题 -->
+        <div class="ledger-header">
+          <div>
+            <div class="page-title">执行跟踪</div>
+            <div class="page-desc">聚合订单关联的航次与车次执行进度，只读查看</div>
+          </div>
+        </div>
+
+        <!-- 概览条：主指标（跟踪订单数）+ 派生指标 + 执行中占比（实时汇总跟踪数据，不含已终止订单） -->
+        <div class="biz-overview">
+          <div class="ov-primary">
+            <div class="ov-label">跟踪订单数</div>
+            <div class="ov-value" id="tTrack">0</div>
+            <div class="ov-note">全部订单（不含已终止）</div>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-metrics">
+            <div class="ov-metric">
+              <div class="ov-label">履行中</div>
+              <div class="ov-num" id="tRunning">0</div>
+              <div class="ov-note">执行中 / 已发运</div>
+            </div>
+            <div class="ov-metric">
+              <div class="ov-label">已到港</div>
+              <div class="ov-num" id="tArrived">0</div>
+              <div class="ov-note">关联航次已到港</div>
+            </div>
+            <div class="ov-metric">
+              <div class="ov-label">本月完成</div>
+              <div class="ov-num" id="tMonthDone">0</div>
+              <div class="ov-note">本月更新为已完成</div>
+            </div>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-rate">
+            <div class="ov-label">执行中占比</div>
+            <div class="ov-rate-bar"><i id="ovRunBar"></i></div>
+            <div class="ov-note">执行中 <b id="ovRunRate">0%</b> / 跟踪订单</div>
+          </div>
+        </div>
+
+        <!-- 跟踪列表 -->
+        <div class="ledger-card">
+          <!-- 列表小标题 -->
+          <div class="ledger-banner">
+            <span class="banner-title">跟踪总览</span>
+            <span class="banner-stat">共 <em id="trackCount">0</em> 单</span>
+          </div>
+
+          <!-- 轻检索工具条：关键词 / 订单状态 / 签订日期区间，变更即筛 -->
+          <form class="table-toolbar" id="searchForm" autocomplete="off">
+            <input class="field-input toolbar-input" type="text" id="searchKeyword" placeholder="搜索订单编号 / 客户 / 货物 / 合同，空格分隔多个关键词" />
+            <select class="field-input" id="searchStatus" title="订单状态">
+              <option value="">全部状态</option>
+              <option value="待确认">待确认</option>
+              <option value="已确认">已确认</option>
+              <option value="执行中">执行中</option>
+              <option value="已发运">已发运</option>
+              <option value="已完成">已完成</option>
+            </select>
+            <div class="field-date-range">
+              <input class="field-input" type="date" id="searchDateStart" title="签订日期起" />
+              <span class="date-sep">至</span>
+              <input class="field-input" type="date" id="searchDateEnd" title="签订日期止" />
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn btn-ghost" type="reset" id="searchReset">重置</button>
+            </div>
+          </form>
+
+          <!-- 进度卡片流：每单一张卡片，聚合航次 / 车次执行进度 -->
+          <div class="track-list" id="trackList"></div>
+          <div class="track-empty" id="trackEmpty" hidden>暂无跟踪数据</div>
+
+          <!-- 分页控制 -->
+          <div class="pager">
+            <div class="pager-left">
+              <select class="pager-size" id="pageSize">
+                <option value="10" selected>10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+              <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
+            </div>
+            <div class="pager-right">
+              <button type="button" class="pager-btn" id="pgFirst">首页</button>
+              <button type="button" class="pager-btn" id="pgPrev">上一页</button>
+              <span class="pager-info">
+                第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
+                / <span id="pgPages">1</span> 页
+              </span>
+              <button type="button" class="pager-btn" id="pgNext">下一页</button>
+              <button type="button" class="pager-btn" id="pgLast">末页</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 跟踪详情抽屉（内容动态渲染） -->
+  <div class="drawer-mask" id="drawerMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="drawerTitle">跟踪详情</span>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+    </aside>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块化数据基座：航次等跨模块字段统一经 HZData 调取各模块权威数据源 -->
+  <script src="/common/hz-data.js"></script>
+  <!-- 业务共享数据层：订单 / 流转日志读取 -->
+  <script src="business-data.js"></script>
+  <!-- 车次共享数据层：车次节点进度读取 -->
+  <script src="/transport/trips-store.js"></script>
+  <!-- 模块脚本 -->
+  <script src="tracking.js"></script>
+</body>
+</html>

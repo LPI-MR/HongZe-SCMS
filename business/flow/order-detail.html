@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单详情 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 按钮与输入组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务流程模块样式：页签 / 状态条 / 概览卡 / 时间轴 / 凭证列表 -->
+  <link rel="stylesheet" href="flow.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 订单不存在状态（由 order-detail.js 控制） -->
+      <div class="flow-panel" id="missing" hidden>
+        <div class="empty-box">
+          <div class="empty-title">订单不存在</div>
+          <div class="empty-desc">该订单可能已被删除，请返回工作台确认。</div>
+          <a class="btn-primary" href="../business.html">返回工作台</a>
+        </div>
+      </div>
+
+      <!-- 页面头部：订单号 + 状态徽标 + 角色切换 + 删除操作 -->
+      <div class="form-head" id="head" hidden>
+        <div>
+          <div class="form-title">订单详情</div>
+          <div class="form-sub">订单 <span id="head-mono" style="font-family:monospace">—</span> · <span id="head-status">—</span> · 创建于 <span id="head-created">—</span> · 更新于 <span id="head-updated">—</span></div>
+        </div>
+        <div class="form-head-ops">
+          <select class="field-input" id="role-select">
+            <option value="finance">财务人员视角</option>
+            <option value="transport">运输人员视角</option>
+            <option value="admin" selected>管理员视角</option>
+          </select>
+          <button type="button" class="btn-ghost js-del">删除订单</button>
+        </div>
+      </div>
+
+      <!-- 九态状态流转条（JS 生成） -->
+      <div class="status-track" id="status-track" hidden></div>
+
+      <!-- 六页签切换 -->
+      <div class="detail-tabs" id="tabs" hidden>
+        <button type="button" class="tab active" data-tab="basic">基本信息</button>
+        <button type="button" class="tab" data-tab="finance">财务状态</button>
+        <button type="button" class="tab" data-tab="shipping">发运状态</button>
+        <button type="button" class="tab" data-tab="warehouse">仓储堆存</button>
+        <button type="button" class="tab" data-tab="cargo">货物动态</button>
+        <button type="button" class="tab" data-tab="log">运输时间轴</button>
+      </div>
+
+      <!-- ===== 基本信息 · 订单信息 ===== -->
+      <section class="flow-panel" data-tab-panel="basic" hidden>
+        <div class="panel-head">
+          <span class="panel-title">订单信息</span>
+          <span class="panel-sub">基础合同要素</span>
+        </div>
+        <div class="kv-grid" id="basic-kv"></div>
+      </section>
+
+      <!-- ===== 基本信息 · 终端客户明细 ===== -->
+      <section class="flow-panel" data-tab-panel="basic" hidden>
+        <div class="panel-head">
+          <span class="panel-title">终端客户明细</span>
+          <span class="panel-sub">下游交付对象</span>
+        </div>
+        <div class="chips" id="basic-chips"></div>
+      </section>
+
+      <!-- ===== 基本信息 · 港口信息 ===== -->
+      <section class="flow-panel" data-tab-panel="basic" hidden>
+        <div class="panel-head">
+          <span class="panel-title">港口信息</span>
+          <span class="panel-sub">靠泊与作业安排</span>
+        </div>
+        <div id="basic-port"></div>
+      </section>
+
+      <!-- ===== 基本信息 · 运输组织方案 ===== -->
+      <section class="flow-panel" data-tab-panel="basic" hidden>
+        <div class="panel-head">
+          <span class="panel-title">运输组织方案</span>
+          <span class="panel-sub">通道运力 · 批次分配</span>
+        </div>
+        <div class="mini-stats" style="grid-template-columns:repeat(4,1fr)">
+          <div class="mini">
+            <div class="mini-label">总运费</div>
+            <div class="mini-value" id="bs-freight">—</div>
+            <div class="mini-label" id="bs-freight-note">—</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">运输时间</div>
+            <div class="mini-value"><span id="bs-lead">0</span><span class="unit">天</span></div>
+            <div class="mini-label" id="bs-lead-note">关键路径时效</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">总闲置运力</div>
+            <div class="mini-value"><span id="bs-idle">0</span><span class="unit">吨/天</span></div>
+            <div class="mini-label" id="bs-idle-note">—</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">货物分配</div>
+            <div class="mini-value" id="bs-alloc">—</div>
+            <div class="mini-label" id="bs-alloc-note">—</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>通道</th><th>起点</th><th>中转</th><th>终点</th><th class="num">分配量（吨）</th><th class="num">闲置运力（吨/天）</th><th class="num">运价（元/吨）</th><th class="num">时效（天）</th><th>承运商</th></tr>
+            </thead>
+            <tbody id="basic-cap-rows"></tbody>
+          </table>
+        </div>
+        <div id="basic-plan-block" hidden>
+          <div class="panel-head" style="margin-top:16px">
+            <span class="panel-title">历史方案批次</span>
+            <span class="panel-sub">运输方案页保存的批次分配</span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr><th>批次</th><th class="num">运量（吨）</th><th>通道</th><th class="num">时效（天）</th><th class="num">单价（元/吨）</th><th class="num">运费小计</th></tr>
+              </thead>
+              <tbody id="basic-batch-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 财务状态 ===== -->
+      <section class="flow-panel" data-tab-panel="finance" hidden>
+        <div class="panel-head">
+          <span class="panel-title">收款概览</span>
+          <span class="panel-sub">应收 · 已收 · 未收</span>
+        </div>
+        <div class="mini-stats">
+          <div class="mini">
+            <div class="mini-label">总金额</div>
+            <div class="mini-value" id="fin-total">¥0</div>
+            <div class="mini-label" style="margin-top:2px">自动同步运费合计，不可编辑</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">已收金额</div>
+            <div class="mini-value" id="fin-received-view" style="color:var(--color-success)">¥0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">未收金额</div>
+            <div class="mini-value" id="fin-unreceived" style="color:var(--color-danger)">¥0</div>
+          </div>
+        </div>
+        <div class="notice info" id="fin-confirm-box" hidden>
+          <div style="flex:1">订单处于「待确认」状态，请核对收款信息后执行确认收款。</div>
+          <button type="button" class="btn-primary" id="btn-confirm-pay">确认收款</button>
+        </div>
+        <div class="notice success" id="fin-confirmed-tip" hidden>订单已确认收款，可进入发运环节。</div>
+        <div class="panel-head">
+          <span class="panel-title">财务信息</span>
+          <span class="panel-sub">收款与发票登记</span>
+        </div>
+        <div class="fgrid">
+          <div class="field">
+            <label class="field-label">总金额（元）</label>
+            <input class="field-input" id="fin-total-input" disabled />
+            <div class="hint">系统自动同步运费合计</div>
+          </div>
+          <div class="field">
+            <label class="field-label">已收金额（元）</label>
+            <input class="field-input" type="number" id="fin-received-input" min="0" />
+          </div>
+          <div class="field">
+            <label class="field-label">收款状态</label>
+            <div class="opt-group" id="fin-pay-group"></div>
+          </div>
+          <div class="field">
+            <label class="field-label">发票状态</label>
+            <div class="opt-group" id="fin-invoice-group"></div>
+          </div>
+          <div class="field span-2">
+            <label class="field-label">备注</label>
+            <textarea class="field-input" id="fin-remark" rows="3" style="resize:vertical;min-height:70px"></textarea>
+          </div>
+        </div>
+        <div class="flow-footer" style="margin-top:0">
+          <span></span>
+          <button type="button" class="btn-primary" id="btn-save-fin">保存财务信息</button>
+        </div>
+        <div class="panel-head" style="margin-top:24px">
+          <span class="panel-title">财务凭证</span>
+          <span class="panel-sub">收款凭证存档</span>
+        </div>
+        <div class="voucher-list" id="fin-vouchers"></div>
+        <div class="fgrid" style="align-items:end">
+          <div class="field">
+            <label class="field-label">凭证名称</label>
+            <input class="field-input" id="fin-vch-name" placeholder="如：预付款银行回单" />
+          </div>
+          <div class="field">
+            <label class="field-label">凭证类型</label>
+            <select class="field-input" id="fin-vch-type"></select>
+          </div>
+          <div class="field">
+            <label class="field-label">备注</label>
+            <input class="field-input" id="fin-vch-note" placeholder="选填" />
+          </div>
+          <div class="field">
+            <button type="button" class="btn-primary" id="btn-fin-vch">上传凭证</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 发运状态 ===== -->
+      <section class="flow-panel" data-tab-panel="shipping" hidden>
+        <div class="notice warn" id="ship-denied" hidden>当前角色不可执行发运操作，请切换至运输人员或管理员视角。</div>
+        <div class="panel-head">
+          <span class="panel-title">发运总览</span>
+          <span class="panel-sub">计划 · 已发 · 剩余</span>
+        </div>
+        <div class="mini-stats">
+          <div class="mini">
+            <div class="mini-label">计划发运量</div>
+            <div class="mini-value"><span id="ship-planned">0</span><span class="unit">吨</span></div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">已发运量</div>
+            <div class="mini-value" style="color:var(--color-primary)"><span id="ship-shipped">0</span><span class="unit">吨</span></div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">剩余待发</div>
+            <div class="mini-value" id="ship-remaining">0</div>
+          </div>
+        </div>
+        <div class="progress-bar"><i id="ship-progress-fill"></i></div>
+        <div class="legend">
+          <span class="lg-item"><i class="lg-dot" style="background:var(--color-primary)"></i>发运进度 <span id="ship-rate">0%</span></span>
+          <span class="lg-item" id="ship-channels-summary">—</span>
+        </div>
+        <div id="ship-ops" hidden>
+          <div class="panel-head" style="margin-top:24px">
+            <span class="panel-title">批次发货操作</span>
+            <span class="panel-sub">按通道累加发运量 · 自动同步货物动态</span>
+          </div>
+          <div class="notice success" id="ship-no-channel" hidden>所有通道均已发运完成。</div>
+          <div id="ship-ops-form" hidden>
+            <div class="fgrid">
+              <div class="field">
+                <label class="field-label">运输通道</label>
+                <select class="field-input" id="ship-channel"></select>
+              </div>
+              <div class="field">
+                <label class="field-label">本次发货量（吨）</label>
+                <input class="field-input" type="number" id="ship-qty" min="0" />
+              </div>
+              <div class="field">
+                <label class="field-label">发货时间</label>
+                <input class="field-input" type="datetime-local" id="ship-date" />
+              </div>
+              <div class="field">
+                <label class="field-label">凭证名称</label>
+                <input class="field-input" id="ship-vch-name" placeholder="如：铁路运单" />
+              </div>
+              <div class="field">
+                <label class="field-label">凭证类型</label>
+                <select class="field-input" id="ship-vch-type"></select>
+              </div>
+              <div class="field">
+                <label class="field-label">备注</label>
+                <input class="field-input" id="ship-remark" placeholder="选填" />
+              </div>
+            </div>
+            <div class="state-boxes" id="ship-state-boxes"></div>
+            <div class="flow-footer" style="margin-top:0">
+              <span></span>
+              <button type="button" class="btn-primary" id="btn-exec-ship">执行发货</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-head" style="margin-top:24px">
+          <span class="panel-title">各通道发运状态</span>
+          <span class="panel-sub">实际 / 计划发运量</span>
+        </div>
+        <div id="ship-channels"></div>
+        <div class="panel-head" style="margin-top:24px">
+          <span class="panel-title">最近发运记录</span>
+          <span class="panel-sub">最近 5 条关键日志</span>
+        </div>
+        <div class="tl" id="ship-logs"></div>
+      </section>
+
+      <!-- ===== 仓储堆存 ===== -->
+      <section class="flow-panel" data-tab-panel="warehouse" hidden>
+        <div class="notice info">仓储堆存为独立环节：到货入库与提货出关由仓储人员登记，不影响订单状态流转。</div>
+        <div class="panel-head">
+          <span class="panel-title">仓储总览</span>
+          <span class="panel-sub">在途 · 堆存 · 提货</span>
+        </div>
+        <div class="mini-stats">
+          <div class="mini">
+            <div class="mini-label">在途运输量</div>
+            <div class="mini-value" style="color:var(--color-primary)"><span id="wh-transit">0</span><span class="unit">吨</span></div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">仓储堆存量</div>
+            <div class="mini-value" style="color:#B25E00"><span id="wh-stored">0</span><span class="unit">吨</span></div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">已提货出关</div>
+            <div class="mini-value" style="color:var(--color-success)"><span id="wh-picked">0</span><span class="unit">吨</span></div>
+          </div>
+        </div>
+        <div id="wh-ops" hidden>
+          <div class="panel-head" style="margin-top:24px">
+            <span class="panel-title">仓储操作</span>
+            <span class="panel-sub">到货入库 · 提货出关</span>
+          </div>
+          <div class="notice warn" id="wh-no-channel" hidden>暂无可操作的通道：仅已发运量大于 0 的通道可登记仓储操作。</div>
+          <div id="wh-ops-form" hidden>
+            <div class="fgrid">
+              <div class="field">
+                <label class="field-label">运输通道</label>
+                <select class="field-input" id="wh-channel"></select>
+              </div>
+              <div class="field">
+                <label class="field-label">到货入库量（吨）</label>
+                <input class="field-input" type="number" id="wh-arrive" min="0" />
+              </div>
+              <div class="field">
+                <label class="field-label">提货出关量（吨）</label>
+                <input class="field-input" type="number" id="wh-pick" min="0" />
+              </div>
+              <div class="field">
+                <label class="field-label">操作时间</label>
+                <input class="field-input" type="datetime-local" id="wh-date" />
+              </div>
+              <div class="field">
+                <label class="field-label">凭证名称</label>
+                <input class="field-input" id="wh-vch-name" placeholder="如：入库单" />
+              </div>
+              <div class="field">
+                <label class="field-label">凭证类型</label>
+                <select class="field-input" id="wh-vch-type"></select>
+              </div>
+              <div class="field span-2">
+                <label class="field-label">备注</label>
+                <input class="field-input" id="wh-remark" placeholder="选填" />
+              </div>
+            </div>
+            <div class="state-boxes" id="wh-state-boxes"></div>
+            <div class="flow-footer" style="margin-top:0">
+              <span></span>
+              <button type="button" class="btn-primary" id="btn-exec-wh">执行操作</button>
+            </div>
+          </div>
+        </div>
+        <div class="panel-head" style="margin-top:24px">
+          <span class="panel-title">各通道仓储状态</span>
+          <span class="panel-sub">提货 · 堆存 · 在途</span>
+        </div>
+        <div id="wh-channels"></div>
+      </section>
+
+      <!-- ===== 货物动态 ===== -->
+      <section class="flow-panel" data-tab-panel="cargo" hidden>
+        <div class="panel-head">
+          <span class="panel-title">货物动态总览</span>
+          <span class="panel-sub">初始分配 · 发运 · 仓储 · 提货</span>
+        </div>
+        <div class="plan-summary" id="cargo-head"></div>
+        <div class="stack-bar" id="cargo-stack"></div>
+        <div class="legend" id="cargo-legend"></div>
+        <div class="mini-stats" style="grid-template-columns:repeat(4,1fr);margin-top:16px">
+          <div class="mini">
+            <div class="mini-label">未发运</div>
+            <div class="mini-value" id="cg-unshipped">0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">运输中（在途）</div>
+            <div class="mini-value" id="cg-transit">0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">仓储堆存</div>
+            <div class="mini-value" id="cg-stored">0</div>
+          </div>
+          <div class="mini">
+            <div class="mini-label">已提货出关</div>
+            <div class="mini-value" id="cg-picked">0</div>
+          </div>
+        </div>
+        <div class="panel-head" style="margin-top:24px">
+          <span class="panel-title">通道货物追踪</span>
+          <span class="panel-sub">分通道四态分布</span>
+        </div>
+        <div id="cargo-channels"></div>
+        <div class="flow-footer" style="margin-top:16px">
+          <span></span>
+          <button type="button" class="btn-ghost" id="btn-goto-log">查看完整运输时间轴 →</button>
+        </div>
+      </section>
+
+      <!-- ===== 运输时间轴 ===== -->
+      <section class="flow-panel" data-tab-panel="log" hidden>
+        <div class="panel-head">
+          <span class="panel-title">货物运输时间轴</span>
+          <span class="panel-sub">关键事件自动生成</span>
+        </div>
+        <div class="tl" id="log-timeline"></div>
+        <div class="panel-head" style="margin-top:24px">
+          <span class="panel-title">完整操作日志</span>
+          <span class="panel-sub">全部操作记录</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>时间</th><th>操作员</th><th>角色</th><th>操作</th><th>状态变更</th><th>备注</th></tr>
+            </thead>
+            <tbody id="log-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 全局提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 业务流程共享数据层 -->
+  <script src="flow-data.js"></script>
+  <!-- 订单详情脚本 -->
+  <script src="order-detail.js"></script>
+</body>
+</html>
