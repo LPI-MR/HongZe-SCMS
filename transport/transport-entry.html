@@ -7,9 +7,9 @@
   <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
   <link rel="stylesheet" href="/css/common.css" />
   <!-- 模块公共样式：复用 mode-badge / stepper 等组件样式 -->
-  <link rel="stylesheet" href="transport.css" />
+  <link rel="stylesheet" href="transport.css?v=20261102b" />
   <!-- 录入页独立样式 -->
-  <link rel="stylesheet" href="transport-entry.css" />
+  <link rel="stylesheet" href="transport-entry.css?v=20261102b" />
 </head>
 <body>
   <div class="layout">
@@ -62,6 +62,10 @@
               <div class="field">
                 <label class="field-label" for="p-time">上报时间</label>
                 <input id="p-time" type="datetime-local" class="input" required />
+              </div>
+              <div class="field">
+                <label class="field-label" for="p-loaded">已拉吨数（吨，选填）</label>
+                <input id="p-loaded" type="number" min="0" step="0.1" class="input" placeholder="运输中已拉重量" />
               </div>
               <div class="field">
                 <label class="field-label" for="p-actual">实际到货重量（吨，选填）</label>
@@ -161,8 +165,8 @@
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
   <!-- 共享数据层 -->
-  <script src="trips-store.js"></script>
+  <script src="trips-store.js?v=20261102b"></script>
   <!-- 录入页脚本 -->
-  <script src="transport-entry.js"></script>
+  <script src="transport-entry.js?v=20261102b"></script>
 </body>
 </html>

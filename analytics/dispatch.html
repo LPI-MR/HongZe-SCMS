@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>调度数据分析 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 -->
+  <link rel="stylesheet" href="/css/common.css?v=20261102a" />
+  <style>
+    /* ===== 调度数据分析页样式 ===== */
+    .module-hero {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: var(--space-md); flex-wrap: wrap; margin-bottom: var(--space-md);
+    }
+    .module-hero .hero-title { font-size: 20px; font-weight: 600; color: var(--gray-800); }
+    .module-hero .hero-desc { margin-top: var(--space-xs); font-size: 14px; color: var(--gray-500); }
+
+    .panel {
+      background: var(--gray-100); border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card); padding: var(--space-md) var(--space-lg) var(--space-lg);
+      margin-bottom: var(--space-md);
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);
+      flex-wrap: wrap; padding: var(--space-xs) 0; border-bottom: 1px solid var(--gray-300);
+      margin-bottom: var(--space-md);
+    }
+    .panel-title { font-size: 16px; font-weight: 600; color: var(--gray-800); }
+    .panel-tip { font-size: 12px; color: var(--gray-500); }
+
+    /* ===== ① 订单选择与登记 ===== */
+    .order-picker { display: flex; align-items: flex-end; gap: var(--space-md); flex-wrap: wrap; }
+    .order-picker .field { display: flex; flex-direction: column; gap: 4px; }
+    .order-picker label { font-size: 12px; color: var(--gray-500); }
+    .order-picker input, .order-picker select {
+      height: 34px; padding: 0 10px; border: 1px solid var(--gray-300);
+      border-radius: var(--radius-md); font-size: 13px; outline: none; background: #fff;
+    }
+    .order-picker select { min-width: 220px; }
+    .order-picker input:focus, .order-picker select:focus { border-color: var(--color-primary); }
+    .picker-sep { font-size: 12px; color: var(--gray-400); padding-bottom: 9px; }
+    .btn {
+      height: 34px; padding: 0 14px; border: 1px solid var(--gray-300); border-radius: var(--radius-md);
+      background: var(--gray-100); color: var(--gray-700); font-size: 13px; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .btn.primary { background: var(--color-primary); border-color: var(--color-primary); color: var(--gray-100); }
+    .btn.primary:hover { background: var(--color-primary-dark); color: var(--gray-100); }
+    .btn.danger { color: var(--color-danger); border-color: var(--assist-bg-red); }
+    .btn.danger:hover { background: var(--assist-bg-red); border-color: var(--color-danger); color: var(--color-danger); }
+    .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; }
+
+    /* ===== ② 当前订单分析 ===== */
+    .detail-head { display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap; }
+    .detail-id { font-size: 18px; font-weight: 600; color: var(--gray-800); }
+    .detail-qty { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--gray-500); }
+    .detail-qty input {
+      width: 120px; height: 30px; padding: 0 8px; border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm); font-size: 13px; text-align: right; outline: none;
+    }
+    .detail-qty input:focus { border-color: var(--color-primary); }
+    .detail-actions { margin-left: auto; display: flex; gap: var(--space-sm); }
+    .o-bar { height: 10px; border-radius: 5px; background: var(--gray-200); overflow: hidden; margin-top: var(--space-md); }
+    .o-bar > span { display: block; height: 100%; background: var(--color-primary); border-radius: 5px; transition: width 0.3s; }
+    .o-bar-tip { margin-top: 6px; font-size: 12px; color: var(--gray-400); }
+
+    .stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); margin-top: var(--space-md); }
+    .stat-card {
+      border: 1px solid var(--gray-200); border-radius: var(--radius-lg);
+      padding: var(--space-md) var(--space-lg); background: #fff;
+    }
+    .stat-card .s-label { font-size: 13px; color: var(--gray-500); }
+    .stat-card .s-value { margin-top: 4px; font-size: 24px; font-weight: 600; color: var(--gray-800); }
+    .stat-card .s-sub { margin-top: 6px; font-size: 12px; color: var(--gray-400); line-height: 1.8; }
+    .stat-card.warn { border-top: 3px solid var(--color-warning); }
+    .stat-card.warn .s-value { color: var(--color-warning); }
+    .stat-card.hl { border-top: 3px solid var(--color-success); }
+    .stat-card.hl .s-value { color: var(--color-success); }
+    .stat-card.factory { border-top: 3px solid var(--color-primary); }
+    .stat-card.factory .s-value { color: var(--color-primary); }
+    .stat-card.port { border-top: 3px solid var(--color-primary); }
+
+    .sub-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .sub-table th, .sub-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--gray-200); }
+    .sub-table th { color: var(--gray-500); font-weight: 500; font-size: 12px; white-space: nowrap; }
+    .sub-table td.num, .sub-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .sub-empty { padding: var(--space-md) 0; text-align: center; color: var(--gray-500); font-size: 13px; }
+
+    .detail-empty {
+      background: var(--gray-100); border-radius: var(--radius-lg); box-shadow: var(--shadow-card);
+      padding: var(--space-xl) 0; text-align: center; color: var(--gray-500); font-size: 14px;
+      margin-bottom: var(--space-md);
+    }
+
+    /* ===== ③ 全部订单一览 ===== */
+    .all-table input.qty {
+      width: 110px; height: 28px; padding: 0 8px; border: 1px solid var(--gray-300);
+      border-radius: var(--radius-sm); font-size: 13px; text-align: right; outline: none;
+    }
+    .all-table input.qty:focus { border-color: var(--color-primary); }
+    .all-table tfoot td { font-weight: 600; color: var(--gray-800); border-top: 2px solid var(--gray-300); }
+
+    @media (max-width: 1100px) {
+      .stat-cards { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 模块头图 -->
+      <section class="module-hero">
+        <div>
+          <div class="hero-title">调度数据分析</div>
+          <div class="hero-desc">先选择 / 登记订单，再查看该订单的出港 · 在途 · 入库 · 出厂分析</div>
+        </div>
+      </section>
+
+      <!-- ① 选择 / 登记订单 -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">① 选择 / 登记订单</div>
+          <div class="panel-tip">「从调度导入」自动发现调度车次中尚未登记的订单号</div>
+        </div>
+        <div class="order-picker">
+          <div class="field">
+            <label for="order-select">选择已有订单</label>
+            <select id="order-select"></select>
+          </div>
+          <span class="picker-sep">—— 或登记新订单 ——</span>
+          <div class="field">
+            <label for="order-id">新订单号</label>
+            <input id="order-id" placeholder="如 SO20261102-001" />
+          </div>
+          <div class="field">
+            <label for="order-qty">总委托量（吨）</label>
+            <input id="order-qty" type="number" min="0" step="0.1" placeholder="如 50000" />
+          </div>
+          <button type="button" id="btn-add" class="btn primary">＋ 登记新订单</button>
+          <button type="button" id="btn-import" class="btn">从调度导入</button>
+        </div>
+      </section>
+
+      <!-- ② 当前订单分析 -->
+      <div class="detail-empty" id="detail-empty" hidden>请先在上方选择或登记订单</div>
+      <section class="panel" id="detail-panel" hidden>
+        <div class="panel-header">
+          <div class="panel-title">② 订单出运分析</div>
+          <div class="panel-tip">出港＝已过「发出」节点；在途＝已发出未到库；入库＝已到库（优先实际吨）；出厂＝仓储出库（按订单号）</div>
+        </div>
+        <div class="detail-head">
+          <span class="detail-id" id="detail-id"></span>
+          <span class="detail-qty">总委托量（吨）
+            <input id="detail-qty" type="number" min="0" step="0.1" placeholder="待填写" />
+          </span>
+          <div class="detail-actions">
+            <button type="button" id="detail-del" class="btn danger sm">删除订单</button>
+          </div>
+        </div>
+        <div class="o-bar"><span id="detail-bar" style="width:0%"></span></div>
+        <div class="o-bar-tip" id="detail-bar-tip"></div>
+
+        <div class="stat-cards">
+          <div class="stat-card port">
+            <div class="s-label">出港总数量</div>
+            <div class="s-value" id="st-port"></div>
+            <div class="s-sub" id="st-port-sub"></div>
+          </div>
+          <div class="stat-card warn">
+            <div class="s-label">路途总数量（在途）</div>
+            <div class="s-value" id="st-transit"></div>
+            <div class="s-sub" id="st-transit-sub"></div>
+          </div>
+          <div class="stat-card hl">
+            <div class="s-label">入库数量</div>
+            <div class="s-value" id="st-inbound"></div>
+            <div class="s-sub" id="st-inbound-sub"></div>
+          </div>
+          <div class="stat-card factory">
+            <div class="s-label">出厂数量</div>
+            <div class="s-value" id="st-factory"></div>
+            <div class="s-sub" id="st-factory-sub"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ②-b 关联明细（核对用） -->
+      <section class="panel" id="detail-sub" hidden>
+        <div class="panel-header">
+          <div class="panel-title">②-b 该订单关联明细</div>
+        </div>
+        <div class="panel-tip" style="margin-bottom: var(--space-sm);">调度车次</div>
+        <table class="sub-table">
+          <thead>
+            <tr><th>车次号</th><th>方式</th><th>路线</th><th>货类</th><th class="num">计划吨</th><th class="num">已拉吨</th><th class="num">到库吨</th><th>当前节点</th></tr>
+          </thead>
+          <tbody id="trip-body"></tbody>
+        </table>
+        <div class="panel-tip" style="margin: var(--space-md) 0 var(--space-sm);">仓储出库流水（按订单号关联）</div>
+        <table class="sub-table">
+          <thead>
+            <tr><th>日期</th><th>仓库</th><th>品类</th><th class="num">数量</th><th>提货钢厂</th><th>备注</th></tr>
+          </thead>
+          <tbody id="io-body"></tbody>
+        </table>
+      </section>
+
+      <!-- ③ 全部订单一览 -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">③ 全部订单一览</div>
+          <div class="panel-tip">委托量可直接修改；点击行可切换上方分析</div>
+        </div>
+        <table class="sub-table all-table">
+          <thead>
+            <tr>
+              <th>订单号</th><th class="num">总委托量（吨）</th><th class="num">出港</th><th class="num">在途</th>
+              <th class="num">入库</th><th class="num">出厂</th><th class="num">进度</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="all-body"></tbody>
+          <tfoot id="all-foot"></tfoot>
+        </table>
+        <div class="sub-empty" id="all-empty" hidden>暂无订单，请在上方登记或点击「从调度导入」</div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="dispatch.js?v=20261102b"></script>
+</body>
+</html>

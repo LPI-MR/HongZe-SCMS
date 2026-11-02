@@ -429,6 +429,21 @@
       return b.uploadedAt.localeCompare(a.uploadedAt);
     })[0] || null;
 
+    // 近一周平均价（截至最新数据日，向前 7 个自然日内的不含税均价）
+    var weekAvg = null, weekFoot = '暂无报价数据';
+    if (latest) {
+      var endT = parseDate(latest.dataDate).getTime();
+      var startT = endT - 6 * 86400000;
+      var inWeek = sorted.filter(function (r) {
+        var t = parseDate(r.dataDate).getTime();
+        return t >= startT && t <= endT;
+      });
+      if (inWeek.length) {
+        weekAvg = avg(inWeek.map(function (r) { return r.price; }));
+        weekFoot = fmtDate(new Date(startT)) + ' ~ ' + latest.dataDate + ' · ' + inWeek.length + ' 条报价';
+      }
+    }
+
     var cards = [
       {
         icon: 'i1', label: '最新不含税价',
@@ -443,10 +458,10 @@
         foot: '不含税价 × 1.09 自动换算'
       },
       {
-        icon: 'i3', label: '汽运价格指数',
-        valueRow: latestPre == null ? '<span class="tx-kpi-value">—</span>'
-          : '<span class="tx-kpi-value">' + (latestPre / baseValue(recs) * 100).toFixed(2) + '</span>' + chgHTML(chg),
-        foot: '基期 ' + baseLabel(recs) + ' = 100'
+        icon: 'i3', label: '近一周平均价',
+        valueRow: weekAvg == null ? '<span class="tx-kpi-value">—</span>'
+          : '<span class="tx-kpi-value">' + weekAvg.toFixed(2) + '</span><span class="tx-kpi-unit">元/吨</span>',
+        foot: weekFoot
       },
       {
         icon: 'i4', label: '最新数据更新',

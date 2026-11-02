@@ -7,7 +7,7 @@
   <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
   <link rel="stylesheet" href="/css/common.css" />
   <!-- 模块独立样式：仅本模块生效 -->
-  <link rel="stylesheet" href="warehouse.css?v=20261029k" />
+  <link rel="stylesheet" href="warehouse.css?v=20261102a" />
 </head>
 <body data-portal="warehouse">
   <div class="layout">
@@ -26,16 +26,27 @@
       <!-- 模块头图 -->
       <section class="module-hero">
         <div class="hero-text">
-          <div class="hero-title">仓储管理</div>
-          <div class="hero-desc">仓库库存总览 · 进销存台账 · 保税报关节点</div>
+          <div class="hero-title">库存管理</div>
+          <div class="hero-desc">仓库库存实时总览 · 分品类快捷出入库 · 保税可出库监控</div>
         </div>
         <div class="hero-right">
+          <a class="hero-entry" href="/warehouse/io.html">进销存台账 →</a>
+          <a class="hero-entry" href="/warehouse/customs.html">保税报关 →</a>
           <a class="hero-entry" href="/warehouse/suppliers.html">供应商列表 →</a>
         </div>
       </section>
 
       <!-- 库存总览 KPI -->
       <section class="kpi-grid" id="kpi-grid"></section>
+
+      <!-- 品类总计总览（跨仓库合计 + 保税可提货） -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">品类总计 · 全仓库</div>
+          <div class="stock-tip">各品类所有仓库合计库存 · 可提货 = 非保税库存 + 保税已报关未出库</div>
+        </div>
+        <table class="stack-table" id="total-table"></table>
+      </section>
 
       <!-- 仓库库存实时总览（数据来自各仓库分垛明细，调整后即时刷新） -->
       <section class="panel">
@@ -47,32 +58,6 @@
           </div>
         </div>
         <div class="stock-grid" id="stock-grid"></div>
-      </section>
-
-      <!-- 进销存台账（入库/出库流水 + 每日盘点 + 导出） -->
-      <section class="panel">
-        <div class="panel-header">
-          <div class="panel-title">进销存台账 · 每日盘点</div>
-          <div class="io-toolbar">
-            <input id="io-date" class="search-input io-date" type="date" />
-            <button id="io-export" type="button" class="io-btn ghost">导出盘点表</button>
-            <button id="io-add-out" type="button" class="io-btn out">－ 出库</button>
-            <button id="io-add-in" type="button" class="io-btn in">＋ 入库</button>
-          </div>
-        </div>
-        <div class="io-summary" id="io-summary"></div>
-        <table class="stack-table io-table" id="io-table"></table>
-        <div class="io-sub-title">当日流水明细</div>
-        <div class="io-records" id="io-records"></div>
-      </section>
-
-      <!-- 保税报关节点（保税物流仓库，单品类 2万吨完成报关） -->
-      <section class="panel">
-        <div class="panel-header">
-          <div class="panel-title">保税报关节点</div>
-          <div class="stock-tip">保税货物分品类报关台账 · 单品类累计 2万吨 可完成报关</div>
-        </div>
-        <div id="customs-body"></div>
       </section>
 
     </main>
@@ -92,6 +77,8 @@
       <div class="form-item"><label class="form-label">品类 <span class="required">*</span></label><input id="io-ore" list="io-ore-list" class="form-input" placeholder="品类，如 PB粉" maxlength="20" autocomplete="off" /><datalist id="io-ore-list"></datalist></div>
       <div class="form-item"><label class="form-label">数量（吨） <span class="required">*</span></label><input id="io-ton" type="number" min="0.1" step="0.1" class="form-input" placeholder="如 1200" /></div>
       <div class="form-item"><label class="form-label">日期</label><input id="io-date-in" type="date" class="form-input" /></div>
+      <div class="form-item"><label class="form-label">关联订单号</label><input id="io-order" type="text" class="form-input" placeholder="如 PO-20261102-001（选填）" maxlength="40" /></div>
+      <div class="form-item" id="io-steel-item"><label class="form-label">提货钢厂</label><input id="io-steel" type="text" class="form-input" placeholder="如 敬业集团（出库选填）" maxlength="40" /></div>
       <div class="form-item"><label class="form-label">备注</label><input id="io-note" type="text" class="form-input" placeholder="如 车号 / 船名 / 对接人" maxlength="40" /></div>
       <div class="io-hint" id="io-hint"></div>
       <div class="drawer-footer d-footer">
@@ -117,29 +104,12 @@
     </div>
   </div>
 
-  <!-- 报关登记弹窗 -->
-  <div class="modal" id="cd-modal" hidden role="dialog" aria-modal="true">
-    <div class="modal-head">
-      <div class="drawer-title">报关登记</div>
-      <button id="cd-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
-    </div>
-    <form id="cd-form" class="modal-body">
-      <div class="form-item"><label class="form-label">品类 <span class="required">*</span></label><select id="cd-ore" class="form-input"></select></div>
-      <div class="form-item"><label class="form-label">报关数量（吨） <span class="required">*</span></label><input id="cd-ton" type="number" min="0.1" step="0.1" class="form-input" placeholder="如 20000" /></div>
-      <div class="form-item"><label class="form-label">日期</label><input id="cd-date" type="date" class="form-input" /></div>
-      <div class="form-item"><label class="form-label">备注</label><input id="cd-note" type="text" class="form-input" placeholder="如 报关单号 / 车船信息" maxlength="40" /></div>
-      <div class="io-hint" id="cd-hint"></div>
-      <div class="drawer-footer d-footer">
-        <button type="button" id="cd-cancel" class="btn-ghost">取消</button>
-        <button type="submit" class="btn-primary">确认报关</button>
-      </div>
-    </form>
-  </div>
+  <!-- 报关登记弹窗已迁移至「保税报关」子模块（customs.html） -->
 
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
   <!-- 模块脚本 -->
-  <script src="warehouse.js?v=20261029o"></script>
+  <script src="warehouse.js?v=20261102e"></script>
 </body>
 </html>

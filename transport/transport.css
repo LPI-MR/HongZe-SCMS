@@ -327,6 +327,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 人工填报吨数显示 */
+.trip-tons { color: var(--color-warning); font-weight: 500; }
+
+.node-tons {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-warning);
+  white-space: nowrap;
+}
+
 .trip-empty {
   padding: var(--space-xl) 0;
   text-align: center;

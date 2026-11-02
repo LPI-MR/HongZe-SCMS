@@ -14,8 +14,8 @@
   // 通道模式及节点链（车次的 nodeIndex 即当前到达的节点下标，最后一节点为终态）
   // custom 为自定义通道：节点链由录入时指定，保存在车次的 nodes 字段上
   const MODES = {
-    rail:   { name: '铁路直达', nodes: ['请车', '批复', '装载中', '装载完毕', '发出', '到达', '卸车', '卸车完毕'] },
-    inter:  { name: '公铁联运', nodes: ['请车', '批复', '装载中', '装载完毕', '发出', '到达', '短倒', '到达'] },
+    rail:   { name: '铁路直达', nodes: ['请车', '批复', '装载中', '装载完毕', '发出', '到达', '卸车', '卸车完毕', '到库'] },
+    inter:  { name: '公铁联运', nodes: ['请车', '批复', '装载中', '装载完毕', '发出', '到达', '短倒', '到达', '到库'] },
     road:   { name: '汽运直达', nodes: ['发出', '运输中', '运输完毕'] },
     custom: { name: '自定义通道', nodes: null },
   };
@@ -54,6 +54,7 @@
     state.trips.forEach(t => {
       if (t.orderId === undefined) { t.orderId = ''; dirty = true; }
       if (t.actualTons === undefined) { t.actualTons = null; dirty = true; }
+      if (t.loadedTons === undefined) { t.loadedTons = null; dirty = true; }
     });
     if (dirty) save(state);
   }
