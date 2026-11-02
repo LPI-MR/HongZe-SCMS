@@ -52,6 +52,9 @@
 /* ===== 车队总览 KPI（4 卡，与仓储一致） ===== */
 .kpi-grid { grid-template-columns: repeat(4, 1fr); }
 
+/* 相邻板块之间统一拉开 24px 上下留白（KPI ↔ 列表面板等） */
+.main > section + section { margin-top: var(--space-lg); }
+
 /* ===== 车队列表面板 ===== */
 .panel {
   background: var(--gray-100);
@@ -102,7 +105,7 @@
 .supplier-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-md);
+  gap: var(--space-lg) var(--space-md);   /* 行距（上下）拉开到 24px；列距（左右）维持原 16px，不改变卡片大小 */
 }
 
 .supplier-card {

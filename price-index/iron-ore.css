@@ -1,0 +1,222 @@
+/* ============================================================
+   price-index 模块 · 铁矿石价格指数页样式（仅 iron-ore.html 生效）
+   色彩/间距/字号遵循 ui-standard.md；红涨绿跌遵循国内行情惯例
+   ============================================================ */
+
+/* 看板头部 */
+.dash-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.dash-header .page-desc {
+  margin-top: var(--space-xs);
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+/* 指数概览：4 张横排（覆盖 common.css 的 3 列栅格） */
+.kpi-grid { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 1200px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 涨跌配色（中国行情惯例：红涨绿跌） */
+.kpi-card.up .kpi-value { color: var(--color-danger, #F53F3F); }
+.kpi-card.down .kpi-value { color: var(--color-success, #00B42A); }
+
+/* ===== 图表卡片 ===== */
+.chart-card {
+  background: var(--gray-100);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+  transition: box-shadow 0.2s;
+}
+
+.chart-card:hover { box-shadow: var(--shadow-hover); }
+
+.chart-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--gray-800);
+}
+
+.chart-sub {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+/* 卡片底部：图例 + 数据来源 */
+.chart-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.chart-foot .foot-source {
+  margin-left: auto;
+  color: var(--gray-400);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-primary, #4080FF);
+  margin-right: 4px;
+}
+
+.legend-up { color: #F53F3F; }
+.legend-down { color: #00B42A; margin-left: 10px; }
+.legend-flat { color: var(--gray-400); margin-left: 10px; }
+
+/* ===== 近七天指数趋势图（SVG 折线，零依赖） ===== */
+#trendChart { width: 100%; height: auto; display: block; }
+
+.trend-grid {
+  stroke: var(--gray-200, #F2F3F5);
+  stroke-width: 1;
+}
+
+.trend-axis {
+  stroke: var(--gray-300, #E5E6EB);
+  stroke-width: 1;
+}
+
+.trend-label {
+  font-size: 13px;
+  fill: var(--gray-500, #86909C);
+}
+
+.trend-value {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--gray-700, #272E3B);
+  font-variant-numeric: tabular-nums;
+}
+
+.trend-line {
+  fill: none;
+  stroke: var(--color-primary, #4080FF);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-dot {
+  fill: #FFFFFF;
+  stroke: var(--color-primary, #4080FF);
+  stroke-width: 2.5;
+  transition: r 0.15s;
+}
+
+.trend-dot:hover { r: 6; }
+
+.chart-empty {
+  font-size: 18px;
+  fill: var(--gray-500, #86909C);
+}
+
+/* ===== 各港口价格表 ===== */
+.table-scroll { overflow-x: auto; }
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.price-table th,
+.price-table td {
+  padding: 10px 12px;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200, #F2F3F5);
+  white-space: nowrap;
+}
+
+.price-table thead th {
+  background: var(--primary-light, #E8F0FF);
+  color: var(--gray-700, #272E3B);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+}
+
+.price-table thead th.day-head { min-width: 88px; }
+
+.price-table thead th .week-tag {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray-500, #86909C);
+}
+
+/* 港口列：纵向合并，左对齐 + 品种列 */
+.price-table td.port-cell {
+  background: #FAFBFC;
+  font-weight: 600;
+  color: var(--gray-700, #272E3B);
+  text-align: center;
+  border-right: 1px solid var(--gray-200, #F2F3F5);
+}
+
+.price-table td.item-cell {
+  text-align: left;
+  color: var(--gray-600, #4E5969);
+}
+
+.price-table td.item-cell .grade {
+  margin-left: 4px;
+  font-size: 12px;
+  color: var(--gray-400, #C9CDD4);
+}
+
+/* 隔行底色（按行奇偶） */
+.price-table tbody tr:nth-child(even) td:not(.port-cell) {
+  background: #FAFBFC;
+}
+
+.price-table tbody tr:hover td:not(.port-cell) {
+  background: var(--primary-light, #E8F0FF);
+}
+
+/* 单元格：主价格 + 较前一日涨跌小字 */
+.price-table .px {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  color: var(--gray-700, #272E3B);
+}
+
+.price-table .chg {
+  margin-left: 6px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.price-table .chg.up { color: #F53F3F; }
+.price-table .chg.down { color: #00B42A; }
+.price-table .chg.flat { color: var(--gray-400, #C9CDD4); }
+
+/* 末列：7 日涨跌汇总 */
+.price-table td.sum-chg { font-weight: 600; font-variant-numeric: tabular-nums; }
+.price-table td.sum-chg.up { color: #F53F3F; }
+.price-table td.sum-chg.down { color: #00B42A; }
+.price-table td.sum-chg.flat { color: var(--gray-500, #86909C); }
