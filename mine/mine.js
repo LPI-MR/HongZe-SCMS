@@ -76,7 +76,7 @@
   //   已本地化为 /mine/assets/ 下的真实影像（来源 Wikimedia Commons / NASA，下载自公开图库）；
   //   为空时回退 prompt 走生成 API（用户自建矿山场景）
   // 参数来源：力拓 2025 Q3 生产报告 / BHP FY25 运营公报 / Vale 2025 生产销售报告 / FMG FY25 季报 / 西芒杜 JORC 公告
-  const SEED_VER = 'v9';
+  const SEED_VER = 'v10';
 
   // 用户自建矿山的介绍板块默认回退值
   const DEFAULT_TAGLINE = '矿山的自然与人文';
@@ -98,16 +98,17 @@
         operator: 'Rio Tinto（力拓集团）', contact_person: '', contact_phone: '',
         status: 'active', remark: '即哈默斯利铁矿（皮尔巴拉）。全球主要铁矿供应商之一，装货港以丹皮尔港为主',
         commissioned_year: 1966,
-        intro: '红色荒原上的世纪矿区——当巨型矿车碾过裸岩，几亿年的地质时间被装进驶向远方的货轮。',
+        intro: '力拓集团的业务遍及全球六大洲的34个国家，我们的61,000余名员工正努力寻求以更好的方式，提供世界所需材料。',
         img_prompt: 'aerial view of Pilbara open-pit iron ore mine, Western Australia, red ochre terraced benches, giant haul trucks, deep blue sky, realistic photography',
-        tagline: '红色大地上的钢铁动脉',
+        tagline: '寻求以更好的方式，提供世界所需材料',
         hero_prompt: 'dramatic high altitude satellite view of Pilbara iron ore mining region, Western Australia, vast red ochre earth with winding haul roads and terraced open pits, realistic satellite photography',
         story: [
-          { h: '红土深处的世纪矿区', p: '在西澳大利亚西北部，皮尔巴拉的红色大地绵延数百公里，哈默斯利山脉静卧其间，藏着这个星球最丰富的铁矿床之一。自二十世纪六十年代起，这里的声音只有风、矿车，以及远程操纵中心里安静的调度指令。' },
-          { h: '从荒野到全球供应链', p: '1966 年，哈默斯利铁矿在汤姆普莱斯山正式投产，开启了皮尔巴拉现代铁矿工业的序幕。此后半个多世纪里，矿山、铁路与港口被一步步编织成一条完整的动脉：矿石在采场剥离、破碎，由长列车穿越荒漠，在海岸线昼夜不停地装上远洋货轮。数千公里之外钢厂高炉的每一次呼吸，都与这片红土遥相呼应。' },
-          { h: '封存地球历史的岩层', p: '皮尔巴拉的矿床大多赋存于二十多亿年前形成的条带状铁建造中——那是地球早期海洋反复沉降与氧化的年轮。站在采场边缘俯瞰，阶梯状的矿坑螺旋而下，每一层台阶都切开一段地质时间：人类的工程尺度与亿万年造山运动，在此并置成一幅罕见的画面。' },
-          { h: '无人化与巨型化', p: '今天，这里运营着全球规模领先的自动矿车运输体系，两百吨级的巨兽在无人驾驶状态下日夜穿梭；横贯荒漠的重载铁路采用自动行驶技术，列车像钟摆一样在矿区与港口之间精确往复。而在一千多公里外的珀斯，运营中心里的工程师注视着大屏上的实时数据流——整座矿区的每一次爆破、装载与发运，都汇聚成这场安静的远程交响。' },
-          { h: '与红土共生的约定', p: '矿山与原住民社区的合作被视为运营的基石：从就业培训到文化遗产保护，从水资源回用到逐步退役矿坑的复垦计划，这片土地的未来被写进了长期规划。朝着 2050 年运营净零排放的目标，电动矿卡与可再生能源电站正在取代柴油与煤电——红土之上，一场静悄悄的能源转型已经开始。' }
+          { h: '关于力拓', p: '力拓集团的业务遍及全球六大洲的34个国家，我们的61,000余名员工正努力寻求以更好的方式，提供世界所需材料。\n\n我们的核心产品——铁矿石、铜、铝和锂——是构建更清洁、更智能未来的基石。\n\n为了满足日益增长的需求，我们致力于在保障员工安全的同时，运营并交付世界一流的业务和项目。\n\n我们承诺以负责任的方式开展业务——凭借深厚的专业知识、强劲的社会许可以及长期的合作伙伴关系，创造持久的积极影响。\n\n我们携手应对全球挑战，共创共享成功。' },
+          { h: '我们的使命', p: '成为最具价值的金属矿业公司' },
+          { h: '我们的愿景', p: '寻求以更好的方式，提供世界所需材料' },
+          { h: '我们的战略', p: '以强劲的资产负债表和社会许可为支撑，在优质市场构建由世界级资产和项目组成的多元化投资组合' },
+          { h: '我们的目标', p: '我们的目标是一切行动的指引，也是我们成为最具价值的金属矿业公司的基石。\n\n以人为本、安全至上：在基于价值的绩效文化中，杜绝死亡事故，保障员工安全，并助力其实现个人成长。\n\n卓越运营：充分释放资产的全部价值，精简业务并明确责任归属，同时保持财务纪律。\n\n卓越发展：优化资本配置，将增长机遇转化为长期价值。\n\n强劲的可持续发展与社会许可：推动碳减排进程，成为最具价值的合作伙伴，为商业表现设立防护机制以保障未来声誉，并赢得社区、合作伙伴及客户的信任。' },
+          { h: '我们的价值观', p: '关爱：我们关注自身和身边人的安全，营造互信的环境，并重视我们对同事、社区和环境的影响。\n\n勇敢：我们勇于承认不足，敢于发声并挑战现状，并为自己的行动和结果负责，以此推动业绩提升。\n\n探索：我们满怀求知欲，在专业领域不断学习和成长，寻找通过日常创新解决问题的机会，并以开放包容的心态拥抱多元化观点。' }
         ],
         gallery: [
           'giant open pit iron ore mine terraces at golden hour, haul trucks on winding red earth roads, Pilbara Western Australia, realistic photography',
@@ -146,16 +147,18 @@
         operator: 'BHP（必和必拓）', contact_person: '', contact_phone: '',
         status: 'active', remark: '即纽曼山铁矿（皮尔巴拉）。装货港以黑德兰港为主',
         commissioned_year: 1969,
-        intro: '荒漠深处的效率图腾——矿山、铁路与港口被当作一条流水线来管理，矿石从爆破到装船以小时计。',
+        intro: '必和必拓是一家业务覆盖多个国家和地区的国际化资源公司，业务遍布全球90多个地点，产品销往世界各地。',
         img_prompt: 'Mount Newman iron ore mine in Pilbara outback Australia, mining plant and long ore trains, golden sunlight, vast red desert, realistic photography',
-        tagline: '荒漠深处的效率图腾',
+        tagline: '融汇英才资源，共创美好未来',
         hero_prompt: 'high altitude satellite view of Mount Newman iron ore mining complex in Pilbara outback, red desert terrain with open pits and railway lines radiating, realistic satellite photography',
         story: [
-          { h: '纽曼山的红色地平线', p: '在皮尔巴拉内陆深处，纽曼山的矿坑如同大地敞开的剖面，露出数十亿年前的条带状铁建造。这里的每一层岩石，都封存着地球早期海洋的呼吸。' },
-          { h: '鲸背山的地球史', p: '当地人叫它"鲸背山"——一道隆起于荒漠之上的岩脊，铁元素含量之高，让整座山丘在卫星影像上都泛着暗红色的光泽。地质学家在这里读到的是一部压缩的地球编年史：条带状铁建造记录着二十多亿年前海洋与大气此消彼长的漫长博弈，而人类只用了一代人的时间，就读懂了它的价值。' },
-          { h: '矿路港一体的效率样本', p: '1969 年投产的纽曼山，如今是必和必拓西澳产能体系的核心。矿山、铁路与黑德兰港被当作一条连续的流水线来运营：矿石从爆破、破碎到装船，全程以小时计算。港口泊位上的装船机昼夜不息，远洋货轮在锚地排成静默的队列——这条流水线的尽头，是亚洲与欧洲的钢铁厂。' },
-          { h: '最长的列车', p: '连接矿区与港口的铁路上，行驶着世界上最长的货运列车之一——两公里余的车身满载矿石，缓缓驶过无边的红色荒漠，沿着优化到极致的运行图自动巡航。对许多澳大利亚人而言，这样的列车早已超越运输工具本身，成为这个国家工业时代的图腾。' },
-          { h: '走向水的未来', p: '在世界上最干旱的矿区之一，水比矿石更昂贵：严格的水资源循环体系在这里全年运转，电池驱动的巨型矿卡与通勤班车正在接受测试；与原住民社区共同管理的土地与文化遗产项目，则让矿山的边界超出了采场。当全球钢铁业开始寻找减碳路径，这条流水线上的每一次试验，都可能成为行业的下一个标准。' }
+          { h: '必和必拓概况', p: '必和必拓是一家业务覆盖多个国家和地区的国际化资源公司，业务遍布全球90多个地点，产品销往世界各地。\n\n我们将业务定位于支持塑造世界的宏观趋势。通过铁矿石和冶金煤支撑全球基建及能源转型所需的钢材生产；开发铜矿助力可再生能源发展；并正拓展钾肥业务以支持可持续农业发展。\n\n我们的资源组合既立足当下，又着眼未来。' },
+          { h: '我们的业务', p: '我们是一家国际化资源公司，业务涵盖铁矿石、铜和炼钢煤，并正拓展钾肥业务。依托多元化的资源资产组合，我们致力于持续为客户、合作伙伴和所在社区创造长期价值。' },
+          { h: '我们的战略', p: '我们将负责任地管理最具韧性的长期资产组合，专注于极具吸引力的大宗商品，并通过卓越运营、资源勘探与开发、优质资产收购和高效资本配置，实现价值增长。\n\n同时，我们以独特方式创造社会价值，为所有利益相关方带来收益，成为值得信赖的合作伙伴。' },
+          { h: '铁矿石', p: '西澳铁矿（WAIO）是全球生产成本最低的主要大型铁矿石生产商。' },
+          { h: '铜', p: '我们拥有多元化的铜矿资源组合，其中包括位于智利的全球重要的在产铜矿之一埃斯康迪达（Escondida）铜矿。' },
+          { h: '钾肥', p: '我们正在开发全球最大的钾盐矿场之一。詹森项目（Jansen）一期预计于2026年底投产，后续将进入两年产能爬坡期。' },
+          { h: '我们的价值观', p: '做正确的事：可持续的未来始于安全和诚信，通过构建与利益相关方的信任实现。\n\n寻求更佳途径：倾听学习、鼓励挑战，是我们推动进步的方式。\n\n做出积极改变：每日践行行动责任、创造价值并产生积极影响，是每位成员的责任担当。' }
         ],
         gallery: [
           'open pit iron ore mine aerial view at dusk, massive haul trucks on red terraces, Pilbara Australia, realistic photography',
@@ -188,16 +191,15 @@
         operator: 'Vale（淡水河谷）', contact_person: '', contact_phone: '',
         status: 'active', remark: '即卡拉加斯铁矿。全球品位最高的铁矿之一，装货港以图巴朗港为主',
         commissioned_year: 1985,
-        intro: '雨林高原上的红色山脊，藏着全球品位最高的铁矿之一。"卡拉加斯"这个名字，本身就是品质的度量衡。',
+        intro: '淡水河谷成立于1942年，总部位于巴西，是一家以齐心协力改善生活、改变未来为己任的全球性矿业公司。',
         img_prompt: 'Carajas iron ore mine, Amazon highlands Brazil, red plateau terraces surrounded by green rainforest, aerial view, realistic photography',
-        tagline: '雨林高原的高品位传奇',
+        tagline: '齐心协力改善生活、改变未来',
         hero_prompt: 'aerial satellite view of Carajas iron ore mine in Amazon highlands Brazil, red mining terraces surrounded by dense green rainforest, realistic satellite photography',
         story: [
-          { h: '雨林高原上的红色山脊', p: '巴西北部帕拉州，亚马逊雨林的绿色海洋中隆起一片红色山脊——卡拉加斯。上世纪六十年代，一架飞机的罗盘在这片高原上空莫名偏转，意外揭开了全球品位最高的铁矿床之一。' },
-          { h: '高品位的代名词', p: '这里的矿石铁含量天然极高、杂质极低，几乎无需复杂选矿即可入炉。半个世纪以来，"卡拉加斯"四个字在钢铁行业里，就是品质本身的度量衡。' },
-          { h: '矿与林的边界', p: '采场之外，是受严格保护的原生雨林与自然保护区：矿山与国家森林在这片高原上长期共存，生态监测队伍常年穿行于矿区边缘的密林。开采与守护之间的张力，构成了这座矿山最独特的现代叙事——繁荣与克制，被要求同时成立。' },
-          { h: '通往大西洋的钢铁动脉', p: '为了让高原上的矿石抵达海洋，一条纵贯雨林的重载铁路被修建起来：列车从卡拉加斯出发，穿越数百公里的雨林与草原，抵达大西洋海岸的装船码头，矿石在那里换船远航。这条动脉与矿脉一样，被写进了巴西工业化的历史。' },
-          { h: '富饶与责任同行', p: '矿区周边的城镇因矿而生：学校、诊所与职业培训中心随矿山一起成长，当地家庭的生活轨迹与这片红土紧紧相连。而在产业前端，更低碳的球团与压块产品、风电与森林保护项目，正在把"绿色矿石"从口号变成产品——雨林高原的高品位传奇，正在书写它的下一章。' }
+          { h: '关于淡水河谷', p: '淡水河谷成立于1942年，总部位于巴西，是一家以齐心协力改善生活、改变未来为己任的全球性矿业公司。淡水河谷是全球领先的铁矿石、铜和镍的生产商之一，公司还生产铁矿石球团和压块、铂族金属、金、银和钴，并运营着与采矿作业无缝衔接的物流系统，包括铁路、海运码头和港口。淡水河谷立志成为备受社会认可的安全标杆、世界一流的可靠矿业运营商、人才驱动型组织、可持续开采的领导者以及创造并分享价值的典范。' },
+          { h: '淡水河谷与中国', p: '淡水河谷是中国值得信赖的长期合作伙伴，自1973年向中国交付第一船铁矿石起，公司已向中国累计供应了逾30亿吨优质铁矿石，以及铜、镍等优质基本金属。淡水河谷将继续致力于向中国持续供应各种优质矿产品和创新低碳解决方案，支持中国钢铁行业加快发展新质生产力，实现绿色转型，努力为人与自然和谐共生的中国式现代化贡献更多力量。' },
+          { h: 'Our purpose', p: 'We exist to improve life and transform the future. Together.\n\n【中文对照】我们的存在，是为了改善生活、改变未来。携手同行。' },
+          { h: 'The history of Vale', p: 'Vale was founded on June 1, 1942, in Itabira, Minas Gerais, under the name Companhia Vale do Rio Doce. Over more than eight decades, we have evolved, simplified our name to Vale, and built a journey marked by transformation.\n\nAlong the way, we became a global mining company with operations in 18 countries. At every stage, we have faced challenges and continuously learned from them.\n\nWe have come a long way since the first ore was extracted in Itabira. Since then, we have expanded our operations into integrated logistics, encompassing mines, railways, vessels, and ports, while also strengthening our presence in the energy sector.\n\nToday, we are one of the world\'s largest mining companies and the global leader in iron ore production.\n\n【中文对照】1942年6月1日，淡水河谷在米纳斯吉拉斯州伊塔比拉成立，最初名为"多西河谷公司"。八十余年来，我们不断演进，将名称简化为 Vale，走过了一条以变革为印记的旅程。\n\n在这一过程中，我们成长为一家业务遍及18个国家的全球化矿业公司。在每个阶段，我们都直面挑战，并不断从中学习。\n\n自伊塔比拉采出第一块矿石以来，我们已经走了很远。此后，我们将业务拓展至涵盖矿山、铁路、船舶和港口的一体化物流体系，同时不断加强在能源领域的布局。\n\n今天，我们已成为全球最大的矿业公司之一，也是全球铁矿石产量的领导者。' }
         ],
         gallery: [
           'Carajas open pit iron ore mine aerial view, red terraces against endless green Amazon rainforest, Brazil, realistic photography',
@@ -230,16 +232,15 @@
         operator: 'Fortescue（福斯特库）', contact_person: '', contact_phone: '',
         status: 'active', remark: '即所罗门铁矿（奇切斯特岭）。装货港以黑德兰港为主',
         commissioned_year: 2013,
-        intro: '奇切斯特岭中最年轻的矿区，用十年时间走完了前辈半个世纪的规模之路——高性价比从来不是妥协，而是精确的计算。',
+        intro: 'Fortescue is a global metals, energy and technology business providing green solutions to the world.（中文对照：福斯特库是一家面向全球提供绿色解决方案的金属、能源与技术企业。）',
         img_prompt: 'Solomon Hub iron ore mine, Chichester Ranges Western Australia, open pit terraces, mining machinery at dusk, realistic photography',
-        tagline: '年轻矿区的成本哲学',
+        tagline: 'We\'re not waiting for the future.（我们不等待未来）',
         hero_prompt: 'aerial satellite view of Solomon Hub iron ore mine in Chichester Ranges Western Australia, red ochre pit terraces in arid mountain ranges, realistic satellite photography',
         story: [
-          { h: '奇切斯特岭的新来者', p: '在西澳皮尔巴拉的奇切斯特岭，所罗门枢纽是主要铁矿商中最年轻的矿区之一。2013 年才投产的它，用十年时间走完了前辈们半个世纪的规模之路。' },
-          { h: '十年，一条增长曲线', p: '从首船矿石离港到跻身全球主要铁矿供应商之列，这座矿区只用了不到十年：所罗门的采场沿奇切斯特岭一字排开，破碎站与堆场昼夜运转，矿石经铁路源源送往黑德兰港。在一个由百年巨头主导的行业里，这样的增长曲线几乎是个例外。' },
-          { h: '成本主义的胜利', p: '极致的低成本是这里唯一的信条：扁平的组织、高效的运输体系、大胆的装备策略。当行业周期步入低谷，这种成本结构便成为最锋利的武器——活下去，并且扩张。' },
-          { h: '品质的下一章', p: '以高性价比矿起家的运营者，正在向高品位矿床发起冲击：西皮尔巴拉的新矿区逐步投产，磁铁矿精矿项目把产品品位推向新的高度。曾经的"经济型配方矿"路线，如今叠加了更高品质的选项——亚洲钢厂的配矿表上，这里的名字正变得越来越灵活。' },
-          { h: '绿色的野心', p: '这家以西澳为家的公司把绿色能源写进了自己的名字：电动矿卡与自动列车已在矿区试运行，氢能与氨能项目在皮尔巴拉的烈日下铺开，目标是让铁矿石的开采与运输率先摆脱柴油。年轻，意味着没有历史包袱——在能源转型的赛道上，这座最年轻的矿区想再一次率先冲线。' }
+          { h: 'Who we are', p: 'Fortescue is a global metals, energy and technology business providing green solutions to the world.\n\nWe\'re combining operational scale with innovation to build the systems, tech and infrastructure needed to accelerating the decarbonisation of heavy industry, rapidly, profitably and at global scale.\n\n【中文对照】福斯特库是一家面向全球提供绿色解决方案的金属、能源与技术企业。\n\n我们将运营规模与创新相结合，构建重工业脱碳所需的系统、技术与基础设施——以快速、盈利且覆盖全球规模的方式推进。' },
+          { h: 'What we do', p: 'We operate at industrial scale while building the systems needed to move beyond fossil fuels. From mining and infrastructure to zero-emissions systems and technology, we\'re redefining heavy industry.\n\n【中文对照】我们在工业规模上运营，同时构建超越化石燃料所需的系统。从采矿和基础设施到零排放系统与技术，我们正在重新定义重工业。' },
+          { h: 'Metals', p: 'A leading global iron ore producer, building on our Pilbara foundations to create the pathway to green iron and green steel.\n\n【中文对照】作为全球领先的铁矿石生产商，我们依托皮尔巴拉的业务根基，开辟通往绿色铁矿与绿色钢铁的道路。' },
+          { h: 'Fortescue in Figures', p: 'For more than 20 years, we\'ve pushed boundaries and built technologies others thought impossible. Today, we\'re applying that capability to eliminate emissions, reshape heavy industry and unlock what comes next.\n\nA$27.2 billion — Total global economic contribution (FY26)\n\n2.5 billion tonnes — Iron ore shipped since 2008\n\nReal Zero by 2030 — Emissions target (scope 1&2 terrestrial)\n\n【中文对照】二十多年来，我们不断突破边界，打造出别人认为不可能的技术。今天，我们正把这种能力用于消除排放、重塑重工业并开启下一个时代。\n\n272 亿澳元 —— 全球经济贡献总额（2026 财年）\n\n25 亿吨 —— 自 2008 年以来发运的铁矿石\n\n2030 年 Real Zero（真正的零排放）—— 排放目标（范围 1&2 陆地排放）' }
         ],
         gallery: [
           'iron ore mining machinery working at dusk inside open pit, Chichester Ranges Western Australia, realistic photography',
@@ -267,16 +268,15 @@
         operator: 'Rio Tinto（力拓集团）SimFer联合体', contact_person: '', contact_phone: '',
         status: 'active', remark: '即西芒杜铁矿（Simandou）。全球最大未开发高品位铁矿之一，装货港为几内亚莫雷巴亚港（Morebaya）',
         commissioned_year: 2025,
-        intro: '被等待了三十年的山脉。当第一船矿石驶离西非海岸，全球高品位铁矿供应的版图被重新绘制。',
+        intro: 'Africa\'s largest mining and related infrastructure project（中文对照：非洲最大的矿业及相关基础设施项目）',
         img_prompt: 'Simandou iron ore project, Guinea West Africa, green mountain range with early mining infrastructure, clear sky, realistic photography',
-        tagline: '改写世界铁矿版图的山脉',
+        tagline: 'Africa\'s largest mining and related infrastructure project（非洲最大的矿业及相关基础设施项目）',
         hero_prompt: 'aerial satellite view of Simandou mountain range in Guinea West Africa, lush green ridges with early mining infrastructure and red earth roads, realistic satellite photography',
         story: [
-          { h: '被等待了三十年的山脉', p: '几内亚东南部，西芒杜山脉绵延一百余公里，山脊之下沉睡着探明于上世纪九十年代的高品位铁矿。此后的三十多年里，它一直被称作"全球最大的未开发高品位铁矿"——直到现在。' },
-          { h: '世界级矿床的前世今生', p: '九十年代的地质勘探队在这片热带高原上钻下了第一批岩芯，化验结果令业界震动：山脊各区块的矿石品位极高、杂质极低，可与全球任何一座旗舰矿山比肩。然而政局更迭、权属协调与基础设施的缺失，让这座山脉在图纸上沉睡了三十年——它成了铁矿石行业最著名的"未完成的梦"。' },
-          { h: '穿越雨林的长征', p: '要把山里的矿石送到海边，需要一条六百余公里长的跨几内亚铁路和一座全新的深水港，以及穿过雨林与高原的全部工程勇气：桥隧翻越山地、站场衔接矿区、码头临海而建。这条钢铁动脉的铺通，本身就是这个时代最宏大的基建叙事之一。' },
-          { h: '改写供应格局', p: '2025 年，西芒杜正式投产。当第一船矿石驶离西非海岸，全球高品位铁矿供应的版图被重新绘制——亚洲钢厂的配矿表上，从此多了一个举足轻重的变量。对于寻求高品位资源以降低焦比与排放的钢铁业而言，这座山脉的意义远不止新增供应。' },
-          { h: '山脉之外的答卷', p: '铁路与港口被设计为共享基础设施，沿线城镇第一次被钢铁动脉串起；矿石收益也被约定反哺这个西非国家的道路、电力与教育。被等待了三十年的西芒杜，如今要回答的是另一个问题：一座世界级矿山，如何成为一个国家的长期机遇。' }
+          { h: 'Africa\'s largest mining and related infrastructure project', p: 'The Simandou mountain range lies in the south-east of the Republic of Guinea. The area has subsoils which contain a world class Ore Reserve of high-grade iron ore. Developing a project of Simandou\'s scale is a unique opportunity.\n\nSimandou is divided into 4 blocks. We hold rights to blocks 3 and 4 through Rio Tinto SimFer – a joint venture with the Government of Guinea and Chalco Iron Ore Holdings (CIOH). These blocks contain ore reserves estimated at around 1.5 billion tonnes. Rio Tinto is the majority shareholder and managing partner of Rio Tinto SimFer.\n\nWe are also working with the Government of Guinea and Winning Consortium Simandou (WCS), developers of Simandou blocks 1 and 2, to co-develop the infrastructure needed to export mined iron ore from the far south-east of the country to Guinea\'s maritime borders and beyond.\n\nThese include 600km of rail infrastructure – spanning the length of the country – as well as port infrastructure on the coast of the Forécariah prefecture in Guinea.\n\n【中文对照】西芒杜山脉位于几内亚共和国东南部。该地区的地下蕴藏着世界级的高品位铁矿石储量。开发西芒杜这样规模的项目，是一个独一无二的机遇。\n\n西芒杜分为4个区块。我们通过力拓 SimFer（与几内亚政府及中国铝业铁矿控股公司 CIOH 的合资企业）持有第3、4区块的开采权。这些区块的矿石储量估计约15亿吨。力拓是力拓 SimFer 的控股股东和管理合伙方。\n\n我们还与几内亚政府以及西芒杜第1、2区块的开发商赢联盟（WCS）合作，共同开发所需的基础设施，以便将开采的铁矿石从该国最东南部出口至几内亚的海域边界及更远的市场。\n\n这包括600公里的铁路基础设施——纵贯该国全境——以及位于几内亚弗雷卡里亚省沿海的港口基础设施。' },
+          { h: 'Iron ore', p: 'Iron ore is the primary raw material used to make steel. Steel is strong, long-lasting and cost-efficient – making it perfect for everything from cars and fridges to wind turbines and skyscrapers.\n\nThe premium grade of Simandou iron ore broadens our global portfolio of iron ore products, complementing our existing, long-term iron ore production in Australia\'s Pilbara region and in Canada.\n\n【中文对照】铁矿石是制造钢铁的主要原材料。钢铁坚固、耐用且具有成本效益——从汽车、冰箱到风力发电机和摩天大楼，它无处不在。\n\n西芒杜优质品位的铁矿石拓展了我们全球铁矿石产品组合，与我们位于澳大利亚皮尔巴拉地区和加拿大的既有长期铁矿石生产形成互补。' },
+          { h: 'Next steps', p: 'Work on the mines and infrastructure is well underway and in December 2025, the first shipment from Simandou left Guinea. Ore is being railed from the SimFer mine to the main rail line via the SimFer rail spur and initially shipped through the WCS port while construction of the SimFer port is finalised.\n\nOnce commissioning of the common rail to port infrastructure is complete, we expect a 30 month ramp up to full capacity of 60 Mtpa production at the SimFer mine.\n\n【中文对照】矿山和基础设施的建设正在全面推进，2025年12月，西芒杜的首批货物已运离几内亚。目前，矿石经 SimFer 铁路支线从 SimFer 矿区运往主线，并在 SimFer 港口建设收尾期间暂经 WCS 港口装船发运。\n\n一旦铁路至港口共享基础设施的调试完成，我们预计将用30个月逐步爬坡，使 SimFer 矿区达到6000万吨/年的满产产能。' },
+          { h: 'Our commitment for Simandou', p: 'Simandou is a complex, uniquely transformative project. From the associated infrastructure corridor to the thousands of jobs the project will create, the project will positively impact the Guinean economy, creating opportunities and development potential which will benefit the people of Guinea for generations to come.\n\nAs with any significant development project, challenges will need to be carefully managed, including minimising adverse social, health, safety and environmental impacts while simultaneously fostering positive and tangible change for local communities and other key stakeholders.\n\nThroughout the history of our involvement in the Simandou project, we have maintained regular community consultation designed to maintain dialogue with local communities by addressing questions, concerns and additional opportunities to provide support.\n\nWe are committed to developing the Simandou project in line with internationally recognised environmental, social and governance standards. This includes transparently reporting on impacts of our mining operations, and continuing to work alongside local stakeholders on ways of mitigating these impacts. We recognise the responsibility we are entrusted with and see ourselves as long-term stewards of natural resources. We will continue to work alongside communities to ensure the Simandou project is developed with environmental stewardship and social wellbeing at its core.\n\n【中文对照】西芒杜是一个复杂且具有独特变革意义的项目。从配套的基础设施走廊到该项目将创造的数千个就业岗位，它将对几内亚经济产生积极影响，创造惠及几内亚人民世世代代的机遇与发展潜力。\n\n与任何重大开发项目一样，各种挑战都需要审慎管理，包括最大限度地减少对社会、健康、安全和环境的不利影响，同时为当地社区和其他主要利益相关方带来积极而切实的改变。\n\n在我们参与西芒杜项目的整个历程中，我们始终坚持定期开展社区磋商，通过回应疑问与关切、提供更多支持，与当地社区保持对话。\n\n我们承诺按照国际公认的环境、社会和治理标准开发西芒杜项目，包括透明地报告采矿作业的影响，并继续与当地利益相关方合作寻求缓解这些影响的方法。我们深知肩负的责任，并将自己视为自然资源的长期守护者。我们将继续与社区携手，确保西芒杜项目始终以环境管护和社会福祉为核心。' }
         ],
         gallery: [
           'Simandou mountain range in Guinea, green forested ridges with mining terraces under construction, realistic photography',
@@ -533,7 +533,11 @@
     let figIdx = 0;
     // 图文节奏：第 2、4 节后各穿插一张实拍图（叙事—图—叙事—图—收尾）
     sections.forEach((s, i) => {
-      html += '<section class="im-section"><h3>' + esc(s.h || '') + '</h3><p>' + esc(s.p || '') + '</p></section>';
+      // 按空行拆分为多段（story 中以 \n\n 分段，\n 为同段内换行）
+      const paras = String(s.p || '').split(/\n\s*\n/).map(t => t.trim()).filter(Boolean);
+      html += '<section class="im-section"><h3>' + esc(s.h || '') + '</h3>' +
+        paras.map(t => '<p>' + esc(t).replace(/\n/g, '<br>') + '</p>').join('') +
+        '</section>';
       // 守卫只看回退源是否存在：figUrl 内部已实现「真实图源优先、超出回退生成」
       if ((i === 1 || i === 3) && (gallery[figIdx] || (galleryUrls && galleryUrls[figIdx]))) {
         html += '<figure class="im-figure">' +
@@ -744,8 +748,14 @@
     const denomOf = p => ps.filter(x => x.category === p.category && x.unit === p.unit)
       .reduce((s, x) => s + (x.output != null ? (Number(x.output) || 0) : 0), 0);
 
-    // 按业务大类分组（保持种子顺序，无类别的产品归入「其他产品」）
-    const catOrder = [];
+    // 固定分类顺序（业务规则，不可调整）；固定外分类（如必和必拓「镍」）按种子顺序追加在后
+    const CAT_ORDER = {
+      '力拓': ['铁矿石', '铜', '铝·锂', '工业矿物'],
+      '必和必拓': ['铁矿石', '钾盐', '铜', '冶金煤'],
+      '淡水河谷': ['铁矿石', '铜', '镍', '锰']
+    };
+    const fixedCats = CAT_ORDER[cur.short_name] || [];
+    const catOrder = fixedCats.filter(c => ps.some(p => (p.category || '其他产品') === c));
     ps.forEach(p => {
       const c = p.category || '其他产品';
       if (catOrder.indexOf(c) < 0) catOrder.push(c);
