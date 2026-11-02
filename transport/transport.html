@@ -7,7 +7,7 @@
   <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
   <link rel="stylesheet" href="/css/common.css" />
   <!-- 模块独立样式：仅本模块生效 -->
-  <link rel="stylesheet" href="transport.css" />
+  <link rel="stylesheet" href="transport.css?v=20261102a" />
 </head>
 <body>
   <div class="layout">
@@ -23,19 +23,18 @@
 
     <!-- 主内容区：本模块独立设计 -->
     <main class="main">
-      <!-- 模块头图：标题 + 实时监控状态 -->
+      <!-- 模块头图：标题 + 人工维护状态 -->
       <section class="module-hero">
         <div class="hero-text">
           <div class="hero-title">运输调度管理</div>
-          <div class="hero-desc">车次总览 · 通道模式 · 实时进度跟踪</div>
+          <div class="hero-desc">车次总览 · 通道模式 · 人工节点维护</div>
         </div>
         <div class="hero-right">
           <a class="hero-entry" href="/transport/transport-entry.html">＋ 信息录入</a>
           <div class="hero-live">
-            <span class="live-dot"></span>
-            <span>实时监控中</span>
+            <span>人工维护模式</span>
             <span class="live-sep">·</span>
-            <span>最后更新 <span id="last-update">--:--:--</span></span>
+            <span>最后同步 <span id="last-update">--:--:--</span></span>
           </div>
         </div>
       </section>
@@ -75,8 +74,8 @@
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
   <!-- 共享数据层（车次数据与信息录入页共享） -->
-  <script src="trips-store.js"></script>
+  <script src="trips-store.js?v=20261102b"></script>
   <!-- 模块脚本 -->
-  <script src="transport.js"></script>
+  <script src="transport.js?v=20261102b"></script>
 </body>
 </html>

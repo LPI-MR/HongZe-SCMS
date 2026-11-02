@@ -34,6 +34,8 @@
     '中转站点管理': '/transfer/transfer.html',
     '仓储管理': '/warehouse/warehouse.html',
     '仓储管理 / 库存管理': '/warehouse/warehouse.html',
+    '仓储管理 / 进销存台账': '/warehouse/io.html',
+    '仓储管理 / 保税报关': '/warehouse/customs.html',
     '仓储管理 / 供应商列表': '/warehouse/suppliers.html',
     '汽运车队': '/fleet/fleet.html',
     '钢厂管理': '/steel/steel.html',

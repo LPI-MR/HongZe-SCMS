@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>进销存台账 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 模块独立样式：仅本模块生效 -->
+  <link rel="stylesheet" href="warehouse.css?v=20261102a" />
+</head>
+<body data-portal="warehouse">
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <!-- 模块头图 -->
+      <section class="module-hero">
+        <div class="hero-text">
+          <div class="hero-title">进销存台账</div>
+          <div class="hero-desc">出入库登记 · 每日盘点 · 盘点表导出</div>
+        </div>
+        <div class="hero-right">
+          <a class="hero-entry" href="/warehouse/warehouse.html">← 库存管理</a>
+        </div>
+      </section>
+
+      <!-- 进销存台账（入库/出库流水 + 每日盘点 + 导出） -->
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">每日盘点 · 流水明细</div>
+          <div class="io-toolbar">
+            <input id="io-date" class="search-input io-date" type="date" />
+            <button id="io-export" type="button" class="io-btn ghost">导出盘点表</button>
+            <button id="io-add-out" type="button" class="io-btn out">－ 出库</button>
+            <button id="io-add-in" type="button" class="io-btn in">＋ 入库</button>
+          </div>
+        </div>
+        <div class="io-summary" id="io-summary"></div>
+        <table class="stack-table io-table" id="io-table"></table>
+        <div class="io-sub-title">提货钢厂汇总（当日出库）</div>
+        <table class="stack-table io-table" id="io-steel-table"></table>
+        <div class="io-sub-title">当日流水明细</div>
+        <div class="io-records" id="io-records"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 弹窗遮罩 -->
+  <div class="drawer-mask" id="modal-mask" hidden></div>
+
+  <!-- 入库 / 出库登记弹窗 -->
+  <div class="modal" id="io-modal" hidden role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div class="drawer-title" id="io-title">入库登记</div>
+      <button id="io-close" type="button" class="drawer-close" aria-label="关闭">✕</button>
+    </div>
+    <form id="io-form" class="modal-body io-form">
+      <div class="form-item"><label class="form-label">仓库 <span class="required">*</span></label><select id="io-sup" class="form-input"></select></div>
+      <div class="form-item"><label class="form-label">品类 <span class="required">*</span></label><input id="io-ore" list="io-ore-list" class="form-input" placeholder="品类，如 PB粉" maxlength="20" autocomplete="off" /><datalist id="io-ore-list"></datalist></div>
+      <div class="form-item"><label class="form-label">数量（吨） <span class="required">*</span></label><input id="io-ton" type="number" min="0.1" step="0.1" class="form-input" placeholder="如 1200" /></div>
+      <div class="form-item"><label class="form-label">日期</label><input id="io-date-in" type="date" class="form-input" /></div>
+      <div class="form-item"><label class="form-label">关联订单号</label><input id="io-order" type="text" class="form-input" placeholder="如 PO-20261102-001（选填）" maxlength="40" /></div>
+      <div class="form-item" id="io-steel-item"><label class="form-label">提货钢厂</label><input id="io-steel" type="text" class="form-input" placeholder="如 敬业集团（出库选填）" maxlength="40" /></div>
+      <div class="form-item"><label class="form-label">备注</label><input id="io-note" type="text" class="form-input" placeholder="如 车号 / 船名 / 对接人" maxlength="40" /></div>
+      <div class="io-hint" id="io-hint"></div>
+      <div class="drawer-footer d-footer">
+        <button type="button" id="io-cancel" class="btn-ghost">取消</button>
+        <button type="submit" id="io-submit" class="btn-primary">确认入库</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 模块脚本 -->
+  <script src="io.js?v=20261102d"></script>
+</body>
+</html>

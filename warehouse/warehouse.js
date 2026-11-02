@@ -256,11 +256,50 @@
     `).join('');
   }
 
+  // 品类总计：跨仓库合计库存 + 可提货（非保税库存 + 保税已报关未出库）
+  function renderTotal() {
+    const table = document.getElementById('total-table');
+    if (!table) return;
+    const byOre = {};
+    suppliers.forEach(s => {
+      const bonded = s.type === '保税物流';
+      const availMap = {};
+      if (bonded) cdSummary(s).forEach(r => { availMap[r.ore] = r.avail; });
+      (s.stacks || []).forEach(t => {
+        const o = (t.ore || '').trim() || '未分类';
+        const v = parseTon(t.tonnage);
+        if (!isFinite(v)) return;
+        if (!byOre[o]) byOre[o] = { stock: 0, avail: 0 };
+        byOre[o].stock += v;
+        // 可提货：非保税直接计库存；保税只计已报关未出库
+        byOre[o].avail += bonded ? (availMap[o] || 0) : v;
+      });
+    });
+    const rows = Object.keys(byOre).map(o => ({ ore: o, stock: byOre[o].stock, avail: byOre[o].avail }))
+      .sort((a, b) => b.stock - a.stock);
+    const tStock = rows.reduce((a, r) => a + r.stock, 0);
+    const tAvail = rows.reduce((a, r) => a + r.avail, 0);
+    table.innerHTML = `
+      <thead><tr><th>品类</th><th>总库存（全仓库）</th><th>可提货</th></tr></thead>
+      <tbody>
+        ${rows.length ? rows.map(r => `
+        <tr>
+          <td class="st-name">${esc(r.ore)}</td>
+          <td class="num">${fmtTon(r.stock)}</td>
+          <td class="num ok">${r.avail ? fmtTon(r.avail) : '—'}</td>
+        </tr>`).join('') : '<tr><td colspan="3" class="io-empty">暂无垛位库存数据</td></tr>'}
+        <tr class="io-total">
+          <td>总计</td>
+          <td class="num">${fmtTon(tStock)}</td>
+          <td class="num ok">${fmtTon(tAvail)}</td>
+        </tr>
+      </tbody>`;
+  }
+
   function renderAll() {
     renderKpi();
+    renderTotal();
     renderStock();
-    renderIo();
-    renderCustoms();
   }
 
   /* ==================== 仓库库存实时总览 ==================== */
@@ -433,11 +472,6 @@
 
   function todayStr() { return fmtTime(Date.now()); }
 
-  function supplierName(id) {
-    const s = suppliers.find(x => x.id === id);
-    return s ? s.name : '未知仓库';
-  }
-
   // 垛位库存写回格式：万吨保留 3 位小数（吨取整），保证小批量出入库不丢精度
   function fmtStackTon(t) {
     if (!isFinite(t)) t = 0;
@@ -487,74 +521,6 @@
     return true;
   }
 
-  // 指定日期的出入库汇总
-  function ioSummary(date) {
-    const recs = ioRecords.filter(r => r.date === date);
-    const sum = type => recs.filter(r => r.type === type)
-      .reduce((s, r) => s + (Number(r.tons) || 0), 0);
-    return { recs, inTons: sum('in'), outTons: sum('out') };
-  }
-
-  // 渲染进销存台账（当日 KPI + 分品类盘点表 + 流水明细），日期选择器联动
-  function renderIo() {
-    const dateInput = document.getElementById('io-date');
-    if (!dateInput) return;
-    if (!dateInput.value) dateInput.value = todayStr();
-    const date = dateInput.value;
-    const { recs, inTons, outTons } = ioSummary(date);
-
-    const totalStock = suppliers.reduce((sum, s) => sum + (s.stacks || []).reduce((s2, t) => {
-      const v = parseTon(t.tonnage);
-      return isFinite(v) ? s2 + v : s2;
-    }, 0), 0);
-
-    document.getElementById('io-summary').innerHTML = `
-      <div class="io-kpi"><div class="io-kpi-num">${fmtTon(totalStock)}</div><div class="io-kpi-label">当前剩余库存</div></div>
-      <div class="io-kpi"><div class="io-kpi-num in">+${fmtTon(inTons)}</div><div class="io-kpi-label">${esc(date)} 入库合计</div></div>
-      <div class="io-kpi"><div class="io-kpi-num out">-${fmtTon(outTons)}</div><div class="io-kpi-label">${esc(date)} 出库合计</div></div>
-      <div class="io-kpi"><div class="io-kpi-num">${recs.length}</div><div class="io-kpi-label">当日流水笔数</div></div>`;
-
-    // 当日分品类汇总
-    const byOre = {};
-    recs.forEach(r => {
-      const o = (r.ore || '').trim() || '未分类';
-      byOre[o] = byOre[o] || { in: 0, out: 0 };
-      const v = Number(r.tons) || 0;
-      if (r.type === 'in') byOre[o].in += v; else byOre[o].out += v;
-    });
-    const ores = Object.keys(byOre)
-      .sort((a, b) => (byOre[b].in + byOre[b].out) - (byOre[a].in + byOre[a].out));
-
-    document.getElementById('io-table').innerHTML = `
-      <thead><tr><th>品类</th><th>入库</th><th>出库</th></tr></thead>
-      <tbody>
-        ${ores.length ? ores.map(o => `
-          <tr>
-            <td class="st-name">${esc(o)}</td>
-            <td class="num ${byOre[o].in ? 'in' : ''}">${byOre[o].in ? fmtTon(byOre[o].in) : '—'}</td>
-            <td class="num ${byOre[o].out ? 'out' : ''}">${byOre[o].out ? fmtTon(byOre[o].out) : '—'}</td>
-          </tr>`).join('') + `
-          <tr class="io-total">
-            <td>合计</td>
-            <td class="num in">${fmtTon(inTons)}</td>
-            <td class="num out">${fmtTon(outTons)}</td>
-          </tr>`
-        : '<tr><td colspan="3" class="io-empty">该日暂无出入库记录</td></tr>'}
-      </tbody>`;
-
-    // 当日流水明细
-    document.getElementById('io-records').innerHTML = recs.length
-      ? recs.slice().sort((a, b) => b.createdAt - a.createdAt).map(r => `
-        <div class="io-rec ${r.type}">
-          <span class="io-rec-type">${r.type === 'in' ? '入' : '出'}</span>
-          <span class="io-rec-ore">${esc(r.ore)}</span>
-          <span class="io-rec-ton">${r.type === 'in' ? '+' : '-'}${fmtTon(Number(r.tons) || 0)}</span>
-          <span class="io-rec-sup">${esc(supplierName(r.supId))}</span>
-          <span class="io-rec-note">${esc(r.note || '')}</span>
-        </div>`).join('')
-      : '<div class="stock-empty">当日暂无流水记录</div>';
-  }
-
   /* ---- 入库 / 出库登记弹窗 ---- */
 
   const ioModal = document.getElementById('io-modal');
@@ -564,6 +530,8 @@
   function openIoModal(type, prefill) {
     closeDetail();
     ioType = type === 'out' ? 'out' : 'in';
+    // 提货钢厂仅出库时显示
+    document.getElementById('io-steel-item').style.display = ioType === 'out' ? '' : 'none';
     document.getElementById('io-title').textContent = ioType === 'in' ? '入库登记' : '出库登记';
     document.getElementById('io-submit').textContent = ioType === 'in' ? '确认入库' : '确认出库';
 
@@ -593,7 +561,7 @@
 
   function closeIoModal() {
     ioModal.hidden = true;
-    if (oreModal.hidden && cdModal.hidden) {
+    if (oreModal.hidden) {
       modalMask.hidden = true;
       document.body.classList.remove('drawer-open');
     }
@@ -629,6 +597,8 @@
     const ore = document.getElementById('io-ore').value.trim();
     const tons = Number(document.getElementById('io-ton').value);
     const date = document.getElementById('io-date-in').value || todayStr();
+    const order = (document.getElementById('io-order')?.value || '').trim();
+    const steel = (document.getElementById('io-steel')?.value || '').trim();
     const note = document.getElementById('io-note').value.trim();
 
     if (!sup) { alert('请先在「供应商列表」子模块添加仓库'); return; }
@@ -651,7 +621,7 @@
 
     ioRecords.push({
       id: genId(), supId: sup.id, date, type: ioType, ore,
-      tons: Math.round(tons * 10) / 10, note, createdAt: Date.now()
+      tons: Math.round(tons * 10) / 10, order, steel, note, createdAt: Date.now()
     });
     saveIo(ioRecords);
     save(suppliers);
@@ -659,65 +629,9 @@
     closeIoModal();
   });
 
-  // 工具栏：日期切换 / 录入 / 导出（箭头函数传参，避免事件对象误传）
-  document.getElementById('io-date').addEventListener('change', renderIo);
-  document.getElementById('io-add-in').addEventListener('click', () => openIoModal('in'));
-  document.getElementById('io-add-out').addEventListener('click', () => openIoModal('out'));
+  // 登记弹窗按钮（台账工具栏已迁移至「进销存台账」子模块 io.html）
   document.getElementById('io-close').addEventListener('click', closeIoModal);
   document.getElementById('io-cancel').addEventListener('click', closeIoModal);
-  document.getElementById('io-export').addEventListener('click', () => exportIoCsv());
-
-  // 导出每日盘点表（CSV 带 BOM，Excel 打开不乱码）：分品类汇总 + 剩余库存 + 当日流水
-  function exportIoCsv() {
-    const date = document.getElementById('io-date').value || todayStr();
-    const recs = ioRecords.filter(r => r.date === date).sort((a, b) => a.createdAt - b.createdAt);
-
-    const rows = [['仓储每日盘点表'], ['盘点日期', date], []];
-    rows.push(['品类', '入库(吨)', '出库(吨)']);
-    const byOre = {};
-    let tIn = 0, tOut = 0;
-    recs.forEach(r => {
-      const o = (r.ore || '').trim() || '未分类';
-      byOre[o] = byOre[o] || { in: 0, out: 0 };
-      const v = Number(r.tons) || 0;
-      if (r.type === 'in') { byOre[o].in += v; tIn += v; } else { byOre[o].out += v; tOut += v; }
-    });
-    Object.keys(byOre).forEach(o => rows.push([o, byOre[o].in || '', byOre[o].out || '']));
-    if (Object.keys(byOre).length) rows.push(['合计', tIn || '', tOut || '']);
-
-    rows.push([]);
-    rows.push(['当前剩余库存（仓库 × 品类）']);
-    rows.push(['仓库', '品类', '剩余库存(吨)']);
-    suppliers.forEach(s => {
-      const m = {};
-      (s.stacks || []).forEach(t => {
-        const o = (t.ore || '').trim();
-        if (!o) return;
-        const v = parseTon(t.tonnage);
-        if (isFinite(v)) m[o] = (m[o] || 0) + v;
-      });
-      Object.keys(m).forEach(o => rows.push([s.name, o, m[o]]));
-    });
-
-    rows.push([]);
-    rows.push(['当日流水明细']);
-    rows.push(['仓库', '类型', '品类', '数量(吨)', '备注']);
-    recs.forEach(r => rows.push([
-      supplierName(r.supId), r.type === 'in' ? '入库' : '出库',
-      r.ore, Number(r.tons) || 0, r.note || ''
-    ]));
-
-    const csv = '\uFEFF' + rows.map(row =>
-      row.map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `仓储盘点_${date}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  }
 
   /* ---- 矿石品类管理弹窗 ---- */
 
@@ -734,7 +648,7 @@
 
   function closeOreModal() {
     oreModal.hidden = true;
-    if (ioModal.hidden && cdModal.hidden) {
+    if (ioModal.hidden) {
       modalMask.hidden = true;
       document.body.classList.remove('drawer-open');
     }
@@ -790,7 +704,6 @@
   /* ==================== 保税报关节点（保税物流仓库专用） ==================== */
 
   const CD_KEY = 'hz_warehouse_customs_v1';
-  const CD_THRESHOLD = 20000; // 单品类完成报关门槛（2万吨）
 
   function loadCd() {
     try {
@@ -799,10 +712,6 @@
       if (data && Array.isArray(data.list)) return data.list;
     } catch (e) { /* 忽略 */ }
     return [];
-  }
-
-  function saveCd(list) {
-    try { localStorage.setItem(CD_KEY, JSON.stringify({ list })); } catch (e) { /* 忽略 */ }
   }
 
   let cdRecords = loadCd();
@@ -849,186 +758,7 @@
     return row ? row.avail : 0;
   }
 
-  // 报关流水：报关登记 + 该仓库出库（视为报关出库），最近 30 条
-  function cdFlow(sup) {
-    const recs = [];
-    cdRecords.forEach(r => {
-      if (r.supId !== sup.id) return;
-      recs.push({ ts: r.createdAt, type: 'cd', ore: r.ore, tons: Number(r.tons) || 0, note: r.note, date: r.date });
-    });
-    ioRecords.forEach(r => {
-      if (r.supId !== sup.id || r.type !== 'out') return;
-      recs.push({ ts: r.createdAt, type: 'out', ore: r.ore, tons: Number(r.tons) || 0, note: r.note, date: r.date });
-    });
-    return recs.sort((a, b) => b.ts - a.ts).slice(0, 30);
-  }
-
-  function renderCustoms() {
-    const body = document.getElementById('customs-body');
-    if (!body) return;
-    const bonded = suppliers.filter(s => s.type === '保税物流');
-    if (!bonded.length) {
-      body.innerHTML = '<div class="empty-state">暂无保税物流仓库，报关节点用于保税货物分品类报关台账</div>';
-      return;
-    }
-    body.innerHTML = bonded.map(s => {
-      const rows = cdSummary(s);
-      const sum = k => rows.reduce((a, r) => a + r[k], 0);
-      const trs = rows.length ? rows.map(r => {
-        const pct = Math.min(100, Math.round(r.undeclared / CD_THRESHOLD * 100));
-        const badge = r.undeclared >= CD_THRESHOLD
-          ? '<span class="cd-badge ok">可完成报关</span>'
-          : r.undeclared > 0
-            ? `<span class="cd-badge warn">未达门槛 · 差 ${fmtTon(CD_THRESHOLD - r.undeclared)}</span>`
-            : r.avail > 0
-              ? `<span class="cd-badge done">已报关待出库 ${fmtTon(r.avail)}</span>`
-              : '<span class="cd-badge">已出清</span>';
-        return `
-        <tr>
-          <td class="st-name">${esc(r.ore)}</td>
-          <td class="num">${fmtTon(r.stock)}</td>
-          <td class="num ok">${r.declared ? fmtTon(r.declared) : '—'}</td>
-          <td class="num">${r.exported ? fmtTon(r.exported) : '—'}</td>
-          <td class="num ok">${r.avail ? fmtTon(r.avail) : '—'}</td>
-          <td class="cd-status">
-            <div class="cd-progress-wrap"><div class="cd-progress${pct >= 100 ? ' full' : ''}"><i style="width:${pct}%"></i></div><span class="cd-progress-txt">${fmtTon(r.undeclared)} / ${fmtTon(CD_THRESHOLD)}</span></div>
-            ${badge}
-          </td>
-          <td><button type="button" class="io-btn ghost cd-row-add" data-id="${esc(s.id)}" data-ore="${esc(r.ore)}">登记</button></td>
-        </tr>`;
-      }).join('') : '<tr><td colspan="7" class="io-empty">该仓库暂无垛位库存</td></tr>';
-
-      // 报关流水：报关登记（报）+ 保税出库（出，自动核销已报关量）
-      const flow = cdFlow(s);
-      const flowHtml = flow.length
-        ? flow.map(f => `
-          <div class="io-rec">
-            <span class="io-rec-type ${f.type}">${f.type === 'cd' ? '报' : '出'}</span>
-            <span class="io-rec-ore">${esc(f.ore)}</span>
-            <span class="io-rec-ton">${f.type === 'cd' ? '+' : '-'}${fmtTon(f.tons)}</span>
-            <span class="io-rec-sup">${esc(f.date)} · ${f.type === 'cd' ? '报关登记' : '报关出库'}</span>
-            <span class="io-rec-note">${esc(f.note || '')}</span>
-          </div>`).join('')
-        : '<div class="io-empty">暂无报关流水，登记报关或报关出库后自动生成</div>';
-
-      return `
-      <div class="cd-warehouse">
-        <div class="cd-wh-head">
-          <span class="cd-wh-name">${esc(s.name)}</span>
-          <span class="cd-wh-kpis">
-            <span>在库 <b>${fmtTon(sum('stock'))}</b></span>
-            <span>已报关 <b class="ok">${fmtTon(sum('declared'))}</b></span>
-            <span>可出库 <b class="ok">${fmtTon(sum('avail'))}</b></span>
-            <span>未报关 <b class="warn">${fmtTon(sum('undeclared'))}</b></span>
-          </span>
-          <button type="button" class="io-btn in cd-add" data-id="${esc(s.id)}">＋ 报关登记</button>
-        </div>
-        <table class="stack-table cd-table">
-          <thead><tr><th>品类</th><th>在库量</th><th>已报关</th><th>报关出库</th><th>可出库</th><th>未报关 / 2万吨门槛</th><th>操作</th></tr></thead>
-          <tbody>${trs}</tbody>
-        </table>
-        <div class="io-sub-title">报关流水（登记 / 报关出库）</div>
-        <div class="io-records">${flowHtml}</div>
-      </div>`;
-    }).join('');
-  }
-
-  /* ---- 报关登记弹窗 ---- */
-
-  const cdModal = document.getElementById('cd-modal');
-  const cdForm = document.getElementById('cd-form');
-  let cdSupId = null;
-
-  function openCdModal(supId, ore) {
-    closeDetail();
-    cdSupId = supId;
-    const sup = suppliers.find(x => x.id === supId);
-    const ores = [];
-    if (sup) {
-      (sup.stacks || []).forEach(t => {
-        const o = (t.ore || '').trim();
-        if (o && !ores.includes(o)) ores.push(o);
-      });
-      cdRecords.forEach(r => {
-        if (r.supId !== sup.id) return;
-        const o = (r.ore || '').trim();
-        if (o && !ores.includes(o)) ores.push(o);
-      });
-    }
-    document.getElementById('cd-ore').innerHTML =
-      ores.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('');
-    cdForm.reset();
-    if (ore && ores.includes(ore)) document.getElementById('cd-ore').value = ore;
-    document.getElementById('cd-date').value = todayStr();
-    modalMask.hidden = false;
-    cdModal.hidden = false;
-    document.body.classList.add('drawer-open');
-    updateCdHint();
-  }
-
-  function closeCdModal() {
-    cdModal.hidden = true;
-    if (ioModal.hidden && oreModal.hidden) {
-      modalMask.hidden = true;
-      document.body.classList.remove('drawer-open');
-    }
-  }
-
-  function cdUndeclared(sup, ore) {
-    const row = cdSummary(sup).find(r => r.ore === ore);
-    return row ? row.undeclared : 0;
-  }
-
-  function updateCdHint() {
-    const sup = suppliers.find(x => x.id === cdSupId);
-    const ore = document.getElementById('cd-ore').value;
-    const hint = document.getElementById('cd-hint');
-    if (!sup || !ore) { hint.textContent = ''; return; }
-    const u = cdUndeclared(sup, ore);
-    const t = Number(document.getElementById('cd-ton').value);
-    const after = Math.max(0, u - (isFinite(t) ? t : 0));
-    hint.textContent = `「${ore}」未报关 ${fmtTon(u)}${u >= CD_THRESHOLD ? '，已达 2万吨门槛' : `，未达 2万吨门槛（还差 ${fmtTon(CD_THRESHOLD - u)}）`}，本次登记后剩余未报关 ${fmtTon(after)}`;
-  }
-
-  cdForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const sup = suppliers.find(x => x.id === cdSupId);
-    const ore = document.getElementById('cd-ore').value.trim();
-    const tons = Number(document.getElementById('cd-ton').value);
-    const date = document.getElementById('cd-date').value || todayStr();
-    const note = document.getElementById('cd-note').value.trim();
-
-    if (!sup) return;
-    if (!ore) { document.getElementById('cd-ore').focus(); return; }
-    if (!isFinite(tons) || tons <= 0) { document.getElementById('cd-ton').focus(); return; }
-    const u = cdUndeclared(sup, ore);
-    if (tons > u) {
-      alert(`报关失败：「${ore}」未报关量仅 ${fmtTon(u)}，不能登记 ${fmtTon(tons)}`);
-      return;
-    }
-    cdRecords.push({
-      id: genId(), supId: sup.id, ore, tons: Math.round(tons * 10) / 10,
-      date, note, createdAt: Date.now()
-    });
-    saveCd(cdRecords);
-    renderAll();
-    closeCdModal();
-  });
-
-  ['cd-ore', 'cd-ton'].forEach(id => {
-    document.getElementById(id).addEventListener('input', updateCdHint);
-    document.getElementById(id).addEventListener('change', updateCdHint);
-  });
-
-  document.getElementById('customs-body').addEventListener('click', e => {
-    const row = e.target.closest('.cd-row-add');
-    if (row) { openCdModal(row.getAttribute('data-id'), row.getAttribute('data-ore')); return; }
-    const add = e.target.closest('.cd-add');
-    if (add) openCdModal(add.getAttribute('data-id'));
-  });
-
-  document.getElementById('cd-close').addEventListener('click', closeCdModal);
-  document.getElementById('cd-cancel').addEventListener('click', closeCdModal);
+  /* ---- 报关登记弹窗已迁移至「保税报关」子模块（customs.js） ---- */
 
   // 供应商新增 / 编辑抽屉已迁移至「供应商列表」子模块（suppliers.js）
 
@@ -1042,7 +772,6 @@
     modalMask.hidden = true;
     ioModal.hidden = true;
     oreModal.hidden = true;
-    cdModal.hidden = true;
     document.body.classList.remove('drawer-open');
   }
 
@@ -1053,15 +782,21 @@
     if (e.key !== 'Escape') return;
     if (!ioModal.hidden) closeIoModal();
     else if (!oreModal.hidden) closeOreModal();
-    else if (!cdModal.hidden) closeCdModal();
   });
 
-  // 供应商子模块（其他标签页）修改资料后，本页自动同步刷新
+  // 其他子模块（台账 / 报关 / 供应商）修改数据后，本页自动同步刷新
   window.addEventListener('storage', e => {
-    if (e.key !== STORE_KEY) return;
     try {
-      const data = JSON.parse(e.newValue);
-      if (data && Array.isArray(data.list)) { suppliers = data.list; renderAll(); }
+      if (e.key === STORE_KEY) {
+        const data = JSON.parse(e.newValue);
+        if (data && Array.isArray(data.list)) { suppliers = data.list; renderAll(); }
+      } else if (e.key === IO_KEY) {
+        const data = JSON.parse(e.newValue);
+        if (data && Array.isArray(data.list)) { ioRecords = data.list; renderAll(); }
+      } else if (e.key === CD_KEY) {
+        const data = JSON.parse(e.newValue);
+        if (data && Array.isArray(data.list)) { cdRecords = data.list; renderAll(); }
+      }
     } catch (err) { /* 忽略 */ }
   });
 

@@ -46,15 +46,9 @@
     road:  '<svg viewBox="0 0 24 24"><path d="M3 16V8l7-2 5 3h4.5a1.5 1.5 0 0 1 1.5 1.5V16"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/><path d="M9.3 17.5h5.4"/></svg>',
   };
 
-  // 路线与货类库（用于模拟新增车次）
-  const ROUTES = {
-    rail:  [['淮安南', '郑州北'], ['连云港东', '西安西'], ['新沂', '武汉北'], ['徐州北', '成都北']],
-    inter: [['淮安东', '洛阳西'], ['宿迁', '邯郸南'], ['淮安东', '石家庄南']],
-    road:  [['淮安', '南京'], ['宿迁', '合肥'], ['淮安', '临沂'], ['连云港', '徐州']],
-  };
-  const CARGOS = ['煤炭', '钢材', '化肥', '粮食', '石英砂', '矿粉'];
+  // ===== 工具 =====
 
-  // 共享车次数据（每次 tick 重新 load，同步录入页的修改）
+  // 共享车次数据（人工维护模式：定时重新 load，同步信息录入页的修改）
   let state = store.load();
 
   // 页面状态
@@ -73,7 +67,7 @@
     if (rate == null) return '';
     const text = rate < 0 ? `溢吨 ${Math.abs(rate).toFixed(2)}%` : `亏吨率 ${rate.toFixed(2)}%`;
     const cls = rate > LOSS_THRESHOLD ? 'bad' : 'ok';
-    return ` <span class="loss-rate ${cls}">到货 ${fmtTons(t.actualTons)}吨 · ${text}</span>`;
+    return ` <span class="loss-rate ${cls}">到库 ${fmtTons(t.actualTons)}吨 · ${text}</span>`;
   }
 
   // ===== 工具 =====
@@ -152,6 +146,21 @@
 
       // 按节点下标计数（公铁联运存在两个"到达"节点，须按下标而非名称统计）
       const counts = m.nodes.map((_, i) => list.filter(t => t.nodeIndex === i).length);
+      // 汽运节点吨数：运输中=该车已拉合计；运输完毕=到库合计（人工填报）
+      const nodeTonsHTML = i => {
+        if (key !== 'road') return '';
+        const sub = list.filter(t => t.nodeIndex === i);
+        if (!sub.length) return '';
+        if (i === 1) {
+          const loaded = sub.reduce((s, t) => s + (Number(t.loadedTons) || 0), 0);
+          return loaded ? `<span class="node-tons">已拉 ${fmtTons(loaded)}吨</span>` : '';
+        }
+        if (i === m.nodes.length - 1) {
+          const actual = sub.reduce((s, t) => s + (Number(t.actualTons) || 0), 0);
+          return actual ? `<span class="node-tons">到库 ${fmtTons(actual)}吨</span>` : '';
+        }
+        return '';
+      };
       return `
         <div class="channel-card">
           <div class="channel-head">
@@ -163,19 +172,22 @@
               <div class="node-chip ${counts[i] ? 'active' : ''}">
                 <span class="node-name">${n}</span>
                 <span class="node-count">${counts[i]}</span>
+                ${nodeTonsHTML(i)}
               </div>`).join('')}
           </div>
         </div>`;
     }).join('');
   }
 
-  // ===== 渲染：车次实时进度列表 =====
+  // ===== 渲染：车次进度列表（人工维护）=====
   function tripItemHTML(t) {
     const done = isDone(t);
     // 订单号：已关联则显示可点击链接（点击即查询该订单），否则显示未关联
     const orderPart = t.orderId
       ? `<a class="order-link" data-order="${esc(t.orderId)}" title="点击查询该订单名下车次">订单 ${esc(t.orderId)}</a> · `
       : '<span class="order-none">未关联订单</span> · ';
+    // 已拉吨数（运输中人工填报）；到库吨数与亏吨率由 lossPartHTML 展示
+    const tonHTML = t.loadedTons != null ? ` <span class="trip-tons">已拉 ${fmtTons(t.loadedTons)}吨</span>` : '';
     return `
       <div class="trip-item">
         <div class="trip-info">
@@ -184,7 +196,7 @@
             <span class="mode-badge ${t.mode}">${store.modeName(t)}</span>
             <span class="trip-status ${done ? 'done' : 'running'}">${done ? '已完成' : '进行中'}</span>
           </div>
-          <div class="trip-meta">${orderPart}${esc(t.from)} → ${esc(t.to)} · ${esc(t.cargo)} ${t.tons}吨${lossPartHTML(t)}</div>
+          <div class="trip-meta">${orderPart}${esc(t.from)} → ${esc(t.to)} · ${esc(t.cargo)} ${t.tons}吨${tonHTML}${lossPartHTML(t)}</div>
         </div>
         <div class="trip-stepper">${store.stepperHTML(t)}</div>
         <div class="trip-time">${hhmm(t.time)}</div>
@@ -289,49 +301,11 @@
     renderList();
   });
 
-  // ===== 模拟新增车次（演示用；真实数据由信息录入页产生）=====
-  function spawnTrip() {
-    const modeKey = MODE_KEYS[Math.floor(Math.random() * MODE_KEYS.length)];
-    const routes = ROUTES[modeKey];
-    const [from, to] = routes[Math.floor(Math.random() * routes.length)];
-    state.trips.push({
-      id: store.nextId(state),
-      mode: modeKey,
-      from, to,
-      cargo: CARGOS[Math.floor(Math.random() * CARGOS.length)],
-      tons: modeKey === 'road' ? 20 + Math.floor(Math.random() * 20) : 800 + Math.floor(Math.random() * 2600),
-      nodeIndex: 0,
-      time: Date.now(),
-    });
-  }
-
-  // ===== 实时模拟：定期推进车次节点（接入后端后可改为 WebSocket 推送）=====
-  function tick() {
-    // 重新加载共享数据，同步信息录入页的最新修改
+  // ===== 数据同步（人工维护模式）：定期重载共享数据，不做任何自动推进 =====
+  setInterval(() => {
     state = store.load();
-    const trips = state.trips;
-
-    // 随机推进 1~2 条在途车次；全部完成时必新增车次，保证看板始终有在途动态
-    const running = trips.filter(t => !isDone(t));
-    if (!running.length) {
-      spawnTrip();
-    } else {
-      const push = Math.min(running.length, 1 + (Math.random() < 0.4 ? 1 : 0));
-      for (let i = 0; i < push; i++) {
-        const t = running.splice(Math.floor(Math.random() * running.length), 1)[0];
-        t.nodeIndex += 1;
-        t.time = Date.now();
-      }
-      // 偶尔新增车次，保持看板动态
-      if (trips.length < 18 && Math.random() < 0.25) {
-        spawnTrip();
-      }
-    }
-    store.save(state);
     renderAll();
-  }
-
-  setInterval(tick, 3000);
+  }, 5000);
 
   // 初始渲染
   renderAll();
