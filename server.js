@@ -16,6 +16,7 @@
 'use strict';
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
@@ -59,10 +60,84 @@ function sendFile(res, fp) {
   });
 }
 
+// ===== 实时行情代理（新浪财经公开期货接口） =====
+// 仅允许 nf_ 前缀的国内期货代码，防止任意 URL 代理（SSRF）
+const LIVE_CODE_RE = /^nf_[A-Za-z0-9]{1,12}$/;
+const SINA_HQ_HOST = 'hq.sinajs.cn';
+
+function sendJson(res, code, obj) {
+  res.statusCode = code;
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.end(JSON.stringify(obj));
+}
+
+function proxyFutures(res, params) {
+  const codes = (params.get('codes') || 'nf_I0')
+    .split(',').map(s => s.trim()).filter(s => LIVE_CODE_RE.test(s)).slice(0, 10);
+  if (!codes.length) { sendJson(res, 400, { ok: false, error: 'invalid codes' }); return; }
+
+  const req = https.get({
+    host: SINA_HQ_HOST,
+    path: '/list=' + codes.join(','),
+    headers: {
+      'Referer': 'https://finance.sina.com.cn',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    },
+    timeout: 8000
+  }, (up) => {
+    const chunks = [];
+    up.on('data', c => chunks.push(c));
+    up.on('end', () => {
+      const buf = Buffer.concat(chunks);
+      let text;
+      try { text = new TextDecoder('gbk').decode(buf); }
+      catch (e) { text = buf.toString('latin1'); }   // 字段以数字为主，中文乱码仅影响名称
+
+      const num = s => { const v = parseFloat(s); return isFinite(v) ? v : null; };
+      const quotes = {};
+      codes.forEach(code => {
+        quotes[code] = null;
+        const m = text.match(new RegExp('hq_str_' + code + '="([^"]*)"'));
+        if (!m || !m[1]) return;
+        const f = m[1].split(',');
+        // 新浪国内期货格式：0名称 1时间 2开盘 3最高 4最低 5昨收 6买价 7卖价
+        //                8最新价 9结算 10昨结算 13持仓量 14成交量 17日期
+        const price = num(f[8]);
+        const prevSettle = num(f[10]);
+        if (price == null) return;
+        quotes[code] = {
+          name: f[0] || code,
+          time: (/^\d{6}$/.test(f[1] || '') ? f[1].replace(/(\d{2})(\d{2})(\d{2})/, '$1:$2:$3') : (f[1] || '')),
+          open: num(f[2]), high: num(f[3]), low: num(f[4]),
+          price: price,
+          prevSettle: prevSettle,
+          change: (prevSettle ? Math.round((price - prevSettle) * 100) / 100 : null),
+          changePct: (prevSettle ? Math.round((price - prevSettle) / prevSettle * 10000) / 100 : null),
+          openInterest: num(f[13]),
+          volume: num(f[14]),
+          date: f[17] || ''
+        };
+      });
+      sendJson(res, 200, { ok: true, quotes: quotes, serverTime: new Date().toISOString() });
+    });
+  });
+  req.on('timeout', () => { req.destroy(); sendJson(res, 504, { ok: false, error: 'upstream timeout' }); });
+  req.on('error', () => sendJson(res, 502, { ok: false, error: 'upstream error' }));
+}
+
 const server = http.createServer((req, res) => {
-  let urlPath;
+  // ===== 实时行情代理：转发新浪财经公开期货接口（浏览器跨域无法直连，由本服务端代理） =====
+  const qIdx = req.url.indexOf('?');
+  const urlPath = qIdx === -1 ? req.url : req.url.slice(0, qIdx);
+  if (urlPath === '/api/futures') {
+    proxyFutures(res, new URLSearchParams(qIdx === -1 ? '' : req.url.slice(qIdx + 1)));
+    return;
+  }
+
+  let urlPathDecoded;
   try {
-    urlPath = decodeURIComponent(req.url.split('?')[0]);
+    urlPathDecoded = decodeURIComponent(urlPath);
   } catch (e) {
     res.statusCode = 400;
     res.end('400 Bad Request');
@@ -70,12 +145,12 @@ const server = http.createServer((req, res) => {
   }
 
   // 依序尝试的候选路径
-  const tries = [urlPath];
-  if (urlPath.endsWith('/')) {
-    tries.push(urlPath + 'index.html');
-  } else if (!path.extname(urlPath)) {
-    tries.push(urlPath + '.html');
-    tries.push(urlPath + '/index.html');
+  const tries = [urlPathDecoded];
+  if (urlPathDecoded.endsWith('/')) {
+    tries.push(urlPathDecoded + 'index.html');
+  } else if (!path.extname(urlPathDecoded)) {
+    tries.push(urlPathDecoded + '.html');
+    tries.push(urlPathDecoded + '/index.html');
   }
 
   let i = 0;

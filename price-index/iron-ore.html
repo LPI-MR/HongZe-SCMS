@@ -25,26 +25,44 @@
       <section class="dash-header">
         <div>
           <div class="page-title">铁矿石价格指数</div>
-          <div class="page-desc">数据参考我的钢铁网（Mysteel）：Mysteel 62% 澳粉指数与主要接卸港现货价格，每日更新</div>
+          <div class="page-desc">数据与我的钢铁网（Mysteel）港口现货一致：主要接卸港铁矿石现货价格，每日更新</div>
         </div>
         <div>
           <button class="btn btn-ghost" id="backBtn" type="button">返回价格指数</button>
         </div>
       </section>
 
-      <!-- 指数概览卡片（iron-ore.js 渲染） -->
+      <!-- 实时行情（大商所铁矿石期货主力连续 · server 代理 · 自动刷新） -->
+      <section class="io-live" id="ioLive">
+        <div class="io-live-top">
+          <span class="io-live-ind"><i id="ioLiveDot" class="io-dot"></i>实时行情</span>
+          <span class="io-live-name" id="ioLiveName">大商所 · 铁矿石期货主力连续（基准交割品：61% Fe 进口粉矿）</span>
+          <span class="io-live-note">每 15 秒自动刷新 · 来源：大连商品交易所（经新浪行情接口转发，仅供参考）</span>
+        </div>
+        <div class="io-live-main" id="ioLiveBody">
+          <div class="io-live-loading">正在获取实时行情…</div>
+        </div>
+      </section>
+
+      <!-- 价格概览卡片（iron-ore.js 渲染） -->
       <section class="kpi-grid" id="kpiGrid"></section>
 
-      <!-- 近七天指数趋势图（SVG 折线，零依赖） -->
+      <!-- 近七日价格走势图（SVG 折线，零依赖；支持搜索任一港口 × 品种） -->
       <section class="chart-card chart-card-full">
         <div class="chart-head">
-          <div class="chart-title">近七天价格指数趋势</div>
-          <div class="chart-sub">Mysteel 62% Fe 澳粉指数（美元/干吨，CIF 中国）</div>
+          <div class="chart-title" id="trendTitle">近七日价格走势</div>
+          <div class="chart-sub" id="trendSub">港口现货成交/提货价（元/湿吨，含税）</div>
+          <div class="io-search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input type="text" id="trendSearch" list="trendList" placeholder="搜索港口 / 品种查看趋势（如：黄骅港 PB粉）" />
+            <datalist id="trendList"></datalist>
+            <button id="trendSearchClear" type="button" title="重置为默认品种" style="display:none;">✕</button>
+          </div>
         </div>
         <svg id="trendChart" viewBox="0 0 1000 320" preserveAspectRatio="xMidYMid meet" role="img"></svg>
         <div class="chart-foot">
-          <span class="legend-dot"></span>日度指数
-          <span class="foot-source">数据来源：我的钢铁网（Mysteel）· 更新时间 2026-10-20</span>
+          <span class="legend-dot"></span><span id="trendFootLabel">日度价格</span>
+          <span class="foot-source">数据来源：我的钢铁网（Mysteel）· 更新时间 2026-11-02</span>
         </div>
       </section>
 
@@ -53,6 +71,12 @@
         <div class="chart-head">
           <div class="chart-title">各港口铁矿石近七日价格</div>
           <div class="chart-sub">港口现货成交/提货价（元/湿吨，含税），格内小字为较前一日涨跌</div>
+          <div class="io-search">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+            <input type="text" id="portSearch" placeholder="搜索港口或品种（如：黄骅港、PB粉）" />
+            <button id="portSearchClear" type="button" title="清空" style="display:none;">✕</button>
+            <span class="io-search-count" id="portSearchCount"></span>
+          </div>
         </div>
         <div class="table-scroll">
           <table class="price-table" id="priceTable"></table>

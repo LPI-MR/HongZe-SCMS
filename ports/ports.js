@@ -6,7 +6,7 @@
   'use strict';
 
   var STORAGE_KEY = 'hz_ports_data';
-  var VERSION = 'v13';   // v13：种子补全黄骅港/天津港详情字段（指标/基本信息/港区分部），升级版本使旧缓存自动重置
+  var VERSION = 'v17';   // v17：既有通道新增公铁联运邢台南站线路（93 元/吨）
 
   // ===== 种子数据（黄骅港 / 天津港）=====
   var SEED = [
@@ -58,6 +58,12 @@
           positioning: '为补充性港区，主要承担煤炭、建材及部分散杂货运输，因受泥沙淤积影响，船舶靠泊受限，发展空间相对有限。',
           facilities: '建有煤炭泊位、建材泊位及部分通用散杂货泊位等。'
         }
+      ],
+      channels: [
+        { channel: '黄骅港铁路直达', route: '黄骅港经邯黄铁路、沧港铁路、京沪、京广铁路到达武安保税', via: '—', cost: '91.6 元/吨' },
+        { channel: '黄骅港公铁联运', route: '黄骅港经邯黄铁路到达曹庄镇站后经汽运运输至武安保税', via: '曹庄镇站', cost: '87 元/吨' },
+        { channel: '黄骅港公铁联运', route: '黄骅港经邯黄铁路到达邢台南站后经汽运运输至武安保税', via: '邢台南站', cost: '93 元/吨' },
+        { channel: '黄骅港汽运直达', route: '黄骅港汽运运输至武安保税', via: '—', cost: '81 元/吨' }
       ]
     },
     {
@@ -254,10 +260,13 @@
         : '')
       + '</section>'
 
-      // 核心指标
+      // 核心指标（黄骅港「年吞吐量」卡可点击 → 跳转吞吐量走势详情页）
       + '<section class="metric-grid">' + (p.metrics || []).map(function (m) {
         var longCls = String(m.value).length > 8 ? ' long' : '';
-        return '<div class="metric-card"><div class="metric-label">' + esc(m.label) + '</div>'
+        var jump = (p.id === 'port-huanghua' && m.label === '年吞吐量');
+        return '<div class="metric-card' + (jump ? ' metric-jump' : '') + '"'
+          + (jump ? ' data-jump="/ports/port-throughput.html" title="查看历年吞吐量走势"' : '')
+          + '><div class="metric-label">' + esc(m.label) + '</div>'
           + '<div class="metric-value' + longCls + '">' + esc(m.value)
           + (m.unit ? '<span class="metric-unit">' + esc(m.unit) + '</span>' : '') + '</div>'
           + (m.note ? '<div class="metric-note">' + esc(m.note) + '</div>' : '') + '</div>';
@@ -269,12 +278,23 @@
       + kvCard(p, 'capacity', '集疏运体系', p.capacity)
       + '</div>'
 
+      // 既有通道（仅黄骅港配置；通栏表格，位于港区分部上方）
+      + (p.channels && p.channels.length ? channelsCard(p.channels) : '')
+
       // 港区分部（通栏；配置了俯瞰图数据的港口附「港区介绍/卫星俯瞰地图」切换）
       + zonesCard(p, p.zones, pmData);
 
     pmPendingData = pmData;   // 地图懒加载：首次切到「卫星俯瞰地图」时初始化
     pmPendingPort = p.name;
     pmInitedFor = null;
+
+    // 指标卡跳转（黄骅港年吞吐量 → 走势详情页）
+    var jumpCard = detailPanel.querySelector('.metric-jump');
+    if (jumpCard) {
+      jumpCard.addEventListener('click', function () {
+        location.href = jumpCard.dataset.jump;
+      });
+    }
   }
 
   function kvCard(p, key, title, rows) {
@@ -285,6 +305,27 @@
         return '<div class="kv-row"><span class="kv-label">' + esc(r.label) + '</span>'
           + '<span class="kv-value">' + esc(r.value) + '</span></div>';
       }).join('') + '</div>'
+      + '</section>';
+  }
+
+  // 既有通道（通栏表格：通道 / 路线 / 中转站点 / 综合运输费用；连续相同通道合并单元格）
+  function channelsCard(rows) {
+    var body = '<thead><tr><th style="width:130px;">通道</th><th>路线</th><th style="width:110px;">中转站点</th><th style="width:150px;">综合运输费用（含税）</th></tr></thead>'
+      + '<tbody>' + rows.map(function (c, i) {
+        var dup = i > 0 && rows[i - 1].channel === c.channel;
+        var span = 1;
+        if (!dup) {
+          for (var j = i + 1; j < rows.length && rows[j].channel === c.channel; j++) span++;
+        }
+        return '<tr>'
+          + (dup ? '' : '<td class="zt-name" rowspan="' + span + '">' + esc(c.channel) + '</td>')
+          + '<td>' + esc(c.route) + '</td>'
+          + '<td>' + esc(c.via) + '</td>'
+          + '<td>' + esc(c.cost) + '</td></tr>';
+      }).join('') + '</tbody>';
+    return '<section class="card zones-card">'
+      + '<div class="card-head"><div class="card-title">既有通道</div></div>'
+      + '<table class="zone-table cost-table">' + body + '</table>'
       + '</section>';
   }
 

@@ -132,6 +132,15 @@
 .metric-value .metric-unit { font-size: 13px; font-weight: 400; color: var(--gray-500); margin-left: 4px; }
 .metric-note { font-size: 12px; color: var(--gray-400); margin-top: 5px; }
 
+/* 可跳转指标卡（黄骅港年吞吐量 → 走势详情页） */
+.metric-jump { cursor: pointer; transition: all .18s ease; position: relative; }
+.metric-jump:hover { border: 1px solid #2E6BE6; box-shadow: 0 8px 20px -12px rgba(46, 107, 230, .5); transform: translateY(-1px); }
+.metric-jump::after {
+  content: '走势 ↗';
+  position: absolute; top: 14px; right: 16px;
+  font-size: 11px; color: #2E6BE6; opacity: .75;
+}
+
 /* ===== 信息分区四宫格 ===== */
 .section-grid {
   display: grid;
@@ -198,8 +207,11 @@
   color: var(--gray-800);
   white-space: nowrap;
   text-align: center;
-  vertical-align: middle;
 }
+
+/* 既有通道表格（按已删「既有通道运输成本」表格样式：全表居中，行底色白色） */
+.zone-table.cost-table th, .zone-table.cost-table td { text-align: center; vertical-align: middle; }
+.zone-table.cost-table tbody tr:nth-child(even) td { background: #fff; }
 
 /* ===== 港区分部：港区介绍 / 卫星俯瞰地图切换 ===== */
 .zv-tabs {

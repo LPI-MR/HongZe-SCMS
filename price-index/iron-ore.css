@@ -11,14 +11,17 @@
   margin-bottom: var(--space-md);
 }
 
+/* 卡片头部：标题 + 副标题 + 工具（搜索/切换）自动换行 */
+.chart-head { flex-wrap: wrap; row-gap: 8px; }
+
 .dash-header .page-desc {
   margin-top: var(--space-xs);
   font-size: 14px;
   color: var(--gray-500);
 }
 
-/* 指数概览：4 张横排（覆盖 common.css 的 3 列栅格） */
-.kpi-grid { grid-template-columns: repeat(4, 1fr); }
+/* 价格概览：2 张横排（覆盖 common.css 的 3 列栅格），与下方趋势图卡片保持间距 */
+.kpi-grid { grid-template-columns: repeat(2, 1fr); margin-bottom: 22px; }
 
 @media (max-width: 1200px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
@@ -220,3 +223,99 @@
 .price-table td.sum-chg.up { color: #F53F3F; }
 .price-table td.sum-chg.down { color: #00B42A; }
 .price-table td.sum-chg.flat { color: var(--gray-500, #86909C); }
+
+/* ===== 实时行情条（大商所期货主力连续 · server.js 代理转发） ===== */
+.io-live {
+  background: #fff;
+  border: 1px solid var(--gray-300, #E5E6EB);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: var(--space-md);
+  box-shadow: var(--shadow-card, 0 1px 4px rgba(0, 0, 0, .04));
+}
+.io-live-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.io-live-ind { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--gray-800, #1D2129); }
+.io-dot { width: 8px; height: 8px; border-radius: 50%; background: #C9CDD4; display: inline-block; }
+.io-dot.ok { background: #00B42A; animation: ioPulse 1.6s ease-in-out infinite; }
+@keyframes ioPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+.io-live-name { font-size: 13px; color: var(--gray-700, #4E5969); }
+.io-live-note { margin-left: auto; font-size: 12px; color: var(--gray-500, #86909C); }
+.io-live-main { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+.io-live-loading, .io-live-error { font-size: 13px; color: var(--gray-500, #86909C); padding: 6px 0; }
+.io-live-error { color: var(--color-danger, #F53F3F); }
+.io-price { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.io-price.up { color: var(--color-danger, #F53F3F); }
+.io-price.down { color: var(--color-success, #00B42A); }
+.io-price.flat { color: var(--gray-800, #1D2129); }
+.io-unit { font-size: 12px; color: var(--gray-500, #86909C); margin-left: 6px; }
+.io-chg { font-size: 14px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #F7F8FA; font-variant-numeric: tabular-nums; }
+.io-chg.up { color: var(--color-danger, #F53F3F); background: #FFECE8; }
+.io-chg.down { color: var(--color-success, #00B42A); background: #E8FFEA; }
+.io-chg.flat { color: var(--gray-600, #4E5969); }
+.io-stats { display: flex; gap: 22px; flex-wrap: wrap; }
+.io-stat { display: flex; flex-direction: column; gap: 3px; }
+.io-stat .k { font-size: 11.5px; color: var(--gray-500, #86909C); }
+.io-stat .v { font-size: 14px; font-weight: 600; color: var(--gray-800, #1D2129); font-variant-numeric: tabular-nums; }
+@media (max-width: 900px) {
+  .io-live-note { display: none; }
+  .io-stats { gap: 14px; }
+}
+
+/* ===== 价格表搜索栏 ===== */
+.io-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+.io-search svg {
+  position: absolute;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: var(--gray-400, #C9CDD4);
+  stroke-width: 2;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+.io-search input {
+  border: 1px solid var(--gray-300, #E5E6EB);
+  border-radius: 8px;
+  padding: 7px 30px 7px 30px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--gray-800, #1D2129);
+  background: #fff;
+  outline: none;
+  width: 220px;
+  transition: border-color .15s ease, width .2s ease;
+}
+.io-search input:focus { border-color: var(--color-primary, #2E6BE6); width: 260px; }
+.io-search input::placeholder { color: var(--gray-400, #C9CDD4); }
+.io-search button {
+  position: absolute;
+  right: 6px;
+  border: none;
+  background: none;
+  color: var(--gray-400, #C9CDD4);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+.io-search button:hover { color: var(--gray-700, #4E5969); background: #F2F3F8; }
+.io-search-count { font-size: 12px; color: var(--gray-500, #86909C); margin-left: 8px; white-space: nowrap; }
+
+/* 搜索无结果 */
+.price-table td.port-empty {
+  text-align: center;
+  color: var(--gray-400, #C9CDD4);
+  font-size: 13px;
+  padding: 26px 0;
+}
+
+@media (max-width: 900px) {
+  .io-search { margin-left: 0; width: 100%; }
+  .io-search input { width: 100%; }
+}
