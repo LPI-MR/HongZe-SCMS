@@ -3,6 +3,13 @@
    公共变量 / 布局 / 导航 / KPI 基础风格由 /css/common.css 统一提供
    ============================================================ */
 
+/* 提货钢厂汇总：明细条目（品类 · 数量 · 仓库 · 时间） */
+.steel-items { display: flex; flex-direction: column; gap: 4px; }
+
+.steel-item { font-size: 12px; color: var(--gray-600); }
+
+.steel-item b { color: var(--color-danger); font-weight: 600; }
+
 /* ===== 模块头图（与 ledger-header 白底风格一致） ===== */
 .module-hero {
   background: none;

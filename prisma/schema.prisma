@@ -1,0 +1,57 @@
+// HongZe-SCMS 数据库结构(唯一事实来源)
+//
+// 修改结构的流程(全体成员必须遵守,禁止手动改库):
+//   1. 修改本文件
+//   2. npx prisma migrate dev --name <描述性名称>   ← 自动生成迁移文件并应用到本地库
+//   3. 将 prisma/migrations/ 一并提交到 GitHub
+//   4. 其他成员 git pull 后执行 npx prisma migrate dev 即可同步结构
+//
+// ⚠ 迁移文件一旦提交并被他人使用,请勿修改或删除,只能追加新迁移。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ↓↓↓ 以下为跑通流程用的示例模型,请按业务需求逐步替换/扩充 ↓↓↓
+// ============================================================
+
+// 系统用户(登录账号)
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique // 登录名
+  password  String // 存储密码哈希,禁止存明文
+  name      String // 显示名称
+  role      String   @default("staff") // 角色: staff | manager | admin
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+// 客户
+model Customer {
+  id       Int    @id @default(autoincrement())
+  name     String @unique // 客户名称
+  contact  String? // 联系人
+  phone    String? // 联系电话
+  region   String? // 所属区域
+  note     String? // 备注
+
+  @@map("customers")
+}
+
+// 商品(大宗商品品种)
+model Commodity {
+  id       Int    @id @default(autoincrement())
+  code     String @unique // 商品编码,如 IRON_ORE
+  name     String // 商品名称,如 铁矿石
+  unit     String @default("吨") // 计量单位
+  note     String?
+
+  @@map("commodities")
+}

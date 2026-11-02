@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>港口信息 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 按钮与输入组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务流程模块样式：步骤条 / 折叠面板 / 表单网格 / 校验与摘要 -->
+  <link rel="stylesheet" href="flow.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 订单不存在状态（由 order-port.js 控制） -->
+      <div class="flow-panel" id="missing" hidden>
+        <div class="empty-box">
+          <div class="empty-title">订单不存在</div>
+          <div class="empty-desc">该订单可能已被删除，请返回工作台确认。</div>
+          <a class="btn-primary" href="../business.html">返回工作台</a>
+        </div>
+      </div>
+
+      <!-- 四步流程步骤条：第 1 步已完成，当前第 2 步 -->
+      <div class="flow-steps" id="steps" hidden>
+        <a class="step done" id="step-back"><span class="idx">1</span>录入订单</a>
+        <span class="step-line done"></span>
+        <span class="step current"><span class="idx">2</span>港口信息</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">3</span>运力方案</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">4</span>运输方案</span>
+      </div>
+
+      <!-- 页面头部：标题 + 已自动保存草稿 -->
+      <div class="form-head" id="head" hidden>
+        <div>
+          <div class="form-title">港口信息</div>
+          <div class="form-sub">录入订单关联港口的拥堵、装卸与泊位情况</div>
+        </div>
+        <span class="saved-tip" id="saved-tip" hidden>✓ 已自动保存草稿</span>
+      </div>
+
+      <!-- 港口信息面板 -->
+      <section class="flow-collapse open" id="panel" hidden>
+        <button type="button" class="collapse-head" data-collapse>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          <span>港口信息</span>
+          <span class="head-extra" id="cong-badge"></span>
+          <span class="head-extra" id="sum-port">未填写</span>
+        </button>
+        <div class="collapse-body">
+          <div class="fgrid">
+            <div class="field">
+              <label class="field-label">港口名称</label>
+              <input class="field-input" data-field="portName" placeholder="如：黄骅港" style="background:var(--gray-200)" />
+              <div class="hint">自动联动订单预计到达港口</div>
+            </div>
+            <div class="field">
+              <label class="field-label">拥堵情况</label>
+              <div class="opt-group" id="cong-group"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">装卸效率</label>
+              <input class="field-input" data-field="efficiency" placeholder="如：2500 吨/小时" />
+            </div>
+            <div class="field">
+              <label class="field-label">等待时间（小时）</label>
+              <input class="field-input" type="number" data-field="waitHours" placeholder="如：12" />
+            </div>
+            <div class="field">
+              <label class="field-label">码头</label>
+              <input class="field-input" data-field="wharf" placeholder="如：黄骅港20万吨码头" />
+            </div>
+            <div class="field">
+              <label class="field-label">泊位</label>
+              <input class="field-input" data-field="berth" placeholder="如：20 万吨级泊位 1 个、10 万吨级泊位 2 个" />
+            </div>
+            <div class="field span-2">
+              <label class="field-label">堆场</label>
+              <textarea class="field-input" data-field="yard" rows="3" placeholder="如：堆场容量 50 万吨，当前空闲 20 万吨" style="resize:vertical;min-height:70px"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 关联订单关键信息 -->
+      <div class="flow-panel" id="info-panel" hidden>
+        <div class="panel-head">
+          <span class="panel-title">关联订单关键信息</span>
+        </div>
+        <div class="info-grid" id="info-grid"></div>
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="flow-footer" id="footer" hidden>
+        <a class="btn-ghost" id="btn-prev">← 上一步</a>
+        <button type="button" class="btn-primary" id="btn-next">保存并下一步 →</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- 全局提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 业务流程共享数据层 -->
+  <script src="flow-data.js"></script>
+  <!-- 港口录入脚本 -->
+  <script src="order-port.js"></script>
+</body>
+</html>

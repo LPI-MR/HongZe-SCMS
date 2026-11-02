@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>运力方案 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 按钮与输入组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务流程模块样式：步骤条 / 折叠面板 / 表单网格 / 校验与摘要 -->
+  <link rel="stylesheet" href="flow.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 订单不存在状态（由 order-capacity.js 控制） -->
+      <div class="flow-panel" id="missing" hidden>
+        <div class="empty-box">
+          <div class="empty-title">订单不存在</div>
+          <div class="empty-desc">该订单可能已被删除，请返回工作台确认。</div>
+          <a class="btn-primary" href="../business.html">返回工作台</a>
+        </div>
+      </div>
+
+      <!-- 四步流程步骤条：前两步已完成，当前第 3 步 -->
+      <div class="flow-steps" id="steps" hidden>
+        <a class="step done" id="step-back-form"><span class="idx">1</span>录入订单</a>
+        <span class="step-line done"></span>
+        <a class="step done" id="step-back-port"><span class="idx">2</span>港口信息</a>
+        <span class="step-line done"></span>
+        <span class="step current"><span class="idx">3</span>运力方案</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">4</span>运输方案</span>
+      </div>
+
+      <!-- 页面头部：标题 + 已自动保存 + 完成 / 导出操作 -->
+      <div class="form-head" id="head" hidden>
+        <div>
+          <div class="form-title">运力方案</div>
+          <div class="form-sub">订单 <span id="head-mono" style="font-family:monospace">—</span> · <span id="head-cargo">—</span></div>
+        </div>
+        <div class="form-head-ops">
+          <span class="saved-tip" id="saved-tip" hidden>✓ 已自动保存</span>
+          <button type="button" class="btn-ghost js-pdf">下载 PDF</button>
+          <button type="button" class="btn-primary js-complete">完成方案</button>
+        </div>
+      </div>
+
+      <!-- 核心指标：总运费 / 运输时间 / 货物分配 / 总闲置运力 -->
+      <div class="metric-grid" id="metrics" hidden>
+        <div class="metric-card">
+          <div class="metric-label">总运费</div>
+          <div class="metric-value c-blue" id="m-freight">—</div>
+          <div class="metric-note" id="m-freight-note">未填写运输量</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">运输时间</div>
+          <div class="metric-value c-purple"><span id="m-lead">0</span><span class="unit">天</span></div>
+          <div class="metric-note">关键路径（最长时效）</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">货物分配</div>
+          <div class="metric-value" id="m-alloc">0<span class="unit">%</span></div>
+          <div class="alloc-bar" id="alloc-bar"><i id="alloc-fill" style="width:0%"></i></div>
+          <div class="metric-note" id="m-alloc-note">请先录入货物总量</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">总闲置运力</div>
+          <div class="metric-value c-green"><span id="m-idle">0</span><span class="unit">吨/天</span></div>
+          <div class="metric-note" id="m-idle-note">铁路 0 · 公路 0</div>
+        </div>
+      </div>
+
+      <!-- 铁路运输：铁路直达 + 公铁联运 -->
+      <section class="flow-panel" id="rail-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">铁路运输</span>
+          <span class="panel-sub">铁路直达 · 公铁联运</span>
+        </div>
+        <div class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>铁路直达</span>
+            <span class="head-extra" id="count-direct"></span>
+          </button>
+          <div class="collapse-body">
+            <div class="route-list" id="direct-list"></div>
+            <button type="button" class="add-route-btn" data-add="direct">＋ 添加铁路直达路线</button>
+          </div>
+        </div>
+        <div class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>公铁联运</span>
+            <span class="head-extra" id="count-transit"></span>
+          </button>
+          <div class="collapse-body">
+            <div class="route-list" id="transit-list"></div>
+            <button type="button" class="add-route-btn" data-add="transit">＋ 添加公铁联运路线</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 公路运输：公路直达 -->
+      <section class="flow-panel" id="road-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">公路运输</span>
+          <span class="panel-sub">公路直达</span>
+        </div>
+        <div class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>公路直达</span>
+            <span class="head-extra" id="count-road"></span>
+          </button>
+          <div class="collapse-body">
+            <div class="route-list" id="road-list"></div>
+            <button type="button" class="add-route-btn" data-add="road">＋ 添加公路直达路线</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 底部操作栏 -->
+      <div class="flow-footer" id="footer" hidden>
+        <a class="btn-ghost" id="btn-prev">← 上一步</a>
+        <div style="display:flex;gap:12px">
+          <button type="button" class="btn-ghost js-pdf">下载 PDF</button>
+          <button type="button" class="btn-primary js-complete">完成方案</button>
+          <a class="btn-ghost" id="btn-detail">订单详情</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 完成方案浮层（由 order-capacity.js 控制） -->
+  <div class="modal-mask" id="done-mask" hidden>
+    <div class="modal" style="text-align:center">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--color-success);color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">✓</div>
+      <div class="modal-title">运输组织方案已完成</div>
+      <div class="modal-desc">订单 <span id="done-mono" style="font-family:monospace">—</span> 状态更新为 <span style="color:var(--color-warning);font-weight:600">待确认</span></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost js-keep" style="flex:1">继续修改</button>
+        <button type="button" class="btn-primary js-pdf" style="flex:1">下载 PDF</button>
+      </div>
+      <a class="btn-primary" id="btn-goto-detail" style="width:100%">进入订单详情</a>
+      <a href="../business.html" style="display:inline-block;margin-top:10px;font-size:13px;color:var(--gray-500)">返回工作台</a>
+    </div>
+  </div>
+
+  <!-- 打印导出区域（window.print 触发，屏幕上隐藏） -->
+  <div class="print-area" id="print-area">
+    <div class="rpt-title">运输组织方案报告</div>
+    <div class="rpt-sub" id="rpt-sub"></div>
+    <h2 id="rpt-h-order">一、订单信息</h2>
+    <div class="rpt-kv" id="rpt-order-kv"></div>
+    <div id="rpt-port-block">
+      <h2 id="rpt-h-port">二、港口信息</h2>
+      <div class="rpt-kv" id="rpt-port-kv"></div>
+    </div>
+    <h2 id="rpt-h-rail">三、铁路运力信息</h2>
+    <table>
+      <thead>
+        <tr><th>通道</th><th>起点</th><th>中转</th><th>终点</th><th>运力（吨/天）</th><th>计划运输量（吨）</th><th>单位运费（元/吨）</th><th>时效（天）</th><th>承运商</th></tr>
+      </thead>
+      <tbody id="rpt-rail-rows"></tbody>
+    </table>
+    <h2 id="rpt-h-road">四、公路运力信息</h2>
+    <table>
+      <thead>
+        <tr><th>通道</th><th>起点</th><th>终点</th><th>运力（吨/天）</th><th>计划运输量（吨）</th><th>单位运费（元/吨）</th><th>时效（天）</th><th>承运商</th></tr>
+      </thead>
+      <tbody id="rpt-road-rows"></tbody>
+    </table>
+    <h2 id="rpt-h-metric">五、核心指标</h2>
+    <div class="rpt-metrics" id="rpt-metrics"></div>
+  </div>
+
+  <!-- 全局提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 业务流程共享数据层 -->
+  <script src="flow-data.js"></script>
+  <!-- 运力方案脚本 -->
+  <script src="order-capacity.js"></script>
+</body>
+</html>

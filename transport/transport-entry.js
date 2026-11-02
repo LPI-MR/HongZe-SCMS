@@ -46,6 +46,7 @@
     pPreview: $('p-preview'),
     pNode: $('p-node'),
     pTime: $('p-time'),
+    pLoaded: $('p-loaded'),
     pActual: $('p-actual'),
     pNote: $('p-note'),
     nId: $('n-id'),
@@ -143,6 +144,17 @@
     const nodeIndex = Number(els.pNode.value);
     const nodeTime = new Date(els.pTime.value).getTime();
 
+    // 已拉吨数（选填）：运输中已拉重量
+    const loadedRaw = els.pLoaded.value.trim();
+    let loadedValue = null;
+    if (loadedRaw !== '') {
+      loadedValue = Number(loadedRaw);
+      if (isNaN(loadedValue) || loadedValue < 0) {
+        toast('已拉吨数格式不正确', 'error');
+        return;
+      }
+    }
+
     // 实际到货重量（选填）：填写时校验并更新车次
     const actualRaw = els.pActual.value.trim();
     let actualValue = null;
@@ -156,6 +168,7 @@
 
     trip.nodeIndex = nodeIndex;
     trip.time = nodeTime;
+    if (loadedValue != null) trip.loadedTons = loadedValue;
     if (actualValue != null) trip.actualTons = actualValue;
     store.save(state);
 
@@ -167,13 +180,14 @@
     store.pushLog({
       time: Date.now(),
       tripId: trip.id,
-      action: `进度上报：${nodes[nodeIndex]}${actualValue != null ? ` · 到货 ${actualValue}吨` : ''}${rateText}`,
+      action: `进度上报：${nodes[nodeIndex]}${loadedValue != null ? ` · 已拉 ${loadedValue}吨` : ''}${actualValue != null ? ` · 到货 ${actualValue}吨` : ''}${rateText}`,
       note: note || '',
     });
 
     els.pNote.value = '';
     els.pTime.value = nowLocal();
-    // 已录过到货重量则回显，便于核对
+    // 已录过则回显，便于核对
+    els.pLoaded.value = trip.loadedTons == null ? '' : trip.loadedTons;
     els.pActual.value = trip.actualTons == null ? '' : trip.actualTons;
     toast(`车次 ${trip.id} 已更新至「${nodes[nodeIndex]}」`);
     refreshTripSelect();
