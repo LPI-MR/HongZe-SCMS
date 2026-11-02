@@ -920,6 +920,9 @@ textarea.field-input {
   margin-bottom: var(--space-lg);
 }
 
+/* 四卡变体（业务管理板块首页专属统计） */
+.portal-stats.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
 @media (max-width: 900px) {
   .portal-stats { grid-template-columns: 1fr; }
 }
@@ -953,6 +956,13 @@ textarea.field-input {
 }
 
 .portal-feature:hover { border-color: var(--color-primary); }
+
+/* 可点击功能卡（a 标签形态，如板块首页功能入口）：去除链接默认样式 */
+a.portal-feature {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
 
 .feature-idx {
   width: 24px;

@@ -1,16 +1,8 @@
 /* ============================================================
-   ocean 模块独立样式（仅海运管理模块生效）
+   海运管理 · 海运综合台账（模块独立样式，仅海运管理模块生效）
    公共变量 / 布局 / 导航 / 卡片等风格由 /css/common.css 统一提供
-   布局骨架与 mine / contracts 模块风格保持一致，类名独立定义避免跨模块耦合
+   行展开详情、港口现货联动子表、港口胶囊筛选为本模块特有交互
    ============================================================ */
-
-/* 按钮 / 页面标题 / 统计卡 / 检索卡 / 列表卡 / 分页 / 抽屉骨架等
-   通用组件样式已上收至 /css/common.css 组件层，本模块仅保留航次特有定义 */
-
-/* ===== 航次检索（基础样式由 common.css 组件层提供）===== */
-.search-form {
-  grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1.2fr) minmax(140px, 1fr) minmax(130px, 1fr) auto;
-}
 
 /* 禁用 / 只读输入（矿山联动后推荐装货港只读展示） */
 .field-input:disabled,
@@ -23,12 +15,52 @@
 /* 航次列表操作按钮：单一主操作按钮推到最右（覆盖组件层多按钮间距规则） */
 .ledger-banner .banner-action { margin-left: auto; }
 
-/* ===== 航次列表表格（基础样式由 common.css 组件层提供）===== */
-.ledger-table { min-width: 1240px; }      /* 13 列最小宽度，窄屏时横向滚动 */
+/* ===== 航次综合台账表格（基础样式由 common.css 组件层提供）===== */
+.ledger-table { min-width: 1160px; }      /* 10 列最小宽度，窄屏时横向滚动 */
 
-/* 列对齐与列宽（航次列表特有列） */
-.ledger-table .col-code { width: 96px; font-variant-numeric: tabular-nums; }
-.ledger-table .col-action { width: 140px; text-align: center; }
+/* 列对齐与列宽（综合台账特有列；col-num / col-date 基础对齐由 common.css 提供） */
+.ledger-table .col-expand { width: 44px; text-align: center; }
+.ledger-table .col-code { width: 92px; font-variant-numeric: tabular-nums; }
+.ledger-table .col-route { min-width: 210px; }
+.ledger-table .col-cargo { min-width: 150px; }
+.ledger-table .col-date { min-width: 190px; white-space: nowrap; }
+.ledger-table .col-action { width: 150px; text-align: center; }
+
+/* ===== 行展开交互（主行 + 详情行） ===== */
+.row-expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--gray-300);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.row-expand:hover { border-color: var(--color-primary); background: var(--color-primary-light); }
+.exp-chev {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--gray-600);
+  border-bottom: 1.5px solid var(--gray-600);
+  transform: rotate(-45deg);
+  margin-top: -3px;
+  transition: transform 0.18s ease;
+}
+tr.v-row.expanded .exp-chev { transform: rotate(45deg); margin-top: 2px; }
+tr.v-row.expanded { background: #FAFBFD; }
+tr.v-row.expanded > td { border-bottom-color: transparent; }
+
+/* 详情行（承载航次概览 + 港口现货联动子表） */
+.ledger-table .detail-row > td {
+  padding: 0 16px 16px 46px;
+  background: #FBFCFE;
+  border-bottom: 1px solid var(--gray-200);
+}
+.ledger-table .detail-row[hidden] { display: none; }
 
 /* 航次状态标签变体（五态：待装船 / 装船中 / 在途 / 已到港 / 已完成，
    基础样式由 common.css 组件层提供） */
@@ -66,6 +98,47 @@
   border-radius: 50%;
   background: var(--color-primary);
   vertical-align: middle;
+}
+
+/* ===== 综合台账单元格样式（航线 / 货种 / 船期 / 概览） ===== */
+/* 航线单元格：装货港 → 卸货港（上下两行 + 国别小字） */
+.route-seg { display: flex; flex-direction: column; gap: 1px; }
+.route-port { font-weight: 500; color: var(--gray-800); white-space: nowrap; }
+.country { font-size: 11px; color: var(--gray-500); margin-left: 2px; font-weight: 400; }
+.route-arrow { color: var(--gray-400); font-size: 11px; font-style: normal; }
+
+/* 货种 · 货量单元格 */
+.cargo-cell { display: flex; flex-direction: column; gap: 1px; }
+.cargo-name { font-weight: 500; color: var(--gray-800); white-space: nowrap; }
+.cargo-qty { font-size: 12px; color: var(--gray-500); font-variant-numeric: tabular-nums; }
+
+/* 船期单元格（离港 → 到港） */
+.date-line {
+  font-size: 12.5px;
+  color: var(--gray-600);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 航次概览 meta 行（详情行内：预估运费 / 品质证书 / 备注） */
+.voyage-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  color: var(--gray-500);
+}
+.voyage-meta b { color: var(--gray-800); font-weight: 600; font-variant-numeric: tabular-nums; }
+.voyage-meta span {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* 危险按钮（抽屉内删除操作） */
@@ -215,46 +288,13 @@
 
 /* COA 按钮联动：登记/编辑/删除按钮已有组件层四态 */
 @media (prefers-reduced-motion: reduce) {
-  .ledger-table .status-tag, .coa-sec { transition: none !important; }
+  .ledger-table .status-tag, .coa-sec, .row-expand, .exp-chev, .port-chip { transition: none !important; }
   .coa-sec:hover { background: transparent; }
 }
 
-/* ============================================================
-   港口现货区块（自 ports 模块迁移，含卡片 / 表格基础样式）
-   ============================================================ */
-#spotSection .card {
-  background: var(--gray-100);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  padding: 20px 24px;
-  margin-bottom: var(--space-md);
-}
-#spotSection .card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-#spotSection .card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--gray-800);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-#spotSection .card-title::before {
-  content: '';
-  width: 3px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--color-primary);
-}
-.spot-meta { font-size: 12px; color: var(--gray-500); font-weight: 400; }
-.spot-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-.spot-chip {
+/* ===== 港口胶囊筛选（按卸货港筛选航次） ===== */
+.port-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.port-chip {
   border: 1px solid var(--gray-300);
   background: #fff;
   color: var(--gray-600);
@@ -264,31 +304,66 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.spot-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.spot-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.port-chip:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.port-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+
+/* ===== 港口现货联动子表（行展开时渲染，数据经 HZData 'oceanSpots'） ===== */
+.spot-sub { font-size: 13px; }
+.spot-sub-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 8px;
+}
+.spot-sub-meta { font-size: 12px; color: var(--gray-500); margin-left: 8px; font-weight: 400; }
+.spot-sub-meta b { color: var(--color-warning); font-weight: 600; }
+.spot-sub-empty {
+  padding: 18px 0;
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 12.5px;
+  border: 1px dashed var(--gray-300);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
 .spot-table-wrap { overflow-x: auto; }
-.spot-table { min-width: 960px; width: 100%; border-collapse: collapse; font-size: 13px; }
+.spot-table { min-width: 880px; width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .spot-table th, .spot-table td {
-  border: 1px solid #333;
-  padding: 10px 14px;
+  border: 1px solid var(--gray-200);
+  padding: 8px 12px;
   text-align: left;
   vertical-align: top;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 .spot-table th {
-  background: var(--color-primary-light);
-  color: #333;
+  background: var(--gray-100);
+  color: var(--gray-600);
   font-weight: 600;
   white-space: nowrap;
   text-align: center;
 }
 .spot-table td { color: var(--gray-800); background: #fff; font-weight: 400; white-space: nowrap; }
-.spot-table tbody tr:nth-child(even) td { background: #F3F8FF; }
-.spot-table tbody tr:hover td { background: #EBF3FF; }
-.spot-table td.spot-variety { white-space: normal; min-width: 120px; }
+.spot-table tbody tr:nth-child(even) td { background: #FAFBFD; }
+.spot-table tbody tr:hover td { background: #F0F5FF; }
+.spot-table th.spot-th-no, .spot-table td.spot-th-no { width: 44px; text-align: center; }
 .spot-table td.spot-berth { white-space: normal; min-width: 110px; }
-.spot-table .spot-no { font-weight: 600; text-align: center; }
 .spot-table .spot-num { text-align: right; font-variant-numeric: tabular-nums; }
 .spot-table .spot-na { text-align: center; color: var(--gray-400); }
 .spot-table .spot-vessel { font-weight: 500; }
 .spot-table .spot-th-num { text-align: right; }
+
+/* 同船高亮：现货船名与航次船名一致时置顶 + 橙色标记 */
+.spot-table tr.spot-same-ship td { background: #FFF7E8 !important; }
+.spot-table tbody tr.spot-same-ship:hover td { background: #FFEDD1 !important; }
+.same-ship-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-warning);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  font-style: normal;
+  vertical-align: middle;
+}

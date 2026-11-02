@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>结算管理 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 卡片，保证各模块风格统一 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务板块独立样式：订单台账 / 执行跟踪 / 结算管理共用 -->
+  <link rel="stylesheet" href="business.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：本模块独立设计 -->
+    <main class="main">
+      <!-- 结算管理 -->
+      <section class="ledger">
+        <!-- 页面标题 + 页头动作 -->
+        <div class="ledger-header">
+          <div>
+            <div class="page-title">结算管理</div>
+            <div class="page-desc">管理订单应收 / 应付结算台账，登记收付款并自动联动结算状态</div>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-ghost" id="exportBtn" type="button">导出 Excel</button>
+            <button class="btn btn-primary" id="addSettleBtn" type="button">新增结算</button>
+          </div>
+        </div>
+
+        <!-- 收付双轨概览条：应收轨（回款进度）+ 应付轨（付款进度），实时汇总全部结算单数据 -->
+        <div class="biz-overview">
+          <div class="ov-side">
+            <div class="ov-side-head">
+              <span class="ov-side-tag tag-receivable">应收</span>
+              <div class="ov-label">应收总额</div>
+            </div>
+            <div class="ov-value" id="sReceivable">¥0</div>
+            <div class="ov-rate-bar"><i id="ovRecvBar"></i></div>
+            <div class="ov-note">已收 <b id="sReceived">¥0</b> · 回款进度 <b id="ovRecvRate">0%</b></div>
+          </div>
+          <div class="ov-divider"></div>
+          <div class="ov-side">
+            <div class="ov-side-head">
+              <span class="ov-side-tag tag-payable">应付</span>
+              <div class="ov-label">应付总额</div>
+            </div>
+            <div class="ov-value" id="sPayable">¥0</div>
+            <div class="ov-rate-bar"><i id="ovPayBar"></i></div>
+            <div class="ov-note">已付 <b id="sPaid">¥0</b> · 付款进度 <b id="ovPayRate">0%</b></div>
+          </div>
+        </div>
+
+        <!-- 结算列表 -->
+        <div class="ledger-card">
+          <!-- 列表小标题 -->
+          <div class="ledger-banner">
+            <span class="banner-title">结算列表</span>
+            <span class="banner-stat">共 <em id="settleCount">0</em> 笔，合计 <em id="settleAmount">0.00</em> 元</span>
+          </div>
+
+          <!-- 轻检索工具条：关键词 / 类型 / 状态 / 日期区间，输入即筛 -->
+          <form class="table-toolbar" id="searchForm" autocomplete="off">
+            <input class="field-input toolbar-input" type="text" id="searchKeyword" placeholder="搜索结算编号 / 订单 / 客户，空格分隔多个关键词" />
+            <select class="field-input" id="searchType" title="结算类型">
+              <option value="">全部类型</option>
+              <option value="应收">应收</option>
+              <option value="应付">应付</option>
+            </select>
+            <select class="field-input" id="searchStatus" title="结算状态">
+              <option value="">全部状态</option>
+              <option value="待结算">待结算</option>
+              <option value="部分结算">部分结算</option>
+              <option value="已结算">已结算</option>
+              <option value="已终止">已终止</option>
+            </select>
+            <div class="field-date-range">
+              <input class="field-input" type="date" id="searchDateStart" title="结算日期起" />
+              <span class="date-sep">至</span>
+              <input class="field-input" type="date" id="searchDateEnd" title="结算日期止" />
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn btn-ghost" type="reset" id="searchReset">重置</button>
+            </div>
+          </form>
+
+          <div class="table-wrap">
+            <table class="ledger-table min-w-settle">
+              <thead>
+                <tr>
+                  <th class="col-check"><input type="checkbox" id="checkAll" title="全选" /></th>
+                  <th class="col-index">序号</th>
+                  <th>结算编号</th>
+                  <th>类型</th>
+                  <th>关联订单</th>
+                  <th>合同编号</th>
+                  <th>客户</th>
+                  <th class="col-num">结算金额（元）</th>
+                  <th class="col-num">已收（元）</th>
+                  <th class="col-num">已付（元）</th>
+                  <th class="col-date">结算日期</th>
+                  <th>状态</th>
+                  <th class="col-detail">详情</th>
+                  <th class="col-action">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 暂无数据，待后续接入 -->
+                <tr class="empty-row">
+                  <td colspan="14">暂无结算数据</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 分页控制 -->
+          <div class="pager">
+            <div class="pager-left">
+              <select class="pager-size" id="pageSize">
+                <option value="10" selected>10 条/页</option>
+                <option value="20">20 条/页</option>
+                <option value="50">50 条/页</option>
+              </select>
+              <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
+            </div>
+            <div class="pager-right">
+              <button type="button" class="pager-btn" id="pgFirst">首页</button>
+              <button type="button" class="pager-btn" id="pgPrev">上一页</button>
+              <span class="pager-info">
+                第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
+                / <span id="pgPages">1</span> 页
+              </span>
+              <button type="button" class="pager-btn" id="pgNext">下一页</button>
+              <button type="button" class="pager-btn" id="pgLast">末页</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 结算详情 / 新增 / 收付登记抽屉（内容动态渲染） -->
+  <div class="drawer-mask" id="drawerMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="drawerTitle">结算详情</span>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+    </aside>
+  </div>
+
+  <!-- 导出 Excel 依赖库（本地离线） -->
+  <script src="/contracts/vendor/xlsx.full.min.js"></script>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 业务共享数据层：订单 / 结算 / 流转日志读写 -->
+  <script src="business-data.js"></script>
+  <!-- 模块脚本 -->
+  <script src="settlement.js"></script>
+</body>
+</html>

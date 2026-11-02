@@ -19,7 +19,12 @@
     '价格指数管理 / 汽运价格指数': '/price-index/truck.html',
     '价格指数管理 / 火运价格指数': '/price-index/price-index.html',
     '价格指数管理 / 铁矿石价格指数': '/price-index/iron-ore.html',
-    '业务管理': '/business/business.html',
+    // 「业务管理」为下拉触发按钮（has-children 仅展开/收起），不配置一级路由，
+    // 由四个子项各自路由到对应页面，父按钮不具备独立停留态界面
+    '业务管理 / 业务总览': '/business/business.html',
+    '业务管理 / 订单台账': '/business/orders.html',
+    '业务管理 / 执行跟踪': '/business/tracking.html',
+    '业务管理 / 结算管理': '/business/settlement.html',
     '矿山管理': '/mine/mine.html',
     '海运管理': '/ocean/ocean.html',
     '港口管理': '/ports/ports.html',

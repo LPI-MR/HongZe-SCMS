@@ -1,0 +1,881 @@
+/* ============================================================
+   business 模块独立样式（业务管理板块：板块门户 / 订单台账 / 执行跟踪 / 结算管理）
+   公共变量 / 布局 / 导航 / 卡片 / 抽屉 / 表单 / 分页等通用组件
+   由 /css/common.css 组件层统一提供，本文件仅保留业务板块特有定义
+   ============================================================ */
+
+/* ===== 状态标签变体（订单状态，基础样式由 common.css 组件层提供）===== */
+/* 配色对齐 ocean.css 先例：浅底 + 同系深字 */
+.status-tag.pending {
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+.status-tag.confirmed {
+  background: #E8F0FF;
+  color: #2B5FCC;
+}
+
+.status-tag.running {
+  background: var(--assist-bg-orange);
+  color: var(--color-warning);
+}
+
+.status-tag.shipped {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.status-tag.done {
+  background: var(--assist-bg-green);
+  color: var(--color-success);
+}
+
+/* 已终止（订单 / 结算共用终态） */
+.status-tag.terminated {
+  background: var(--assist-bg-red);
+  color: var(--color-danger);
+}
+
+/* ===== 结算状态变体（待结算 / 部分结算 / 已结算）===== */
+.status-tag.unsettled {
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+.status-tag.partial {
+  background: var(--assist-bg-orange);
+  color: var(--color-warning);
+}
+
+.status-tag.settled {
+  background: var(--assist-bg-green);
+  color: var(--color-success);
+}
+
+/* ===== 航次状态变体（跟踪页关联航次标签，配色对齐 ocean.css）===== */
+.status-tag.loading {
+  background: var(--assist-bg-orange);
+  color: var(--color-warning);
+}
+
+.status-tag.sailing {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.status-tag.arrived {
+  background: var(--assist-bg-green);
+  color: var(--color-success);
+}
+
+/* ===== 行内操作按钮变体（基础样式由 common.css 组件层提供）===== */
+/* 详情 / 编辑 / 流转：主色 */
+.row-act.detail,
+.row-act.edit,
+.row-act.advance { color: var(--color-primary); }
+
+.row-act.detail:hover,
+.row-act.edit:hover,
+.row-act.advance:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+/* 终止：警示色 */
+.row-act.terminal { color: var(--color-warning); }
+
+.row-act.terminal:hover {
+  background: var(--assist-bg-orange);
+  border-color: var(--color-warning);
+}
+
+/* 收付登记：成功色 */
+.row-act.register { color: var(--color-success); }
+
+.row-act.register:hover {
+  background: var(--assist-bg-green);
+  border-color: var(--color-success);
+}
+
+/* 删除：危险色 */
+.row-act.del { color: var(--color-danger); }
+
+.row-act.del:hover {
+  background: var(--assist-bg-red);
+  border-color: var(--color-danger);
+}
+
+/* ===== 表格列扩展（勾选 / 操作 / 详情）===== */
+.ledger-table .col-check { width: 48px; text-align: center; }
+.ledger-table .col-check input { cursor: pointer; vertical-align: middle; }
+
+/* 操作列：订单 5 个行内操作，结算复用同一宽度 */
+.ledger-table .col-action { width: 250px; text-align: center; }
+
+/* 详情列：详情为可点击链接 */
+.ledger-table .col-detail { text-align: center; }
+
+.detail-link {
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.detail-link:hover { color: var(--color-primary-dark); text-decoration: underline; }
+
+/* ===== 表格最小宽度（列较多的台账在 .table-wrap 内横向滚动）===== */
+.ledger-table.min-w-orders { min-width: 1440px; }
+.ledger-table.min-w-settle { min-width: 1260px; }
+
+/* ============================================================
+   差异化组件套件（Apple 风格设计语言：白卡 + 细边框 + 克制色彩）
+   biz-overview 概览条 / pill-nav 流程胶囊 / table-toolbar 轻检索 /
+   track-list 进度卡片流（四页统一语言、按业务特性差异化呈现）
+   ============================================================ */
+
+/* --- 页头右侧动作区 --- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* --- 概览条（替代四宫格统计卡：主指标 + 派生指标 + 完成率）--- */
+.biz-overview {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-lg);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  margin-bottom: var(--space-md);
+}
+
+.biz-overview .ov-primary { min-width: 180px; }
+
+.biz-overview .ov-label {
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.biz-overview .ov-value {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.biz-overview .ov-note {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.biz-overview .ov-note b {
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 主指标与派生指标之间的竖分隔线 */
+.biz-overview .ov-divider {
+  width: 1px;
+  background: var(--gray-300);
+}
+
+.biz-overview .ov-metrics {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.biz-overview .ov-metric { min-width: 88px; }
+
+.biz-overview .ov-num {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* 完成率区：标签 + 进度条 + 百分比 */
+.biz-overview .ov-rate {
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xs);
+}
+
+.biz-overview .ov-rate-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.biz-overview .ov-rate-bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: width 0.4s ease;
+}
+
+/* --- 流程胶囊导航（订单台账：履约全流程快捷过滤）--- */
+.pill-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--gray-300);
+  border-radius: 999px;
+  background: var(--gray-100);
+  font-size: 13px;
+  color: var(--gray-600);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, border-color 0.15s ease,
+    background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-hover);
+}
+
+.pill.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* 胶囊内状态圆点：与表格状态标签同色系 */
+.pill .flow-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gray-400);
+}
+
+.pill .flow-dot.d-pending { background: var(--gray-400); }
+.pill .flow-dot.d-confirmed { background: var(--color-primary-dark); }
+.pill .flow-dot.d-running { background: var(--color-warning); }
+.pill .flow-dot.d-shipped { background: var(--color-primary); }
+.pill .flow-dot.d-done { background: var(--color-success); }
+.pill .flow-dot.d-terminated { background: var(--color-danger); }
+
+.pill.active .flow-dot { background: rgba(255, 255, 255, 0.9); }
+
+.pill .flow-count {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.pill.active .flow-count { color: rgba(255, 255, 255, 0.85); }
+
+/* --- 轻检索工具条（嵌入 ledger-card 顶部，替代独立检索卡）--- */
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.table-toolbar .toolbar-input { flex: 1; min-width: 220px; }
+
+.table-toolbar .toolbar-actions { margin-left: auto; }
+
+/* --- 进度卡片流（执行跟踪：替代 9 列表格）--- */
+.track-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+}
+
+.track-card {
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-md) var(--space-lg);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.track-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.track-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.track-idx {
+  min-width: 22px;
+  font-size: 13px;
+  color: var(--gray-400);
+  font-variant-numeric: tabular-nums;
+}
+
+.track-code {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+}
+
+.track-spacer { flex: 1; }
+
+.track-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-lg);
+  margin-top: var(--space-sm);
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.track-meta b {
+  color: var(--gray-700);
+  font-weight: 500;
+}
+
+/* 进度区：虚线分隔 + 多指标横排 */
+.track-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xl);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--gray-300);
+}
+
+.track-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.track-plabel {
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.track-vval {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--gray-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.track-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.track-bar {
+  display: inline-block;
+  width: 160px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.track-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--color-primary);
+  transition: width 0.4s ease;
+}
+
+.track-pct {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.track-empty {
+  padding: var(--space-xl);
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* --- 结算页双轨概览（应收 / 应付各占一侧）--- */
+.biz-overview .ov-side {
+  flex: 1;
+  min-width: 0;
+}
+
+.biz-overview .ov-side-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.biz-overview .ov-side-tag {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.biz-overview .ov-side-tag.tag-receivable {
+  background: var(--assist-bg-green);
+  color: var(--color-success);
+}
+
+.biz-overview .ov-side-tag.tag-payable {
+  background: var(--assist-bg-orange);
+  color: var(--color-warning);
+}
+
+.biz-overview .ov-side .ov-rate-bar { margin-top: var(--space-sm); }
+
+/* --- 板块门户：概览条在 portal-stats 网格中独占一行 --- */
+.portal-stats .biz-overview {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+/* ===== 日期起止区间 ===== */
+.field-date-range {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.field-date-range .field-input { flex: 1; min-width: 0; }
+
+.field-date-range .date-sep {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+/* ===== 收付金额（收付登记抽屉：两个并排输入）===== */
+.pay-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.pay-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* ===== 抽屉辅助（跨两列项 / 提示变体 / 流转选项）===== */
+/* 表单与信息网格中跨两列的整行项 */
+.form-grid .span2,
+.info-grid .span2 { grid-column: 1 / -1; }
+
+/* 提示条变体：默认红色（common.css），此处扩展信息 / 中性 */
+.form-tip.info {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.form-tip.muted {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+/* 流转抽屉目标状态单选项：横向排列 */
+.form-item.flow-option {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+}
+
+.form-item.flow-option input { cursor: pointer; }
+
+/* ===== 节点进度条（跟踪页车次进度，结构由 TripsStore.stepperHTML 生成）===== */
+.trip-stepper { overflow-x: auto; }
+
+.stepper {
+  display: flex;
+  min-width: 480px;
+}
+
+.step {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 节点连接线（到达当前节点之前的线视为已走完）*/
+.step:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--gray-300);
+}
+
+.step.done:not(:first-child)::before,
+.step.current::before { background: var(--color-primary); }
+
+.step .dot {
+  position: relative;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gray-400);
+}
+
+.step.done .dot { background: var(--color-primary); }
+
+/* 当前节点：脉冲光圈强调 */
+.step.current .dot {
+  background: var(--color-primary);
+  animation: dot-pulse 1.6s ease-out infinite;
+}
+
+@keyframes dot-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(64, 128, 255, 0.45); }
+  70%  { box-shadow: 0 0 0 6px rgba(64, 128, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(64, 128, 255, 0); }
+}
+
+.step-name {
+  font-size: 11px;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.step.done .step-name { color: var(--gray-600); }
+.step.current .step-name { color: var(--color-primary); font-weight: 600; }
+
+/* ===== 时间线（跟踪页详情抽屉：航次节点 / 流转日志）===== */
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 18px;
+  bottom: 0;
+  width: 2px;
+  background: var(--gray-200);
+}
+
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-item:last-child::before { display: none; }
+
+.timeline-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  margin-top: 3px;
+}
+
+.timeline-item.done .timeline-dot { background: var(--color-primary); }
+
+.timeline-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-700);
+  word-break: break-all;
+}
+
+.timeline-time {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--gray-500);
+  word-break: break-all;
+}
+
+/* ===== 响应式与动效降级 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .step.current .dot { animation: none; }
+}
+
+/* ============================================================
+   订单台账 · 视图切换与履约流程视图（迁移自业务总览）
+   view-switch 分段控件 / fv-* 履约流程视图组件 / toast 反馈
+   ============================================================ */
+
+/* --- 视图切换：iOS 分段控件（白滑块） --- */
+.view-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(142, 142, 147, 0.12);
+  border-radius: 980px;
+  margin-bottom: var(--space-md);
+}
+
+.view-switch .seg-btn,
+.seg .seg-btn {
+  height: 28px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 980px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.view-switch .seg-btn { height: 30px; padding: 0 18px; }
+.view-switch .seg-btn:hover,
+.seg .seg-btn:hover { color: var(--gray-700); }
+
+.view-switch .seg-btn.active,
+.seg .seg-btn.active {
+  background: var(--gray-100);
+  color: var(--gray-800);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(142, 142, 147, 0.12);
+  border-radius: 980px;
+}
+
+/* --- 履约流程数字摘要条（纯排版，无卡片） --- */
+.fv-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 32px;
+  margin-bottom: var(--space-md);
+  padding: 0 2px;
+}
+
+.fv-stat { display: flex; align-items: baseline; gap: 8px; }
+
+.fv-stat-num {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--gray-800);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.fv-stat-unit {
+  font-style: normal;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  margin-left: 2px;
+}
+
+.fv-stat-label { font-size: 13px; color: var(--gray-500); }
+
+/* --- 工具条：检索 + 阶段筛选 + 排序 --- */
+.fv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--gray-300);
+}
+
+.fv-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.fv-search svg {
+  position: absolute;
+  left: 12px;
+  color: var(--gray-400);
+  pointer-events: none;
+}
+
+.fv-search input {
+  width: 100%;
+  height: 32px;
+  padding: 0 14px 0 32px;
+  border: 1px solid var(--gray-300);
+  border-radius: 980px;
+  background: var(--gray-200);
+  font-size: 13px;
+  color: var(--gray-800);
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.fv-search input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: var(--gray-100);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.fv-search input::placeholder { color: var(--gray-400); }
+
+/* 排序：轻量胶囊组 */
+.sort-group {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.sort-btn {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: 980px;
+  background: var(--gray-100);
+  font-size: 12px;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+.sort-btn:hover { color: var(--gray-700); border-color: var(--gray-400); }
+.sort-btn .dir { margin-left: 4px; }
+
+.sort-btn.active {
+  border-color: transparent;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* --- 履约流程表格（台账行式） --- */
+.fv-table { min-width: 980px; }
+
+/* flex 布局修正：flex 项默认 min-width:auto 会让表格 min-width 经 min-content 逐级传播撑破 main，
+   显式允许 main 收缩后，窄屏时由 .table-wrap 接管表格横向滚动，页面本身不再横向溢出 */
+body.page-orders .main { min-width: 0; }
+
+.ledger-table.fv-table .col-action { width: 170px; }
+
+.fv-table .cell-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.fv-no {
+  color: var(--gray-800);
+  font-weight: 500;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s;
+}
+
+.fv-no:hover { color: var(--color-primary); }
+
+.fv-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- 操作反馈 toast（毛玻璃胶囊） --- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%) translateY(8px);
+  background: rgba(29, 29, 31, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 980px;
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  transition: opacity 0.25s, transform 0.25s;
+  z-index: 300;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.error { background: rgba(255, 59, 48, 0.92); }
+
+/* --- 履约流程视图响应式 --- */
+@media (max-width: 760px) {
+  .view-switch { width: 100%; }
+  .view-switch .seg-btn { flex: 1; }
+  .seg { width: 100%; justify-content: center; }
+  .seg .seg-btn { flex: 1; }
+  .sort-group { width: 100%; margin-left: 0; overflow-x: auto; }
+  .fv-stats { gap: 10px 22px; }
+  .fv-stat-num { font-size: 20px; }
+}
