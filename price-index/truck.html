@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>汽运价格指数 - 泓泽宜通 HongZe-SCMS</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="truck.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：LPI-MR 汽运运价指数页（原设计版式整体合并，无登录环节，运营方视图） -->
+    <main class="main tx-main">
+      <div class="tx-page">
+
+        <!-- 顶部品牌 + 页签导航（原设计顶栏） -->
+        <header class="tx-topbar">
+          <div class="tx-brand">
+            <div class="tx-brand-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 16l5-5 4 3 6-7"/><path d="M14 7h4v4"/></svg>
+            </div>
+            <div class="tx-brand-text">
+              <div class="tx-brand-sub">泓泽宜通智物流</div>
+              <div class="tx-brand-name">运价指数</div>
+            </div>
+          </div>
+          <nav class="tx-tabs" id="txTabs">
+            <button class="tx-tab active" data-tab="overview" type="button">
+              <svg viewBox="0 0 24 24"><rect x="4" y="12" width="3.4" height="7" rx="1"/><rect x="10.3" y="8" width="3.4" height="11" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="14.5" rx="1"/></svg>
+              指数总览
+            </button>
+            <button class="tx-tab" data-tab="entry" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 16V5"/><path d="M7.5 9.5 12 5l4.5 4.5"/><path d="M4.5 19h15"/></svg>
+              价格录入
+            </button>
+            <button class="tx-tab" data-tab="history" type="button">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2.5"/></svg>
+              历史数据
+            </button>
+            <button class="tx-tab" data-tab="base" type="button">
+              <svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.4-6.5-10a6.5 6.5 0 0 1 13 0c0 4.6-6.5 10-6.5 10z"/><circle cx="12" cy="10.6" r="2.4"/></svg>
+              基础数据
+            </button>
+          </nav>
+        </header>
+
+        <!-- ================= 指数总览 ================= -->
+        <section class="tx-panel" id="tab-overview">
+          <div class="tx-head">
+            <div>
+              <div class="tx-title">指数总览</div>
+              <div class="tx-sub">汽运物流运价：不含税/含税价格与指数走势</div>
+            </div>
+            <button class="tx-btn tx-btn-primary" id="btnGoEntry" type="button">＋ 录入新数据</button>
+          </div>
+
+          <!-- 运输方式（铁路即将上线） -->
+          <div class="tx-mode-pills">
+            <span class="tx-pill active">
+              <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="11" rx="2.5"/><path d="M7 19l2-3m8 3-2-3"/><circle cx="8" cy="12" r="1.2"/><circle cx="16" cy="12" r="1.2"/></svg>
+              汽运
+            </span>
+            <span class="tx-pill disabled">
+              <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="13" rx="2.5"/><path d="M4 9h16"/><circle cx="9" cy="13" r="1.2"/><circle cx="15" cy="13" r="1.2"/><path d="M8 19h8"/></svg>
+              铁路运价 <i class="tx-soon">即将上线</i>
+            </span>
+          </div>
+
+          <!-- 筛选卡片：启运地 / 目的地 / 货物种类 + 线路数 + 时间范围 -->
+          <div class="tx-filter-card">
+            <div class="tx-filters">
+              <div class="tx-filter">
+                <label>启运地</label>
+                <div class="tx-select" id="pickFrom">
+                  <span class="tx-select-value placeholder" id="pickFromValue">全部启运地</span>
+                  <svg class="tx-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+              <div class="tx-filter">
+                <label>目的地</label>
+                <div class="tx-select" id="pickTo">
+                  <span class="tx-select-value placeholder" id="pickToValue">全部目的地</span>
+                  <svg class="tx-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+              <div class="tx-filter">
+                <label>货物种类</label>
+                <div class="tx-select" id="pickGoods">
+                  <span class="tx-select-value placeholder" id="pickGoodsValue">全部货物种类</span>
+                  <svg class="tx-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+              <div class="tx-filter-right">
+                <span class="tx-route-count" id="routeCount">共 0 条线路</span>
+                <div class="tx-range" id="rangeBtns">
+                  <button data-range="30" type="button">近30天</button>
+                  <button data-range="90" class="active" type="button">近90天</button>
+                  <button data-range="all" type="button">全部</button>
+                </div>
+              </div>
+            </div>
+            <!-- 线路快捷切换（原设计：线路 chips） -->
+            <div class="tx-chips" id="routeChips"></div>
+          </div>
+
+          <!-- 指数概览 4 卡 -->
+          <div class="tx-kpis" id="kpiGrid"></div>
+
+          <!-- 走势图 -->
+          <div class="tx-card tx-chart-card">
+            <div class="tx-chart-head">
+              <div class="tx-chart-title" id="chartTitle">— · 不含税/含税价格走势</div>
+              <div class="tx-chart-tools">
+                <div class="tx-seg" id="chartMode">
+                  <button class="active" data-mode="price" type="button">价格（元/吨）</button>
+                  <button data-mode="index" type="button">指数</button>
+                </div>
+                <span class="tx-unit" id="chartUnit">单位：元/吨</span>
+              </div>
+            </div>
+            <div class="tx-legend">
+              <span class="tx-legend-item"><i class="dot dot-pre"></i>不含税价</span>
+              <span class="tx-legend-item" id="legendTax"><i class="dot dot-tax"></i>含税价（× 1.09）</span>
+              <span class="tx-legend-item" id="legendIndex" style="display:none;"><i class="dot dot-idx"></i>价格指数</span>
+            </div>
+            <div class="tx-chart-wrap" id="chartWrap">
+              <svg id="trendChart" viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid meet" role="img"></svg>
+              <div class="tx-tip" id="chartTip" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- 最新数据来源 + 最近上传 -->
+          <div class="tx-bottom-grid">
+            <div class="tx-card" id="latestSource"></div>
+            <div class="tx-card" id="recentUploads"></div>
+          </div>
+        </section>
+
+        <!-- ================= 价格录入 ================= -->
+        <section class="tx-panel" id="tab-entry" style="display:none;">
+          <div class="tx-head">
+            <div>
+              <div class="tx-title">价格录入 <span class="tx-tag-blue">汽运</span></div>
+              <div class="tx-sub">录入汽运不含税价格，含税价格自动换算，依据来源截图留痕</div>
+            </div>
+          </div>
+
+          <div class="tx-card tx-form-card">
+            <div class="tx-form-grid2">
+              <div class="tx-field">
+                <label>数据日期 <i class="req">*</i></label>
+                <input type="date" id="entryDate" />
+              </div>
+              <div class="tx-field">
+                <label>货物种类 <i class="req">*</i> <em class="tx-field-tip">可选可输入，候选由管理员维护</em></label>
+                <div class="tx-combo">
+                  <input id="entryGoods" list="goodsDatalist" placeholder="如：罗伊山MB块" />
+                  <button class="tx-combo-clear" id="entryGoodsClear" type="button" title="清空">✕</button>
+                  <datalist id="goodsDatalist"></datalist>
+                </div>
+              </div>
+            </div>
+
+            <div class="tx-field">
+              <label>运输线路 <i class="req">*</i></label>
+              <select id="entryRoute"></select>
+              <div class="tx-custom-route" id="customRoutePanel" style="display:none;">
+                <div class="tx-cr-field">
+                  <label>启运地</label>
+                  <div class="tx-combo">
+                    <input id="entryFrom" list="placesDatalist" placeholder="如：黄骅港" />
+                    <datalist id="placesDatalist"></datalist>
+                  </div>
+                </div>
+                <span class="tx-cr-arrow">
+                  <svg viewBox="0 0 24 24"><rect x="2.5" y="7" width="13" height="9" rx="2"/><path d="M15.5 10h3.2l2.3 2.6V16h-5.5"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17.5" cy="17.5" r="1.6"/></svg>
+                </span>
+                <div class="tx-cr-field">
+                  <label>目的地</label>
+                  <div class="tx-combo">
+                    <input id="entryTo" list="placesDatalist" placeholder="如：普阳钢铁" />
+                  </div>
+                </div>
+                <div class="tx-cr-preview">线路预览：<b id="entryRoutePreview">—</b></div>
+              </div>
+            </div>
+
+            <div class="tx-form-grid2">
+              <div class="tx-field">
+                <label>不含税价格 <i class="req">*</i> <em class="tx-unit-label">元/吨</em></label>
+                <input type="number" id="entryPrice" min="0" step="0.01" placeholder="如：67" />
+              </div>
+              <div class="tx-field">
+                <label>含税价格 <em class="tx-field-tip">系统自动计算</em></label>
+                <div class="tx-tax-box">
+                  <span id="entryTax">— 元/吨</span>
+                  <span class="tx-tax-badge">不含税 × 1.09</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="tx-field">
+              <label>备注 <em class="tx-field-tip">选填</em></label>
+              <textarea id="entryRemark" rows="2" placeholder="如：普阳7月28日报价"></textarea>
+            </div>
+
+            <div class="tx-field">
+              <label>依据来源 <em class="tx-field-tip">选填，建议上传</em></label>
+              <div class="tx-upload" id="uploadArea">
+                <svg viewBox="0 0 24 24"><path d="M12 16V8"/><path d="M8.5 11.5 12 8l3.5 3.5"/><path d="M5 19h14"/></svg>
+                <div class="tx-upload-title">点击上传依据来源</div>
+                <div class="tx-upload-sub">聊天截图、报价单、合同扫描件等图片，自动压缩后存储（最多 9 张）</div>
+              </div>
+              <input type="file" id="entryFiles" accept="image/jpeg,image/png" multiple style="display:none;" />
+              <div class="tx-thumbs" id="entryThumbs"></div>
+            </div>
+
+            <div class="tx-form-foot">
+              <button class="tx-btn tx-btn-primary" id="btnSaveRecord" type="button">✓ 保存记录</button>
+              <button class="tx-btn tx-btn-plain" id="btnClearEntry" type="button">清空</button>
+              <span class="tx-uploader-note">上传人：系统管理员</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= 历史数据 ================= -->
+        <section class="tx-panel" id="tab-history" style="display:none;">
+          <div class="tx-head">
+            <div>
+              <div class="tx-title">历史数据</div>
+              <div class="tx-sub">全部价格上传记录 · 可按启运地/目的地/日期筛选</div>
+            </div>
+          </div>
+
+          <div class="tx-card tx-his-filter">
+            <div class="tx-field">
+              <label>启运地</label>
+              <select id="hisFrom"></select>
+            </div>
+            <div class="tx-field">
+              <label>目的地</label>
+              <select id="hisTo"></select>
+            </div>
+            <div class="tx-field">
+              <label>关键词</label>
+              <input id="hisKeyword" placeholder="🔍 线路 / 货物 / 上传人" />
+            </div>
+            <div class="tx-field">
+              <label>开始日期</label>
+              <input type="date" id="hisStart" />
+            </div>
+            <div class="tx-field">
+              <label>结束日期</label>
+              <input type="date" id="hisEnd" />
+            </div>
+            <button class="tx-btn tx-btn-plain" id="btnHisReset" type="button">🔄 重置</button>
+          </div>
+
+          <div class="tx-card">
+            <div class="tx-table-scroll">
+              <table class="tx-table" id="hisTable"></table>
+            </div>
+            <div class="tx-table-foot" id="hisFoot"></div>
+          </div>
+        </section>
+
+        <!-- ================= 基础数据 ================= -->
+        <section class="tx-panel" id="tab-base" style="display:none;">
+          <div class="tx-head">
+            <div>
+              <div class="tx-title">基础数据</div>
+              <div class="tx-sub">地点库与货物种类候选维护，供筛选与录入下拉使用</div>
+            </div>
+          </div>
+
+          <div class="tx-card">
+            <div class="tx-base-head">地点库</div>
+            <div id="placeGroups"></div>
+            <div class="tx-base-add">
+              <select id="placeGroupSel">
+                <option value="hot">热门地点</option>
+                <option value="ports">港口</option>
+                <option value="factories">钢厂</option>
+              </select>
+              <input id="placeAddInput" placeholder="地点名称，如：黄骅港" />
+              <button class="tx-btn tx-btn-primary" id="btnAddPlace" type="button">添加地点</button>
+            </div>
+          </div>
+
+          <div class="tx-card">
+            <div class="tx-base-head">货物种类候选</div>
+            <div class="tx-chip-wrap" id="goodsChips"></div>
+            <div class="tx-base-add">
+              <input id="goodsAddInput" placeholder="货物种类名称，如：煤炭" />
+              <button class="tx-btn tx-btn-primary" id="btnAddGoods" type="button">添加种类</button>
+            </div>
+          </div>
+
+          <div class="tx-card">
+            <div class="tx-base-head">运输线路统计（由报价记录自动生成）</div>
+            <div class="tx-table-scroll">
+              <table class="tx-table" id="baseRouteTable"></table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 地点选择弹窗（启运地 / 目的地共用） -->
+  <div class="tx-mask" id="placeMask">
+    <div class="tx-modal tx-modal-picker">
+      <div class="tx-modal-head"><span id="placeTitle">选择启运地</span><button class="tx-close" id="placeClose" type="button">✕</button></div>
+      <div class="tx-modal-body">
+        <input class="tx-search" id="placeSearch" placeholder="输入地点名称，如：唐山 / 鄂尔多斯" />
+        <div id="placeGroupsBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 货物种类筛选弹窗 -->
+  <div class="tx-mask" id="goodsMask">
+    <div class="tx-modal tx-modal-picker">
+      <div class="tx-modal-head"><span>筛选货物种类</span><button class="tx-close" id="goodsClose" type="button">✕</button></div>
+      <div class="tx-modal-body">
+        <input class="tx-search" id="goodsSearch" placeholder="输入货物种类，如：煤炭 / 铁矿石" />
+        <div id="goodsGroupsBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="tx-mask" id="confirmMask">
+    <div class="tx-modal tx-modal-confirm">
+      <div class="tx-modal-head"><span id="confirmTitle">删除确认</span><button class="tx-close" id="confirmClose" type="button">✕</button></div>
+      <div class="tx-modal-body">
+        <p class="tx-confirm-text" id="confirmText"></p>
+        <p class="tx-confirm-sub">删除需管理员确认，操作不可恢复。</p>
+      </div>
+      <div class="tx-modal-foot">
+        <button class="tx-btn tx-btn-plain" id="confirmCancel" type="button">取消</button>
+        <button class="tx-btn tx-btn-danger" id="confirmOk" type="button">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 凭证大图预览（支持多张切换） -->
+  <div class="tx-gallery" id="gallery">
+    <button class="tx-gallery-close" id="galleryClose" type="button">✕</button>
+    <button class="tx-gallery-nav prev" id="galleryPrev" type="button">‹</button>
+    <img id="galleryImg" alt="依据来源" />
+    <button class="tx-gallery-nav next" id="galleryNext" type="button">›</button>
+    <div class="tx-gallery-count" id="galleryCount"></div>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 页面脚本：LPI-MR 汽运运价指数（四页签） -->
+  <script src="truck.js"></script>
+</body>
+</html>

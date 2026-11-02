@@ -317,7 +317,8 @@
         + '<div class="pm-legend">'
         + '<span><i class="pm-shape pm-shape-zone"></i>港区区域</span>'
         + '<span><i class="pm-shape pm-shape-berth"></i>码头位置</span>'
-        + '<span class="pm-tip">双击放大 · 拖动平移 · 点击区域查看说明' + (pmData.editable ? ' · 码头⚓可拖动调节位置' : '') + '</span>'
+        + ((pmData.stations || []).length ? '<span><i class="pm-shape pm-shape-station"></i>铁路站点</span>' : '')
+        + '<span class="pm-tip">双击放大 · 拖动平移 · 点击区域查看说明' + (pmData.editable ? ' · 码头⚓可拖动' : '') + '</span>'
         + '</div></div>'
       : '';
     return '<section class="card zones-card">'
@@ -336,6 +337,7 @@
   // 天津港各多边形按港区围堤与码头岸线走向绘制的示意范围。
   var PORT_MAPS = {
     '黄骅港': {
+      editable: false,  // 俯瞰地图只读，不允许绘制/拖动
       center: [38.3500, 117.8850],
       zoom: 13,
       // 港区多边形已按最终确认结果移除（原综合/散货/煤炭/河口四个港区不再展示），仅保留码头锚点
@@ -357,9 +359,14 @@
           area: [[38.32254, 117.88004]],
           note: '国能黄骅港务（原神华集团）煤炭专业化装船码头一至五期，最大10万吨级泊位，配套翻车机房与筒仓群'
         }
+      ],
+      // 铁路站点（蓝色图标，常显名称；坐标为实地放置/拖动后固化）
+      stations: [
+        { name: '渤海东站', area: [[38.36009930588571, 117.92278289794923]], note: '铁路站点' }
       ]
     },
     '天津港': {
+      editable: false,  // 俯瞰地图只读，不允许绘制/拖动
       // 一港八区：北疆、东疆、南疆、海河、大沽口、高沙岭、大港、北塘
       center: [38.9400, 117.7400],
       zoom: 11,
@@ -434,6 +441,11 @@
           area: [[38.94686, 117.85137]],
           note: '远航国际矿石码头，20万吨级专业化矿石泊位，服务首钢、河钢等钢厂原料进口'
         }
+      ],
+      // 铁路站点（蓝色图标，常显名称；坐标为实地放置/拖动后固化）
+      stations: [
+        { name: '塘沽新港站', area: [[38.98529965477937, 117.76382446289064]], note: '铁路站点' },
+        { name: '东大沽站', area: [[38.97223498157296, 117.66550540924074]], note: '铁路站点' }
       ]
     }
   };
@@ -495,7 +507,7 @@
   var pmPendingPort = null;   // 待初始化的港口名（可编辑港口的自绘数据按港口持久化）
   var pmInitedFor = null;     // 已初始化的地图容器元素（重渲染后重新初始化）
 
-  // 可编辑港口的自绘数据持久化：{ [港口名]: { added: [{name,desc,area}], removed: [基础区域索引], berthPos: { 码头名: [lat,lng] } } }
+  // 可编辑港口的自绘数据持久化：{ [港口名]: { added: [{name,desc,area}], removed: [基础区域索引], berthPos: { 码头/站点名: [lat,lng] } } }
   var PM_CUSTOM_KEY = 'hz_port_map_custom';
   function pmCustomAll() {
     try { return JSON.parse(localStorage.getItem(PM_CUSTOM_KEY)) || {}; }
@@ -504,6 +516,13 @@
   function pmCustomSave(all) {
     try { localStorage.setItem(PM_CUSTOM_KEY, JSON.stringify(all)); } catch (e) { /* 忽略存储异常 */ }
   }
+
+  // 火车站点徽标：蓝色圆 + 白环 + 标准火车头图标（Material Design 官方 train 图标，与高德地图样式一致）
+  var PM_STATION_ICON = '<svg width="22" height="22" viewBox="0 0 34 34" xmlns="http://www.w3.org/2000/svg">'
+    + '<circle cx="17" cy="17" r="15.4" fill="#2E6BE6" stroke="#fff" stroke-width="2.8"/>'
+    + '<g transform="translate(5.5,5.5)">'
+    + '<path fill="#fff" d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2H18v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-6H6V6h5v5zm2 0V6h5v5h-5zm3.5 6c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>'
+    + '</g></svg>';
 
   function initPortMap(mapData, portName) {
     var box = document.getElementById('portMap');
@@ -564,8 +583,11 @@
       var zoneLayer = L.layerGroup().addTo(map);
       var berthLayer = L.layerGroup().addTo(map);
 
-      // ===== 港区区域：基础数据 + 自绘数据合并（不可编辑港口合并项恒为空，即只读展示） =====
-      var cst = editable && portName ? (pmCustomAll()[portName] || { added: [], removed: [], berthPos: {} }) : { added: [], removed: [], berthPos: {} };
+      // ===== 港区区域：基础数据 + 自绘数据合并（只读模式仍加载已保存数据，仅展示不可改） =====
+      var cst = portName ? (pmCustomAll()[portName] || {}) : {};
+      cst.added = cst.added || [];           // 自绘港区区域
+      cst.removed = cst.removed || [];       // 被删除的基础区域索引
+      cst.berthPos = cst.berthPos || {};     // 码头/站点拖动位置 { 名称: [lat,lng] }
 
       function saveCustom() {
         if (!editable || !portName) return;
@@ -664,29 +686,55 @@
           ? '<div style="margin-top:6px;text-align:right;"><button class="pm-del-zone" data-reset-berth="' + esc(b.name) + '">重置位置</button></div>'
           : '';
         mk.bindTooltip(b.name, { permanent: true, direction: 'right', offset: [10, 0], className: 'pm-berth-label' })
-          .bindPopup('<b>' + esc(b.name) + '</b><br>' + esc(b.note) + resetBtn);
+          .bindPopup('<b>' + esc(b.name) + '</b><br>' + esc(b.note || '自定义站点') + resetBtn);
+        return mk;
+      }
+
+      // ===== 铁路站点：蓝色圆钉图标 + 名称标签置于右侧（数据写死；可编辑港口锚点可拖动调节位置） =====
+      function stationMarker(b) {
+        var pos = (cst.berthPos && cst.berthPos[b.name]) || [b.area[0][0], b.area[0][1]];
+        var mk = L.marker(pos, {
+          draggable: editable,
+          icon: L.divIcon({ className: 'pm-station-pin', html: PM_STATION_ICON, iconSize: [22, 22], iconAnchor: [11, 11] })
+        });
+        if (editable) {
+          mk.on('dragend', function () {
+            var ll = mk.getLatLng();
+            cst.berthPos[b.name] = [ll.lat, ll.lng];
+            saveCustom();
+            toast('已保存「' + b.name + '」位置');
+          });
+        }
+        var resetBtn = editable && cst.berthPos && cst.berthPos[b.name]
+          ? '<div style="margin-top:6px;text-align:right;"><button class="pm-del-zone" data-reset-berth="' + esc(b.name) + '">重置位置</button></div>'
+          : '';
+        mk.bindTooltip(b.name, { permanent: true, direction: 'right', offset: [10, 0], className: 'pm-station-label' })
+          .bindPopup('<b>' + esc(b.name) + '</b><br>' + esc(b.note || '铁路站点') + resetBtn);
         return mk;
       }
 
       function drawBerths() {
         berthLayer.clearLayers();
         mapData.berths.forEach(function (b) { berthLayer.addLayer(berthMarker(b)); });
+        (mapData.stations || []).forEach(function (b) { berthLayer.addLayer(stationMarker(b)); });
       }
 
       drawBerths();
 
-      // popup 内「重置位置」（码头锚点恢复默认位置）
+      // popup 内「重置位置」（码头/站点锚点恢复写死的默认位置）
       map.on('popupopen', function (e) {
         var el = e.popup.getElement();
-        var rbtn = el && el.querySelector('[data-reset-berth]');
-        if (!rbtn) return;
-        rbtn.onclick = function () {
-          var name = rbtn.getAttribute('data-reset-berth');
-          delete cst.berthPos[name];
-          saveCustom();
-          map.closePopup();
-          drawBerths();
-        };
+        if (!el) return;
+        var rbtn = el.querySelector('[data-reset-berth]');
+        if (rbtn) {
+          rbtn.onclick = function () {
+            var name = rbtn.getAttribute('data-reset-berth');
+            delete cst.berthPos[name];
+            saveCustom();
+            map.closePopup();
+            drawBerths();
+          };
+        }
       });
 
       // ===== 自绘港区区域：仅可编辑港口开放（单击取点 → 完成/双击闭合 → 自动保存） =====
@@ -715,14 +763,16 @@
         bDone.disabled = pts.length < 3;
       }
 
-      function setDraw(on) {
-        drawing = on;
-        bStart.style.display = on ? 'none' : '';
-        bDone.style.display = on ? '' : 'none';
-        bCancel.style.display = on ? '' : 'none';
-        tip.style.display = on ? '' : 'none';
-        box.classList.toggle('pm-drawing', on);
-        if (on) { map.doubleClickZoom.disable(); }
+      // 模式切换：'zone' 绘制港区 / null 退出编辑
+      function setMode(mode) {
+        drawing = mode === 'zone';
+        bStart.style.display = drawing ? 'none' : '';
+        bDone.style.display = drawing ? '' : 'none';
+        bCancel.style.display = drawing ? '' : 'none';
+        tip.style.display = drawing ? '' : 'none';
+        tip.textContent = '单击地图依次添加顶点（至少 3 个），双击或点「完成」结束';
+        box.classList.toggle('pm-drawing', drawing);
+        if (drawing) { map.doubleClickZoom.disable(); }
         else {
           map.doubleClickZoom.enable();
           pts = [];
@@ -734,7 +784,7 @@
       function finishDraw() {
         if (pts.length < 3) return;
         var area = pts.slice();
-        setDraw(false);
+        setMode(null);
         // 自动保存：自动命名，不打断操作
         var name = '自绘区域 ' + (cst.added.length + 1);
         cst.added.push({ name: name, desc: '自绘区域', area: area });
@@ -758,8 +808,8 @@
         finishDraw();
       });
 
-      bStart.onclick = function () { setDraw(true); };
-      bCancel.onclick = function () { setDraw(false); };
+      bStart.onclick = function () { setMode('zone'); };
+      bCancel.onclick = function () { setMode(null); };
       bDone.onclick = finishDraw;
     });
   }
