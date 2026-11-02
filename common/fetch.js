@@ -16,9 +16,9 @@
   const NAV_ROUTES = {
     '首页': '/index.html',
     '客户管理': '/customers/customers.html',
-    '价格指数管理 / 汽运价格指数': '/price-index/price-index.html',
+    '价格指数管理 / 汽运价格指数': '/price-index/truck.html',
     '价格指数管理 / 火运价格指数': '/price-index/price-index.html',
-    '价格指数管理 / 铁矿石价格指数': '/price-index/price-index.html',
+    '价格指数管理 / 铁矿石价格指数': '/price-index/iron-ore.html',
     '业务管理': '/business/business.html',
     '矿山管理': '/mine/mine.html',
     '海运管理': '/ocean/ocean.html',
