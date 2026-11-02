@@ -6,7 +6,7 @@
   'use strict';
 
   var STORAGE_KEY = 'hz_transfer_stations';
-  var VERSION = 'v18';   // v18：成本卡片改为「运输通道」单列（含完整线路描述），全表居中，表头带单位
+  var VERSION = 'v19';   // v19：删除「既有通道运输成本」卡片及相关编辑功能
 
   // ===== 种子数据（曹庄镇站 / 邢台南站 / 康城站）=====
   var SEED = [
@@ -31,10 +31,7 @@
         { label: '车站等级', value: '四级' }
       ],
       stationIntro: '2025年，启动铁路线延长工程，曹庄镇站轨道由450米延长至1050米，装卸能力预计560万吨/年。具备20、40英尺集装箱及整车发到作业能力，可满足整列火车直接进出装卸。现已实现东盟班列常态化运行，成为京津冀地区唯一常态化运行的"中国—东盟"陆地运输通道。',
-      scale: '货场1处，横列式布置，货物线2条，有效长度450米，装卸作业时需对整列解编为半列列车推送进入。',
-      costRoutes: [
-        { route: '黄骅港经曹庄镇站到武安钢厂', total: '80.6', rail: '44.6', load: '6', shuttle: '30' }
-      ]
+      scale: '货场1处，横列式布置，货物线2条，有效长度450米，装卸作业时需对整列解编为半列列车推送进入。'
     },
     {
       id: 'st-xingtainan',
@@ -80,10 +77,7 @@
         { label: '车站等级', value: '三级' }
       ],
       stationIntro: '康城站是邯郸站与武安站之间的一个重要中间站，连接着京广铁路与沙午铁路方向。距离邯郸站23公里。其上下行区间均已实现电气化',
-      scale: '车站设有到发线8条（含正线2条），有效长度为871m~1044m。',
-      costRoutes: [
-        { route: '天津港经康城站到武安钢厂', total: '78.6', rail: '62.6', load: '6', shuttle: '10' }
-      ]
+      scale: '车站设有到发线8条（含正线2条），有效长度为871m~1044m。'
     }
   ];
 
@@ -227,9 +221,7 @@
       + '</div>'
 
       // 站场规模（文字卡）或 堆场/仓库信息表格（通栏）
-      + (s.scale ? scaleCard(s, s.scale) : yardsCard(s, s.yards))
-      // 既有通道运输成本（通栏；有数据才显示）
-      + (s.costRoutes && s.costRoutes.length ? costCard(s, s.costRoutes) : '');
+      + (s.scale ? scaleCard(s, s.scale) : yardsCard(s, s.yards));
   }
 
   function kvCard(s, key, title, rows) {
@@ -275,23 +267,6 @@
       + '<div class="card-head"><div class="card-title">堆场/仓库信息</div>'
       + '<button class="icon-btn" data-edit="yards" title="编辑">✎</button></div>'
       + '<table class="yard-table">' + body + '</table>'
-      + '</section>';
-  }
-
-  // 既有通道运输成本（通栏表格卡，全表居中）
-  function costCard(s, rows) {
-    var body = '<thead><tr><th style="width:34%;">运输通道</th><th>综合运输成本（元/吨）</th><th>铁路运费（元/吨）</th><th>装卸费（元/吨）</th><th>短倒费（元/吨）</th></tr></thead>'
-      + '<tbody>' + rows.map(function (r) {
-        return '<tr><td>' + esc(r.route) + '</td>'
-          + '<td>' + esc(r.total) + '</td>'
-          + '<td>' + esc(r.rail) + '</td>'
-          + '<td>' + esc(r.load) + '</td>'
-          + '<td>' + esc(r.shuttle) + '</td></tr>';
-      }).join('') + '</tbody>';
-    return '<section class="card yards-card">'
-      + '<div class="card-head"><div class="card-title">既有通道运输成本</div>'
-      + '<button class="icon-btn" data-edit="costRoutes" title="编辑">✎</button></div>'
-      + '<table class="yard-table cost-table">' + body + '</table>'
       + '</section>';
   }
 
@@ -394,51 +369,6 @@
       $('#f-yard-rows').insertAdjacentHTML('beforeend',
         yardRow({ name: '', area: '', capacity: '', location: '' }));
       bindRowRemove($('#f-yard-rows'));
-    };
-  }
-
-  // 编辑既有通道运输成本
-  function editCostRoutes() {
-    var s = currentDetail();
-    if (!s) return;
-    s.costRoutes = s.costRoutes || [];
-    function costRow(r) {
-      return '<div class="form-cost-row" style="border:1px solid var(--gray-300);border-radius:8px;padding:10px;margin-bottom:10px;">'
-        + '<input class="c-route" placeholder="运输通道（如：黄骅港经曹庄镇站到武安钢厂）" value="' + esc(r.route) + '" style="width:100%;margin-bottom:6px;">'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'
-        + '<input class="c-total" placeholder="综合运输成本（元/吨）" value="' + esc(r.total) + '">'
-        + '<input class="c-rail" placeholder="铁路运费（元/吨）" value="' + esc(r.rail) + '"></div>'
-        + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;">'
-        + '<input class="c-load" placeholder="装卸费（元/吨）" value="' + esc(r.load) + '">'
-        + '<input class="c-shuttle" placeholder="短倒费（元/吨）" value="' + esc(r.shuttle) + '"></div>'
-        + '<button class="row-del" style="border:none;background:transparent;color:var(--color-danger);cursor:pointer;font-size:12px;padding:4px 0 0;">✕ 删除该行</button>'
-        + '</div>';
-    }
-    var body = '<div id="f-cost-rows">' + s.costRoutes.map(costRow).join('') + '</div>'
-      + '<button class="form-add" id="f-cost-add">＋ 添加运输成本行</button>';
-    openModal('编辑既有通道运输成本', body, function () {
-      var rows = [];
-      document.querySelectorAll('#f-cost-rows .form-cost-row').forEach(function (row) {
-        var route = row.querySelector('.c-route').value.trim();
-        if (!route) return;
-        rows.push({
-          route: route,
-          total: row.querySelector('.c-total').value.trim(),
-          rail: row.querySelector('.c-rail').value.trim(),
-          load: row.querySelector('.c-load').value.trim(),
-          shuttle: row.querySelector('.c-shuttle').value.trim()
-        });
-      });
-      s.costRoutes = rows;
-      saveData();
-      renderDetail();
-      toast('运输成本数据已更新');
-    });
-    bindRowRemove($('#f-cost-rows'));
-    $('#f-cost-add').onclick = function () {
-      $('#f-cost-rows').insertAdjacentHTML('beforeend',
-        costRow({ route: '', total: '', rail: '', load: '', shuttle: '' }));
-      bindRowRemove($('#f-cost-rows'));
     };
   }
 
@@ -783,7 +713,6 @@
       else if (key === 'stationIntro') editStationIntro();
       else if (key === 'scale') editScale();
       else if (key === 'yards') editYards();
-      else if (key === 'costRoutes') editCostRoutes();
     });
   } else {
     // 列表模式

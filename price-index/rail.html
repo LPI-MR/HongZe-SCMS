@@ -1,0 +1,124 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>火运价格指数 - 泓泽宜通 HongZe-SCMS</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="rail.css?v=20261102f" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区：火运价格指数（四页签，版式同汽运价格指数） -->
+    <main class="main">
+      <div class="rl-page">
+
+        <!-- 顶部品牌 + 页签导航 -->
+        <header class="rl-topbar">
+          <div class="rl-brand">
+            <div class="rl-brand-icon">
+              <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="13" rx="2.5"/><path d="M4 9h16"/><circle cx="9" cy="13" r="1.2"/><circle cx="15" cy="13" r="1.2"/><path d="M8 19h8"/><path d="M10 16l-1.5 3M14 16l1.5 3"/></svg>
+            </div>
+            <div class="rl-brand-text">
+              <div class="rl-brand-sub">泓泽宜通智物流</div>
+              <div class="rl-brand-name">火运价格指数</div>
+            </div>
+          </div>
+          <nav class="rl-tabs" id="rlTabs">
+            <button class="rl-tab active" data-tab="overview" type="button">
+              <svg viewBox="0 0 24 24"><rect x="4" y="12" width="3.4" height="7" rx="1"/><rect x="10.3" y="8" width="3.4" height="11" rx="1"/><rect x="16.6" y="4.5" width="3.4" height="14.5" rx="1"/></svg>
+              指数总览
+            </button>
+          </nav>
+        </header>
+
+        <!-- ================= 指数总览 ================= -->
+        <section class="rl-panel" id="tab-overview">
+          <div class="rl-phead">
+            <div>
+              <div class="rl-phead-title">指数总览</div>
+              <div class="rl-phead-sub">铁路货运运价：不含税/含税价格 · 含税价 = 不含税 × 1.09 · 运价查询测算各办理方式预计费用</div>
+            </div>
+          </div>
+
+          <!-- 线路行情区：近一周平均价 + 各线路行情卡并排展示（运价口径参考 95306 铁路货运价格） -->
+          <section class="rl-hero">
+            <div class="rl-week-avg" id="weekAvgBar"></div>
+            <div class="rl-route-cards" id="routeCards"></div>
+            <div class="rl-hero-note">运价数据口径参考国铁 95306 货运价格体系，支持后续直接对接</div>
+          </section>
+
+          <!-- 运价查询（发站 / 到站 / 货物信息 → 预计费用测算表） -->
+          <div class="rl-card rl-form-card">
+            <div class="rl-card-head">
+              <span class="rl-card-title">运价查询</span>
+              <span class="rl-card-note">发站 / 到站 / 货物信息 → 测算各办理方式预计费用（口径参考国铁 95306）</span>
+            </div>
+            <div class="rl-form-grid">
+              <div class="rl-field">
+                <label>发站 <i class="req">*</i></label>
+                <input id="qFrom" class="rl-input" list="qFromList" placeholder="如：黄骅港站" />
+                <datalist id="qFromList"></datalist>
+              </div>
+              <div class="rl-field">
+                <label>到站 <i class="req">*</i></label>
+                <input id="qTo" class="rl-input" list="qToList" placeholder="如：康城站" />
+                <datalist id="qToList"></datalist>
+              </div>
+              <div class="rl-field rl-field-full">
+                <label>货物信息 <i class="req">*</i></label>
+                <div class="rl-q-goods">
+                  <select id="qGoodsMode" class="rl-input rl-input-sel">
+                    <option value="name">按品名</option>
+                    <option value="cat">按品类</option>
+                  </select>
+                  <div class="rl-q-goods-input" id="qGoodsNameWrap">
+                    <input id="qGoodsName" class="rl-input" list="qGoodsList" placeholder="货物名称，如：铁矿石" />
+                    <datalist id="qGoodsList"></datalist>
+                  </div>
+                  <div class="rl-q-goods-input" id="qGoodsCatWrap" style="display:none;">
+                    <select id="qGoodsCat" class="rl-input"></select>
+                  </div>
+                </div>
+              </div>
+              <div class="rl-field-full rl-q-actions">
+                <button class="rl-btn rl-btn-primary" id="btnQuery" type="button">查询</button>
+                <button class="rl-btn rl-btn-ghost" id="btnQueryReset" type="button">清空</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 查询结果：表格常驻，点击查询后填入数据 -->
+          <div id="qResult">
+            <div class="rl-q-summary" id="qSummary" hidden></div>
+            <div class="rl-card">
+              <div class="rl-table-wrap rl-q-wrap">
+                <table class="rl-table rl-qt" id="qTable"></table>
+              </div>
+              <div class="rl-q-note" id="qNote" hidden></div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <script src="rail.js?v=20261102f"></script>
+</body>
+</html>

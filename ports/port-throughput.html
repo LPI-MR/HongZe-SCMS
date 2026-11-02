@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>黄骅港货物吞吐量走势 - 泓泽宜通供应链管理系统</title>
+  <link rel="stylesheet" href="/css/common.css" />
+  <link rel="stylesheet" href="ports.css?v=20261102a" />
+  <style>
+    /* ===== 走势图详情页（仅本页生效） ===== */
+    .tp-wrap { padding-top: var(--space-md); }
+
+    /* 走势面板：白底 + 浅蓝粗圆角边框 */
+    .tp-panel {
+      position: relative;
+      background: #fff;
+      border: 7px solid #A8D8F0;
+      border-radius: 44px;
+      padding: 26px 30px 18px;
+      overflow: hidden;
+      box-shadow: 0 14px 34px -20px rgba(46, 107, 230, .45);
+    }
+    /* 面板底部淡化的港口实景背景 */
+    .tp-bg {
+      position: absolute; inset: 0;
+      background: url('/ports/assets/huanghua-port.png') center bottom / cover no-repeat;
+      opacity: .10;
+      pointer-events: none;
+    }
+    /* 标题横幅：蓝色渐变胶囊 */
+    .tp-title {
+      position: relative;
+      max-width: 680px;
+      margin: 0 auto 10px;
+      background: linear-gradient(180deg, #37A9E1, #1F8BC5);
+      color: #fff;
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-align: center;
+      padding: 10px 20px;
+      border-radius: 999px;
+      box-shadow: 0 6px 16px -8px rgba(31, 139, 197, .6);
+    }
+    .tp-chart { position: relative; }
+    .tp-chart svg { width: 100%; height: auto; display: block; }
+    .tp-foot {
+      position: relative;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: #A9B1C2; margin-top: 4px; padding: 0 6px;
+    }
+    .tp-bar { transition: filter .15s ease; }
+    .tp-bar:hover { filter: brightness(1.18); }
+
+    @media (max-width: 760px) {
+      .tp-panel { border-radius: 26px; padding: 18px 12px 12px; border-width: 5px; }
+      .tp-title { font-size: 15px; letter-spacing: 1px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <section class="tp-wrap">
+        <div class="detail-top">
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" id="backBtn" type="button">返回详情</button>
+        </div>
+
+        <!-- 走势图面板（SVG 由脚本渲染） -->
+        <div class="tp-panel">
+          <div class="tp-bg"></div>
+          <div class="tp-title">2002-2025年黄骅港货物吞吐量走势图</div>
+          <div class="tp-chart" id="tpChart"></div>
+          <div class="tp-foot">
+            <span>单位：亿吨</span>
+            <span>数据来源：港口公开统计 · 数据时间：2025年</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/common/fetch.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // ===== 数据（2002-2025 年黄骅港货物吞吐量，亿吨） =====
+      var DATA = [
+        ['2002', 0.17], ['2003', 0.31], ['2004', 0.46], ['2005', 0.68],
+        ['2006', 0.81], ['2007', 0.83], ['2008', 0.80], ['2009', 0.84],
+        ['2010', 0.94], ['2011', 1.13], ['2012', 1.26], ['2013', 1.71],
+        ['2014', 1.76], ['2015', 1.67], ['2016', 2.45], ['2017', 2.70],
+        ['2018', 2.88], ['2019', 2.88], ['2020', 3.01], ['2021', 3.11],
+        ['2022', 3.15], ['2023', 3.31], ['2024', 3.55], ['2025', 3.66]
+      ];
+      var RED = { '2010': 1, '2020': 1, '2025': 1 };   // 红色高亮年份
+
+      // ===== SVG 绘制 =====
+      var W = 1080, H = 580;
+      var LEFT = 90, RIGHT = 1050, TOP = 48, BOTTOM = 500;
+      var STEP = (RIGHT - LEFT) / DATA.length;   // 每年步距
+      var BARW = 26;                              // 柱宽
+      var YMAX = 4;
+      function Y(v) { return BOTTOM - v / YMAX * (BOTTOM - TOP); }
+
+      function render() {
+        var s = '';
+        // 渐变定义
+        s += '<defs>'
+          + '<linearGradient id="tpGray" x1="0" y1="0" x2="0" y2="1">'
+          + '<stop offset="0" stop-color="#C7CFD6"/><stop offset="1" stop-color="#77828C"/></linearGradient>'
+          + '<linearGradient id="tpRed" x1="0" y1="0" x2="0" y2="1">'
+          + '<stop offset="0" stop-color="#D8493F"/><stop offset="1" stop-color="#A8281F"/></linearGradient>'
+          + '</defs>';
+
+        // Y 轴刻度（0 ~ 4，步长 0.5）+ 单位
+        for (var v = 0; v <= YMAX + 0.001; v += 0.5) {
+          var label = (v % 1 === 0) ? String(v) : v.toFixed(1);
+          s += '<text x="78" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" font-size="12" fill="#777">' + label + '</text>';
+        }
+        s += '<text x="36" y="' + ((TOP + BOTTOM) / 2) + '" font-size="12" fill="#777" transform="rotate(-90 36 ' + ((TOP + BOTTOM) / 2) + ')" text-anchor="middle">亿吨</text>';
+
+        // 柱体 + 数值标签 + 趋势线端点
+        var linePts = [];
+        DATA.forEach(function (d, i) {
+          var year = d[0], val = d[1];
+          var cx = LEFT + i * STEP + STEP / 2;
+          var y = Y(val), h = BOTTOM - y;
+          var fill = RED[year] ? 'url(#tpRed)' : 'url(#tpGray)';
+          s += '<path class="tp-bar" d="M' + (cx - BARW / 2).toFixed(1) + ' ' + BOTTOM.toFixed(1)
+            + ' V' + (y + 3).toFixed(1) + ' Q' + (cx - BARW / 2).toFixed(1) + ' ' + y.toFixed(1) + ' ' + (cx - BARW / 2 + 3).toFixed(1) + ' ' + y.toFixed(1)
+            + ' H' + (cx + BARW / 2 - 3).toFixed(1) + ' Q' + (cx + BARW / 2).toFixed(1) + ' ' + y.toFixed(1) + ' ' + (cx + BARW / 2).toFixed(1) + ' ' + (y + 3).toFixed(1)
+            + ' V' + BOTTOM.toFixed(1) + ' Z" fill="' + fill + '">'
+            + '<title>' + year + '年：' + val.toFixed(2) + ' 亿吨</title></path>';
+          linePts.push(cx.toFixed(1) + ',' + y.toFixed(1));
+
+          // 数值标签（白底小圆角框）
+          s += '<rect x="' + (cx - 19).toFixed(1) + '" y="' + (y - 27).toFixed(1) + '" width="38" height="17" rx="4" fill="#fff" stroke="#D6DBE3"/>'
+            + '<text x="' + cx.toFixed(1) + '" y="' + (y - 14.5).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="600" fill="#8B1A12">' + val.toFixed(2) + '</text>';
+        });
+
+        // 趋势虚线
+        s += '<polyline points="' + linePts.join(' ') + '" fill="none" stroke="#9E2B22" stroke-width="2" stroke-dasharray="7 5"/>';
+
+        // X 轴年份
+        DATA.forEach(function (d, i) {
+          var cx = LEFT + i * STEP + STEP / 2;
+          s += '<text x="' + cx.toFixed(1) + '" y="524" text-anchor="middle" font-size="11" fill="#666">' + d[0] + '年</text>';
+        });
+
+        document.getElementById('tpChart').innerHTML =
+          '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="2002-2025年黄骅港货物吞吐量走势图">' + s + '</svg>';
+      }
+
+      // ===== 返回详情 =====
+      document.getElementById('backBtn').addEventListener('click', function () {
+        location.href = '/ports/ports-detail.html?id=port-huanghua';
+      });
+
+      // ===== 导航高亮（业务管理 / 3.港口管理） =====
+      function setActiveNav() {
+        var navbar = document.getElementById('navbar');
+        if (!navbar) return;
+        navbar.querySelectorAll('.nav-item.active, .nav-sub-item.active')
+          .forEach(function (el) { el.classList.remove('active'); });
+        navbar.querySelectorAll('.nav-item').forEach(function (item) {
+          if ((item.dataset.path || '') === '业务管理 / 3.港口管理') item.classList.add('active');
+        });
+      }
+      var navbar = document.getElementById('navbar');
+      if (navbar && navbar.children.length) setActiveNav();
+      else document.addEventListener('navbar:loaded', setActiveNav, { once: true });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
