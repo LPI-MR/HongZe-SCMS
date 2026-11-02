@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>订单录入 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 按钮与输入组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务流程模块样式：步骤条 / 折叠面板 / 表单网格 / 校验与摘要 -->
+  <link rel="stylesheet" href="flow.css" />
+</head>
+  <!-- page-order-form：苹果风格润色作用域（flow.css 末段覆盖样式仅作用于本页） -->
+  <body class="page-order-form">
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 四步流程步骤条：当前第 1 步 -->
+      <div class="flow-steps">
+        <span class="step current"><span class="idx">1</span>录入订单</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">2</span>港口信息</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">3</span>运力方案</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">4</span>运输方案</span>
+      </div>
+
+      <!-- 页面头部：标题 + 已自动保存 + 保存草稿 -->
+      <div class="form-head">
+        <div>
+          <div class="form-title" id="form-title">新建订单</div>
+          <div class="form-sub" id="form-sub">填写后将自动生成订单编号并进入下一步</div>
+        </div>
+        <div class="form-head-ops">
+          <span class="saved-tip" id="saved-tip" hidden>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 5"/></svg>
+            已自动保存
+          </span>
+          <button type="button" class="btn-ghost" id="btn-save-head">保存草稿</button>
+        </div>
+      </div>
+
+      <!-- 客户面板（默认展开） -->
+      <section class="flow-collapse open">
+        <button type="button" class="collapse-head" data-collapse>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          <span>客户</span>
+          <span class="head-extra" id="sum-customer">未填写</span>
+        </button>
+        <div class="collapse-body">
+          <div class="fgrid">
+            <div class="field">
+              <label class="field-label">客户<span class="req">*</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="trader" placeholder="如：中矿国链" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-hint="trader"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">联系人<span class="req">*</span></label>
+              <input class="field-input" data-field="traderContact" placeholder="如：张经理" />
+              <div class="hint" data-hint="traderContact"></div>
+            </div>
+            <div class="field span-2">
+              <label class="field-label">联系方式<span class="req">*</span></label>
+              <input class="field-input" data-field="traderContactInfo" placeholder="如：138-XXXX-XXXX" />
+              <div class="hint" data-hint="traderContactInfo"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 货物信息面板（默认展开） -->
+      <section class="flow-collapse open">
+        <button type="button" class="collapse-head" data-collapse>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          <span>货物信息</span>
+          <span class="head-extra" id="sum-cargo">未填写</span>
+        </button>
+        <div class="collapse-body">
+          <div class="fgrid cols-3">
+            <div class="field">
+              <label class="field-label">货物名称<span class="req">*</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="cargoName" placeholder="如：PB粉" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-hint="cargoName"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">货物总量（吨）<span class="req">*</span></label>
+              <input class="field-input" type="number" data-field="cargoTotal" placeholder="如：70000" />
+              <div class="hint" data-hint="cargoTotal"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">货物单价（元/吨）<span class="req">*</span></label>
+              <input class="field-input" type="number" data-field="cargoPrice" placeholder="如：800" />
+              <div class="hint" data-hint="cargoPrice"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">货物品质<span class="req">*</span></label>
+              <input class="field-input" data-field="cargoQuality" placeholder="如：品位 62%、粒度 10-40mm" />
+              <div class="hint" data-hint="cargoQuality"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">来源矿山</label>
+              <select class="field-input" id="sel-mine">
+                <option value="">请选择</option>
+              </select>
+            </div>
+            <div class="field" id="field-mine-other" hidden>
+              <label class="field-label">来源矿山（自定义）</label>
+              <input class="field-input" id="in-mine-custom" placeholder="如：力拓" maxlength="50" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 到港信息面板（默认收起） -->
+      <section class="flow-collapse">
+        <button type="button" class="collapse-head" data-collapse>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          <span>到港信息</span>
+          <span class="head-extra" id="sum-port">未填写</span>
+        </button>
+        <div class="collapse-body">
+          <div class="fgrid cols-3">
+            <div class="field">
+              <label class="field-label">运输船舶</label>
+              <input class="field-input" data-field="vessel" placeholder="如：远盛海 008" />
+            </div>
+            <div class="field">
+              <label class="field-label">装船开始时间</label>
+              <input class="field-input" type="datetime-local" data-field="loadingStart" />
+            </div>
+            <div class="field">
+              <label class="field-label">起运时间</label>
+              <input class="field-input" type="datetime-local" data-field="departure" />
+            </div>
+            <div class="field">
+              <label class="field-label">预计到达港口</label>
+              <input class="field-input" data-field="destPort" placeholder="如：黄骅港" />
+            </div>
+            <div class="field">
+              <label class="field-label">上传时水尺数（米）</label>
+              <input class="field-input" type="number" step="0.01" data-field="draftMark" placeholder="如：14.5" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 终端客户面板（默认收起） -->
+      <section class="flow-collapse">
+        <button type="button" class="collapse-head" data-collapse>
+          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+          <span>终端客户</span>
+          <span class="head-extra" id="sum-customers">未填写</span>
+        </button>
+        <div class="collapse-body">
+          <!-- 动态客户行（由 order-form.js 渲染） -->
+          <div id="cust-list"></div>
+          <button type="button" class="btn-ghost btn-sm" id="btn-add-customer">＋ 添加客户</button>
+          <!-- 差额提示 -->
+          <div class="hint" id="diff-tip" style="margin-top: var(--space-sm)" hidden></div>
+        </div>
+      </section>
+
+      <!-- 订单摘要卡片（编辑态显示） -->
+      <div class="summary-card" id="summary-card" hidden>
+        <div class="panel-head">
+          <span class="panel-title">订单摘要</span>
+        </div>
+        <div class="summary-grid" id="summary-grid"></div>
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="flow-footer">
+        <a class="btn-ghost" href="../business.html">← 返回工作台</a>
+        <div style="display:flex;align-items:center;gap:var(--space-sm)">
+          <button type="button" class="btn-ghost" id="btn-save">保存草稿</button>
+          <button type="button" class="btn-primary" id="btn-generate">生成订单 →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 全局提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 业务流程共享数据层 -->
+  <script src="flow-data.js"></script>
+  <!-- 订单录入脚本 -->
+  <script src="order-form.js"></script>
+</body>
+</html>

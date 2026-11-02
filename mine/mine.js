@@ -49,7 +49,7 @@
 
   // ===== 本地持久化 =====
   const LS_MINES = 'hz_mines';               // 矿山主数据（本模块权威存储键，其他模块只读复用）
-  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v9：介绍弹层文案五节式扩充）
+  const LS_SEED_VER = 'hz_mines_seed_ver';   // 种子数据版本标记（v11：产品详情价格参考与合作伙伴模块）
 
   function loadJSON(key, fallback) {
     try {
@@ -64,7 +64,7 @@
   //   province, city, district, address, longitude, latitude, annual_capacity, reserve,
   //   ore_grade, operator, contact_person, contact_phone, status, remark,
   //   commissioned_year, intro, img_prompt, tagline, hero_prompt, story, gallery,
-  //   img_url, hero_url, gallery_urls, img_credit, products_ext, created_at, updated_at, created_by}]
+  //   img_url, hero_url, gallery_urls, img_credit, products_ext, price_refs, partners, created_at, updated_at, created_by}]
   let mines = loadJSON(LS_MINES, []);
   if (!Array.isArray(mines)) mines = [];
 
@@ -76,7 +76,10 @@
   //   已本地化为 /mine/assets/ 下的真实影像（来源 Wikimedia Commons / NASA，下载自公开图库）；
   //   为空时回退 prompt 走生成 API（用户自建矿山场景）
   // 参数来源：力拓 2025 Q3 生产报告 / BHP FY25 运营公报 / Vale 2025 生产销售报告 / FMG FY25 季报 / 西芒杜 JORC 公告
-  const SEED_VER = 'v10';
+  // v11：产品详情新增「价格参考」「合作伙伴」两模块（静态演示样本 [Assumption, TBD]，来源/备注以 hover 气泡展示）
+  // price_refs 条目：{name, tag, product, value, unit, delta, direction(up/down/flat), updated, source}——source 必填，缺省不渲染 ⓘ
+  // partners 条目：{name, type(steel/trader/other), scale, scale_value(降序排序用), period, status(lt/spot/strategic), remark}
+  const SEED_VER = 'v11';
 
   // 用户自建矿山的介绍板块默认回退值
   const DEFAULT_TAGLINE = '矿山的自然与人文';
@@ -136,6 +139,22 @@
           { name: '硼酸盐（加州 Boron）', category: '工业矿物', spec: 'B₂O₃ 46-47%', output: 50, unit: '万吨/年', grade: 'B₂O₃ ≈47%', impurity: '—', size: '精矿 / 硼酸 / 硼砂', moisture: '—', application: '玻璃 / 陶瓷 / 农业', desc: '莫哈韦沙漠波隆矿区，全球硼酸盐领导者，满足全球约三成需求' },
           { name: '钛渣（RTIT 加/南非）', category: '工业矿物', spec: 'TiO₂ ≈80%', output: 110, unit: '万吨/年', grade: 'TiO₂ 80%+', impurity: 'FeO ≈10%', size: '钛渣 / 高钛渣', moisture: '—', application: '钛白粉原料', desc: '加拿大 Lac Tio 钛铁矿与魁北克 Sorel-Tracy 冶金综合体，钛白粉颜料工业核心原料，副产氧化钪与铁粉' },
           { name: '盐（Dampier Salt）', category: '工业矿物', spec: 'NaCl ≥99.5%', output: 500, unit: '万吨/年', grade: 'NaCl ≥99.5%', impurity: '—', size: '日晒海盐', moisture: '—', application: '化工 / 食用盐', desc: '丹皮尔盐业：世界最大日晒盐场之一，位于西澳皮尔巴拉海岸' }
+        ],
+        // 价格参考（v11 演示样本 [Assumption, TBD]）：市场体系价格为 62%/65% 统一口径，Mysteel 现货按本矿主力品种差异化
+        price_refs: [
+          { name: '北矿指数 · 北矿所基准价（62%）', tag: '官方指数', product: '62% 品位粉矿 · 平台成交', value: '103.20', unit: '美元/干吨', delta: '+1.10', direction: 'up', updated: '2026-10-30', source: '北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（62% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格' },
+          { name: '国际标准价 · 普氏 IODEX', tag: '国际标准', product: '62% Fe 铁矿石 · CFR 中国', value: '103.45', unit: '美元/干吨', delta: '+0.62', direction: 'up', updated: '2026-10-30', source: 'S&P Global 普氏能源资讯发布的 62% 品位铁矿石中国到岸（CFR）现货评估，美元计价，是 ICE 普氏 IODEX 期货及上海清算所人民币铁矿石掉期的结算基准' },
+          { name: '国内现货价 · Mysteel 青岛港', tag: '国内现货', product: '61.5% PB粉 · 港口现货', value: '768.0', unit: '元/湿吨', delta: '+3.0', direction: 'up', updated: '2026-10-30', source: '我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平' },
+          { name: '国内期货价 · 大商所铁矿石期货', tag: '国内期货', product: '主力合约 I · 结算价', value: '812.5', unit: '元/吨', delta: '-4.5', direction: 'down', updated: '2026-10-30', source: '大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准' },
+          { name: '新加坡掉期 · SGX TSI', tag: '场外掉期', product: '62% Fe 掉期 · CFR 中国', value: '102.85', unit: '美元/干吨', delta: '+0.95', direction: 'up', updated: '2026-10-30', source: '新加坡交易所铁矿石掉期（SGX TSI 62% Fe CFR 中国），2009 年起以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场' },
+          { name: 'CIOPI 中国铁矿石价格指数', tag: '官方指数', product: '62% 进口铁矿石指数', value: '104.10', unit: '指数点', delta: '+1.30', direction: 'up', updated: '2026-10-30', source: '中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数' }
+        ],
+        // 合作伙伴（v11 演示样本 [Assumption, TBD]）：scale_value 仅用于列表降序排序
+        partners: [
+          { name: '宝武集团', type: 'steel', scale: '年采购 3,200 万吨', scale_value: 3200, period: '2021 至今 · 5 年', status: 'strategic', remark: '与宝武原料采购中心签署战略合作，年度长协+季度调整，青岛港/日照港到岸' },
+          { name: '鞍钢集团', type: 'steel', scale: '年采购 1,500 万吨', scale_value: 1500, period: '2018 至今 · 7 年', status: 'lt', remark: '年度长协，丹皮尔港发运，信用证结算' },
+          { name: '中钢集团', type: 'trader', scale: '年代理分销 900 万吨', scale_value: 900, period: '2015 至今 · 10 年', status: 'lt', remark: '央企代理分销通道，覆盖华北钢厂二级市场，长协与现货混合结算' },
+          { name: '托克（Trafigura）', type: 'trader', scale: '年贸易 700 万吨', scale_value: 700, period: '2019 至今 · 6 年', status: 'spot', remark: '国际贸易商，CFR 中国主要接货方，转口贸易与人民币现货并行' }
         ]
       },
       {
@@ -180,6 +199,20 @@
           { name: '喷吹煤（PCI）', category: '冶金煤', spec: '灰分 ≤10%', output: 2000, unit: '万吨/年', grade: '灰分 ≤10%', impurity: 'S ≤0.5%', size: '粉煤', moisture: '≈ 10%', application: '高炉喷吹', desc: '高炉喷吹用煤，替代部分焦炭降低炼铁成本与排放' },
           { name: '钾盐（Jansen，建设中）', category: '钾盐', spec: 'KCl ≥95%', output: 435, unit: '万吨/年', grade: 'KCl ≥95%', impurity: '—', size: '标准钾肥 / 颗粒钾肥', moisture: '—', application: '农业肥料', desc: '加拿大萨斯喀彻温 Jansen 项目：一期 2027 年中投产、设计产能 435 万吨/年，加拿大最大钾盐项目' },
           { name: '镍（西澳镍业）', category: '镍', spec: '镍锍 / 镍精矿', output: null, unit: '万吨/年', grade: 'Ni 75%+（镍锍）', impurity: '—', size: '镍锍', moisture: '—', application: '不锈钢 / 电池', desc: '西澳镍业（Nickel West / West Musgrave）自 2024 年 12 月起临时停产，2027 年 2 月前复审复产决策' }
+        ],
+        price_refs: [
+          { name: '北矿指数 · 北矿所基准价（62%）', tag: '官方指数', product: '62% 品位粉矿 · 平台成交', value: '103.20', unit: '美元/干吨', delta: '+1.10', direction: 'up', updated: '2026-10-30', source: '北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（62% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格' },
+          { name: '国际标准价 · 普氏 IODEX', tag: '国际标准', product: '62% Fe 铁矿石 · CFR 中国', value: '103.45', unit: '美元/干吨', delta: '+0.62', direction: 'up', updated: '2026-10-30', source: 'S&P Global 普氏能源资讯发布的 62% 品位铁矿石中国到岸（CFR）现货评估，美元计价，是 ICE 普氏 IODEX 期货及上海清算所人民币铁矿石掉期的结算基准' },
+          { name: '国内现货价 · Mysteel 青岛港', tag: '国内现货', product: '62% 纽曼粉 · 港口现货', value: '772.5', unit: '元/湿吨', delta: '+3.5', direction: 'up', updated: '2026-10-30', source: '我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平' },
+          { name: '国内期货价 · 大商所铁矿石期货', tag: '国内期货', product: '主力合约 I · 结算价', value: '812.5', unit: '元/吨', delta: '-4.5', direction: 'down', updated: '2026-10-30', source: '大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准' },
+          { name: '新加坡掉期 · SGX TSI', tag: '场外掉期', product: '62% Fe 掉期 · CFR 中国', value: '102.85', unit: '美元/干吨', delta: '+0.95', direction: 'up', updated: '2026-10-30', source: '新加坡交易所铁矿石掉期（SGX TSI 62% Fe CFR 中国），2009 年起以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场' },
+          { name: 'CIOPI 中国铁矿石价格指数', tag: '官方指数', product: '62% 进口铁矿石指数', value: '104.10', unit: '指数点', delta: '+1.30', direction: 'up', updated: '2026-10-30', source: '中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数' }
+        ],
+        partners: [
+          { name: '宝武集团', type: 'steel', scale: '年采购 2,800 万吨', scale_value: 2800, period: '2016 至今 · 9 年', status: 'strategic', remark: '宝武与 BHP 战略合作框架，黑德兰港发运，含人民币计价结算试点' },
+          { name: '河钢集团', type: 'steel', scale: '年采购 1,300 万吨', scale_value: 1300, period: '2012 至今 · 13 年', status: 'lt', remark: '河钢国际物流统一采购，年度长协+季度浮动定价' },
+          { name: '厦门建发股份', type: 'trader', scale: '年贸易 800 万吨', scale_value: 800, period: '2017 至今 · 8 年', status: 'spot', remark: '建发物流港口现货分销，覆盖东南沿海钢厂' },
+          { name: '厦门国贸集团', type: 'trader', scale: '年贸易 650 万吨', scale_value: 650, period: '2018 至今 · 7 年', status: 'spot', remark: '进口代理+现货分销，人民币现货交易活跃' }
         ]
       },
       {
@@ -221,6 +254,21 @@
           { name: '镍（Onça Puma/Voisey\'s Bay 等）', category: '镍', spec: '镍锍 Ni ≥75%', output: 16, unit: '万吨/年', grade: 'Ni ≥75%', impurity: 'Co · Cu 伴生', size: '镍锍 / 镍精矿', moisture: '—', application: '不锈钢 / 电池', desc: '巴西 Onça Puma、加拿大 Voisey\'s Bay 与印尼索罗瓦科，2025 年产量约 16 万吨' },
           { name: '铜精矿（Salobo/Sossego）', category: '铜', spec: 'Cu 25-30%', output: 35, unit: '万吨/年', grade: 'Cu 25-30%', impurity: 'Au · Ag 伴生', size: '铜精矿 / 阴极铜', moisture: '≈ 8%', application: '铜冶炼', desc: '卡拉加斯 Salobo 创历史产量纪录，与 Sossego 合计 2025 年约 34-40 万吨' },
           { name: '锰矿石（Azul）', category: '锰', spec: 'Mn 40%+', output: 250, unit: '万吨/年', grade: 'Mn 40%+', impurity: 'Fe · SiO₂ 适中', size: '块矿 / 粉矿', moisture: '≈ 8%', application: '铁合金', desc: '卡拉加斯配套 Azul 锰矿——全球最大锰矿之一，供应铁合金与电池级锰原料' }
+        ],
+        // 高品位矿山（65%）：北矿所/普氏/SGX 均有 65% 品位体系，期货与 CIOPI 仍为 62% 口径
+        price_refs: [
+          { name: '北矿指数 · 北矿所基准价（65%）', tag: '官方指数', product: '65% 品位粉矿 · 平台成交', value: '117.30', unit: '美元/干吨', delta: '+1.40', direction: 'up', updated: '2026-10-30', source: '北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（65% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格' },
+          { name: '国际标准价 · 普氏 IODEX', tag: '国际标准', product: '65% Fe 铁矿石 · CFR 中国', value: '118.60', unit: '美元/干吨', delta: '+0.80', direction: 'up', updated: '2026-10-30', source: 'S&P Global 普氏能源资讯发布的高品位铁矿石中国到岸（CFR）现货评估，美元计价，为国际市场高品位矿定价参考基准' },
+          { name: '国内现货价 · Mysteel 青岛港', tag: '国内现货', product: '65% 卡拉加斯粉 · 港口现货', value: '856.0', unit: '元/湿吨', delta: '+4.0', direction: 'up', updated: '2026-10-30', source: '我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平' },
+          { name: '国内期货价 · 大商所铁矿石期货', tag: '国内期货', product: '主力合约 I · 结算价', value: '812.5', unit: '元/吨', delta: '-4.5', direction: 'down', updated: '2026-10-30', source: '大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准' },
+          { name: '新加坡掉期 · SGX TSI', tag: '场外掉期', product: '65% Fe 掉期 · CFR 中国', value: '117.90', unit: '美元/干吨', delta: '+1.10', direction: 'up', updated: '2026-10-30', source: '新加坡交易所高品位铁矿石掉期（SGX TSI 65% Fe CFR 中国），以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场' },
+          { name: 'CIOPI 中国铁矿石价格指数', tag: '官方指数', product: '62% 进口铁矿石指数', value: '104.10', unit: '指数点', delta: '+1.30', direction: 'up', updated: '2026-10-30', source: '中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数' }
+        ],
+        partners: [
+          { name: '宝武集团', type: 'steel', scale: '年采购 3,500 万吨', scale_value: 3500, period: '2002 至今 · 23 年', status: 'strategic', remark: '宝武与 Vale 长期战略合作，图巴朗港发运，含绿色压块采购试点' },
+          { name: '山钢集团', type: 'steel', scale: '年采购 900 万吨', scale_value: 900, period: '2014 至今 · 11 年', status: 'lt', remark: '年度长协，青岛港到岸分销，卡拉加斯粉为主' },
+          { name: '浙江物产中大', type: 'trader', scale: '年贸易 750 万吨', scale_value: 750, period: '2016 至今 · 9 年', status: 'spot', remark: '物产中大集团港口现货分销，覆盖长三角钢厂' },
+          { name: '华菱钢铁', type: 'steel', scale: '年采购 600 万吨', scale_value: 600, period: '2019 至今 · 6 年', status: 'lt', remark: '湘钢/涟钢配矿需求，BRBF 长协占比高' }
         ]
       },
       {
@@ -257,6 +305,20 @@
           { name: '西皮粉（WPF）', category: '铁矿石', spec: 'TFe 60.1%', output: 2300, unit: '万吨/年', grade: 'TFe 60.1%', impurity: 'Al₂O₃ 2.0% · SiO₂ 5.5% · P 0.06%', size: '-9.5mm 为主', moisture: '≈ 9%', application: '烧结', desc: '西皮尔巴拉粉（West Pilbara Fines），FMG 品位升级战略的主力中品粉矿' },
           { name: 'King 粉（CID）', category: '铁矿石', spec: 'TFe 55%', output: 500, unit: '万吨/年', grade: 'TFe 55%', impurity: 'Al₂O₃ 2.5% · SiO₂ 5.5% · P 0.05%', size: '-9.5mm 为主', moisture: '≈ 9%', application: '烧结', desc: 'Kings 通道铁矿（CID）独立产品，补充低成本配矿选项' },
           { name: 'Iron Bridge 磁铁矿精矿', category: '铁矿石', spec: 'TFe 67%', output: 2000, unit: '万吨/年', grade: 'TFe 67%', impurity: 'Al₂O₃ 0.3% · SiO₂ 2.5%', size: '磁铁矿精矿，-0.5mm', moisture: '≈ 9%', application: '球团 / 高品位配矿', desc: '世界级高品位磁铁矿项目：满产 2,200 万吨/年，对 65% 品位指数溢价定价' }
+        ],
+        price_refs: [
+          { name: '北矿指数 · 北矿所基准价（62%）', tag: '官方指数', product: '62% 品位粉矿 · 平台成交', value: '103.20', unit: '美元/干吨', delta: '+1.10', direction: 'up', updated: '2026-10-30', source: '北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（62% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格' },
+          { name: '国际标准价 · 普氏 IODEX', tag: '国际标准', product: '62% Fe 铁矿石 · CFR 中国', value: '103.45', unit: '美元/干吨', delta: '+0.62', direction: 'up', updated: '2026-10-30', source: 'S&P Global 普氏能源资讯发布的 62% 品位铁矿石中国到岸（CFR）现货评估，美元计价，是 ICE 普氏 IODEX 期货及上海清算所人民币铁矿石掉期的结算基准' },
+          { name: '国内现货价 · Mysteel 青岛港', tag: '国内现货', product: '58.2% 混合粉 · 港口现货', value: '692.0', unit: '元/湿吨', delta: '+2.5', direction: 'up', updated: '2026-10-30', source: '我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平' },
+          { name: '国内期货价 · 大商所铁矿石期货', tag: '国内期货', product: '主力合约 I · 结算价', value: '812.5', unit: '元/吨', delta: '-4.5', direction: 'down', updated: '2026-10-30', source: '大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准' },
+          { name: '新加坡掉期 · SGX TSI', tag: '场外掉期', product: '62% Fe 掉期 · CFR 中国', value: '102.85', unit: '美元/干吨', delta: '+0.95', direction: 'up', updated: '2026-10-30', source: '新加坡交易所铁矿石掉期（SGX TSI 62% Fe CFR 中国），2009 年起以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场' },
+          { name: 'CIOPI 中国铁矿石价格指数', tag: '官方指数', product: '62% 进口铁矿石指数', value: '104.10', unit: '指数点', delta: '+1.30', direction: 'up', updated: '2026-10-30', source: '中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数' }
+        ],
+        partners: [
+          { name: '沙钢集团', type: 'steel', scale: '年采购 1,600 万吨', scale_value: 1600, period: '2014 至今 · 11 年', status: 'lt', remark: '沙钢为超特粉最大用户之一，黑德兰港发运，性价比配矿核心供应' },
+          { name: '日照钢铁', type: 'steel', scale: '年采购 950 万吨', scale_value: 950, period: '2015 至今 · 10 年', status: 'spot', remark: '以现货招标为主，港口现货与长协结合' },
+          { name: '华菱钢铁', type: 'steel', scale: '年采购 700 万吨', scale_value: 700, period: '2017 至今 · 8 年', status: 'lt', remark: '混合粉/超特粉配比使用，年度长协框架' },
+          { name: '厦门国贸集团', type: 'trader', scale: '年贸易 600 万吨', scale_value: 600, period: '2019 至今 · 6 年', status: 'spot', remark: '现货分销与代理进口结合，覆盖华南市场' }
         ]
       },
       {
@@ -290,6 +352,20 @@
         products_ext: [
           { name: '西芒杜高品位粉', category: '铁矿石', spec: 'TFe 65%', output: 3500, unit: '万吨/年', grade: 'TFe 65%', impurity: 'Al₂O₃ ≈1.0% · SiO₂ ≈2.0%', size: '-9.5mm 为主', moisture: '≈ 8%', application: '烧结', desc: '新投产的高品位粉矿，低铝低硅，有望成为高品位配矿新基准；JORC 资源品位 66-67.1%' },
           { name: '西芒杜块矿', category: '铁矿石', spec: 'TFe 66%', output: 2500, unit: '万吨/年', grade: 'TFe 66%', impurity: 'Al₂O₃ ≈1.0% · SiO₂ ≈2.0%', size: '6.3-31.5mm', moisture: '≈ 3%', application: '高炉直接入炉', desc: '全球最高品位块矿之一，直接入炉比例提升的关键资源；项目远期产能 1.2 亿吨/年（四大区块）' }
+        ],
+        // 高品位新投产矿山（65%），投产初期现货试单为主
+        price_refs: [
+          { name: '北矿指数 · 北矿所基准价（65%）', tag: '官方指数', product: '65% 品位粉矿 · 平台成交', value: '117.30', unit: '美元/干吨', delta: '+1.40', direction: 'up', updated: '2026-10-30', source: '北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（65% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格' },
+          { name: '国际标准价 · 普氏 IODEX', tag: '国际标准', product: '65% Fe 铁矿石 · CFR 中国', value: '118.60', unit: '美元/干吨', delta: '+0.80', direction: 'up', updated: '2026-10-30', source: 'S&P Global 普氏能源资讯发布的高品位铁矿石中国到岸（CFR）现货评估，美元计价，为国际市场高品位矿定价参考基准' },
+          { name: '国内现货价 · Mysteel 青岛港', tag: '国内现货', product: '65% 高品位粉 · 港口现货（新货种）', value: '862.0', unit: '元/湿吨', delta: '+4.5', direction: 'up', updated: '2026-10-30', source: '我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平' },
+          { name: '国内期货价 · 大商所铁矿石期货', tag: '国内期货', product: '主力合约 I · 结算价', value: '812.5', unit: '元/吨', delta: '-4.5', direction: 'down', updated: '2026-10-30', source: '大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准' },
+          { name: '新加坡掉期 · SGX TSI', tag: '场外掉期', product: '65% Fe 掉期 · CFR 中国', value: '117.90', unit: '美元/干吨', delta: '+1.10', direction: 'up', updated: '2026-10-30', source: '新加坡交易所高品位铁矿石掉期（SGX TSI 65% Fe CFR 中国），以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场' },
+          { name: 'CIOPI 中国铁矿石价格指数', tag: '官方指数', product: '62% 进口铁矿石指数', value: '104.10', unit: '指数点', delta: '+1.30', direction: 'up', updated: '2026-10-30', source: '中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数' }
+        ],
+        partners: [
+          { name: '宝武集团', type: 'steel', scale: '规划年采购 1,600 万吨', scale_value: 1600, period: '2025 年 12 月起 · 首船已发运', status: 'strategic', remark: '宝武为西芒杜项目中方股东之一，投产初期承接包销与战略采购' },
+          { name: '中钢集团', type: 'trader', scale: '年包销 800 万吨', scale_value: 800, period: '2025 年起 · 5 年包销', status: 'lt', remark: '中钢集团首批包销协议，经莫雷巴亚港发运' },
+          { name: '厦门建发股份', type: 'trader', scale: '年贸易 500 万吨', scale_value: 500, period: '2026 年起', status: 'spot', remark: '高品位新货种现货试单，青岛港接货分销' }
         ]
       }
     ];
@@ -714,6 +790,126 @@
     return productsOf(m).map(name => ({ name: name, category: '', spec: '', output: null, unit: '万吨/年', grade: '', impurity: '', size: '', moisture: '', application: '', desc: '' }));
   }
 
+  // ===== 产品详情新增模块：价格参考 / 合作伙伴（v11） =====
+  const PARTNER_TYPES = { steel: '钢铁企业', trader: '矿石贸易商', other: '其他' };
+  const PARTNER_STATUS = { lt: '长协', spot: '现货', strategic: '战略' };
+
+  // 来源/备注 hover 气泡（FR-03 共享交互）：悬停或键盘聚焦展示，ESC 失焦收起
+  function tipHtml(text, label) {
+    return '<span class="ref-tip" tabindex="0" aria-label="' + label + '">' +
+      '<i aria-hidden="true">ⓘ</i><span class="ref-tip-bubble">' + esc(text) + '</span></span>';
+  }
+
+  // 气泡防裁剪定位（FR-03/E5）：
+  // 垂直——滚动容器顶缘放不下且下方空间更大时翻转到图标下方；
+  // 水平——气泡右缘锚定图标右侧向左展开（width:max-content），首列卡片较窄时
+  //       会越过滚动容器左缘（overflow-y:auto 使 overflow-x 计算为 auto 而被裁切），
+  //       按「图标右缘到容器左缘」的可用距离收窄气泡宽度；先定宽再测高（宽度影响换行行数）
+  function placeTip(tip) {
+    const bubble = tip.querySelector('.ref-tip-bubble');
+    const scroller = tip.closest('#productGroups');
+    if (!bubble || !scroller) return;
+    const sr = scroller.getBoundingClientRect();
+    const ir = tip.getBoundingClientRect();
+    bubble.style.maxWidth = Math.max(120, Math.min(280, ir.right + 8 - sr.left - 2)) + 'px';
+    const aboveRoom = ir.top - sr.top;
+    const need = bubble.offsetHeight + 16;
+    bubble.classList.toggle('below', aboveRoom < need && (sr.bottom - ir.bottom) > aboveRoom);
+  }
+
+  // 价格参考条目规范化（容错：缺失/非数组/空 → null 模块不渲染；缺 name 条目丢弃）
+  function priceRefsOf(m) {
+    if (!Array.isArray(m.price_refs) || !m.price_refs.length) return null;
+    const rows = m.price_refs.filter(r => r && r.name).map(r => ({
+      name: r.name,
+      tag: r.tag || '',
+      product: r.product || '',
+      value: r.value != null ? String(r.value) : '',
+      unit: r.unit || '',
+      delta: r.delta || '',
+      direction: (r.direction === 'up' || r.direction === 'down') ? r.direction : 'flat',
+      updated: r.updated || '',
+      source: r.source || ''
+    }));
+    return rows.length ? rows : null;
+  }
+
+  // 合作伙伴条目规范化（容错同上），按 scale_value 降序（缺值排后，稳定排序保持原序）
+  function partnersOf(m) {
+    if (!Array.isArray(m.partners) || !m.partners.length) return null;
+    const rows = m.partners.filter(p => p && p.name).map(p => ({
+      name: p.name,
+      type: PARTNER_TYPES[p.type] ? p.type : 'other',
+      scale: p.scale || '',
+      scaleValue: Number(p.scale_value),
+      period: p.period || '',
+      status: PARTNER_STATUS[p.status] ? p.status : '',
+      remark: p.remark || ''
+    }));
+    if (!rows.length) return null;
+    rows.sort((a, b) => {
+      const va = isNaN(a.scaleValue) ? -Infinity : a.scaleValue;
+      const vb = isNaN(b.scaleValue) ? -Infinity : b.scaleValue;
+      return vb - va;
+    });
+    return rows;
+  }
+
+  // 价格参考模块 HTML（无有效数据返回空串 → 模块整体不渲染）
+  function priceRefsHtml(m) {
+    const refs = priceRefsOf(m);
+    if (!refs) return '';
+    const lastUpdated = refs.map(r => r.updated).filter(Boolean).sort().pop() || '';
+    const cards = refs.map(r => {
+      const arrow = r.direction === 'up' ? '▲ ' : (r.direction === 'down' ? '▼ ' : '');
+      return '<article class="price-card">' +
+        (r.source ? tipHtml(r.source, '来源备注') : '') +
+        '<div class="price-card-top">' +
+          '<span class="price-name">' + esc(r.name) + '</span>' +
+          (r.tag ? '<span class="price-tag">' + esc(r.tag) + '</span>' : '') +
+        '</div>' +
+        (r.product ? '<div class="price-product">' + esc(r.product) + '</div>' : '') +
+        '<div class="price-value">' + (esc(r.value) || '—') + (r.unit ? '<i>' + esc(r.unit) + '</i>' : '') + '</div>' +
+        '<div class="price-delta ref-' + r.direction + '">' + (r.delta ? arrow + esc(r.delta) : '—') + '</div>' +
+        (r.updated ? '<div class="price-updated">' + esc(r.updated) + ' 更新</div>' : '') +
+      '</article>';
+    }).join('');
+    return '<section class="prod-sec">' +
+      '<header class="prod-sec-head">' +
+        '<h4 class="prod-sec-title">价格参考</h4>' +
+        '<span class="prod-sec-note">主流价格标准体系 · 演示样本数据</span>' +
+        (lastUpdated ? '<span class="prod-sec-extra">更新至 ' + esc(lastUpdated) + '</span>' : '') +
+      '</header>' +
+      '<div class="price-cards">' + cards + '</div>' +
+    '</section>';
+  }
+
+  // 合作伙伴模块 HTML（无有效数据返回空串 → 模块整体不渲染）
+  function partnersHtml(m) {
+    const rows = partnersOf(m);
+    if (!rows) return '';
+    const body = rows.map(p =>
+      '<tr>' +
+        '<td><span class="partner-name">' + esc(p.name) + '</span>' + (p.remark ? tipHtml(p.remark, '合作备注') : '') + '</td>' +
+        '<td><span class="partner-type ' + p.type + '">' + PARTNER_TYPES[p.type] + '</span></td>' +
+        '<td class="partner-scale">' + (esc(p.scale) || '—') + '</td>' +
+        '<td>' + (esc(p.period) || '—') + '</td>' +
+        '<td>' + (p.status ? '<span class="partner-status ' + p.status + '">' + PARTNER_STATUS[p.status] + '</span>' : '—') + '</td>' +
+      '</tr>'
+    ).join('');
+    return '<section class="prod-sec">' +
+      '<header class="prod-sec-head">' +
+        '<h4 class="prod-sec-title">合作伙伴</h4>' +
+        '<span class="prod-sec-note">下游客户 · 钢铁企业与矿石贸易商</span>' +
+        '<span class="prod-sec-extra">' + rows.length + ' 家</span>' +
+      '</header>' +
+      '<div class="partner-wrap"><table class="partner-table">' +
+        '<thead><tr><th>企业名称</th><th>类型</th><th>合作规模</th><th>合作周期</th><th>状态</th></tr></thead>' +
+        '<tbody>' + body + '</tbody>' +
+      '</table></div>' +
+    '</section>';
+  }
+
   // 产品详情板块当前聚焦的矿山 id（数据变更后保持选中；无效时回退产量最高矿）
   let curMineId = null;
 
@@ -819,6 +1015,8 @@
         '<span class="prod-group-total">' + fmtNum(capNum) + '<i>万吨/年</i></span>' +
       '</header>' +
       (catSections || '<div class="tab-empty">暂无产品明细</div>') +
+      priceRefsHtml(cur) +
+      partnersHtml(cur) +
     '</section>';
   }
 
@@ -910,11 +1108,24 @@
       if (e.target === prodMask) closeProdModal();
     });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !prodMask.hidden) closeProdModal();
+      if (e.key !== 'Escape') return;
+      if (!prodMask.hidden) { closeProdModal(); return; }
+      // 来源/备注气泡聚焦时 ESC 收起（FR-03）
+      const tip = document.activeElement;
+      if (tip && tip.classList && tip.classList.contains('ref-tip')) tip.blur();
     });
 
     // 产品矩阵区事件委托：产品卡开弹层 / 折叠组头切换（两者互不嵌套）
     const groups = $('productGroups');
+    // 气泡展示前定位：悬停 / 键盘聚焦时先测空间再显示（FR-03/E5）
+    groups.addEventListener('mouseover', e => {
+      const tip = e.target.closest('.ref-tip');
+      if (tip) placeTip(tip);
+    });
+    groups.addEventListener('focusin', e => {
+      const tip = e.target.closest('.ref-tip');
+      if (tip) placeTip(tip);
+    });
     groups.addEventListener('click', e => {
       const card = e.target.closest('.prod-card');
       if (card) { openProdModalFromCard(card); return; }

@@ -1,7 +1,11 @@
-// ===== ocean 模块脚本（海运管理 · 航次列表） =====
-// 公共导航栏由 /common/fetch.js 加载；本脚本负责海运航次的增删改查、状态流转、检索与分页
-// 矿山主数据复用 mine 模块的 localStorage（hz_mines），本模块对其只读（PRD 6.5 模块对接约定）
-// 航次数据持久化到 localStorage（hz_ocean_voyages），刷新页面不丢失
+// ===== ocean 模块脚本（海运管理 · 海运综合台账） =====
+// 公共导航栏由 /common/fetch.js 加载；本脚本负责海运航次的增删改查、状态流转、
+// 港口胶囊筛选、分页，以及行展开后的港口现货联动子表渲染
+// 数据源走 HZData 模块化数据基座（common/hz-data.js）：
+//  - oceanTrips（hz_ocean_voyages，读写）：海运航次权威数据
+//  - mines（hz_mines，只读）：矿山主数据（抽屉联动）
+//  - oceanSpots（hz_ocean_spots，读写）：港口现货参考数据（联动子表）
+//  - oceanCoas（hz_ocean_coas，读写）：COA 品质证书
 (function () {
   'use strict';
 
@@ -42,19 +46,15 @@
   // 状态流转顺序（行内「推进」按钮按此顺序走下一步）
   const STATUS_ORDER = ['pending', 'loading', 'sailing', 'arrived', 'done'];
 
-  // ===== 矿山 → 推荐装货港映射（矿山 PRD 6.5：从矿山出发推算海运装货港） =====
-  // 按矿山简称匹配（与矿山预置数据 short_name 对应）；未命中时由用户手动填写
-  const MINE_LOAD_PORTS = {
-    '力拓': { port: '丹皮尔港', country: '澳大利亚', distance_note: '西澳矿区 → 丹皮尔港，铁路短倒约 300km' },
-    '必和必拓': { port: '黑德兰港', country: '澳大利亚', distance_note: '纽曼矿区 → 黑德兰港，铁路短倒约 400km' },
-    '福斯特库': { port: '黑德兰港', country: '澳大利亚', distance_note: '奇切斯特岭矿区 → 黑德兰港，铁路短倒约 250km' },
-    '淡水河谷': { port: '图巴朗港', country: '巴西', distance_note: '卡拉加斯矿区 → 图巴朗港，铁路短倒约 900km' }
-  };
+  // ===== 字典派生（经 HZData 模块化数据基座，替代本地静态字典） =====
+  // 矿山 → 推荐装货港映射（HZData.dict('mineLoadPorts')，矿山 PRD 6.5 约定）
+  const MINE_LOAD_PORTS = {};
+  (HZData.dict('mineLoadPorts') || []).forEach(d => {
+    MINE_LOAD_PORTS[d.mine] = { port: d.port, country: d.country, distance_note: d.note };
+  });
 
-  // 常用卸货港快捷选项（中国主要铁矿石接卸港）
-  const DISCHARGE_PORT_DICT = [
-    '青岛港', '曹妃甸港', '日照港', '舟山港', '大连港', '天津港', '湛江港', '上海港', '连云港'
-  ];
+  // 常用卸货港快捷选项（HZData.dict('dischargePorts') 中国主要接卸港）
+  const DISCHARGE_PORT_DICT = (HZData.dict('dischargePorts') || []).map(d => d.name);
 
   // ===== 港口现货参考数据（静态展示数据，来源：中国矿产·中矿国链港口现货） =====
   // 缺测值（原表「–」）统一记为 null，展示为「–」；no 为原表序号（同序号=同船多品种）
@@ -86,8 +86,8 @@
   };
 
   // ===== 本地持久化 =====
-  const LS_VOYAGES = 'hz_ocean_voyages';   // 航次数据（本模块权威存储键）
-  const LS_MINES = 'hz_mines';             // 矿山主数据（mine 模块维护，此处只读）
+  const LS_VOYAGES = 'hz_ocean_voyages';   // 航次数据（本模块权威存储键，经 HZData 'oceanTrips' 调取）
+  const LS_SPOTS = 'hz_ocean_spots';       // 港口现货参考数据（经 HZData 'oceanSpots' 调取）
 
   function loadJSON(key, fallback) {
     try {
@@ -98,9 +98,9 @@
     }
   }
 
+  // 矿山主数据：经 HZData 模块化接口直调 mine 模块数据源（本模块只读）
   function loadMines() {
-    const v = loadJSON(LS_MINES, []);
-    return Array.isArray(v) ? v : [];
+    return HZData.raw('mines');
   }
 
   // 航次列表：[{id, voyage_code, vessel_name, mine_id, mine_name,
@@ -109,6 +109,9 @@
   //   sail_date, eta_date, status, remark, created_at, updated_at, created_by}]
   let voyages = loadJSON(LS_VOYAGES, []);
   if (!Array.isArray(voyages)) voyages = [];
+
+  // 港口现货参考列表（模块级，联动子表渲染用；init 时从统一数据源恢复）
+  let spots = [];
 
   // ===== 预置航次示例数据（首次打开时写入，与四大矿山关联） =====
   function seedVoyages() {
@@ -158,6 +161,16 @@
     try {
       localStorage.setItem(LS_VOYAGES, JSON.stringify(voyages));
     } catch (e) { /* 预置失败不阻断页面，用户可手动新增 */ }
+  }
+
+  // ===== 预置港口现货参考数据（首次打开时经 HZData 归一化落库，行展开联动子表用） =====
+  function seedSpots() {
+    if (loadJSON(LS_SPOTS, null) !== null) return;
+    const list = SPOT_SEED.rows.map((r, i) =>
+      HZData.normalize('oceanSpots', Object.assign({ id: 'spot-' + String(i + 1).padStart(3, '0') }, r), i));
+    try {
+      localStorage.setItem(LS_SPOTS, JSON.stringify({ __version: 'v1', list: list }));
+    } catch (e) { /* 预置失败不阻断页面，联动子表走空态 */ }
   }
 
   function save() {
@@ -210,20 +223,86 @@
     return Math.round((Number(quantity) || 0) * 10000 * (Number(rate) || 0));
   }
 
-  // ===== 数据渲染（表格数据驱动） =====
+  // ===== 数据渲染（表格数据驱动：航次主行 + 行展开港口现货联动子表） =====
   const tbody = document.querySelector('.ledger-table tbody');
 
-  function renderRow(v) {
-    const tr = document.createElement('tr');
-    tr.dataset.id = v.id;
-    tr.dataset.vessel = v.vessel_name || '';
-    tr.dataset.mine = v.mine_name || '';
-    tr.dataset.cargo = v.cargo_type || '';
-    tr.dataset.status = v.status || '';
-
-    // 航线组合展示：装货港(国) → 卸货港(国)
+  // 航线组合展示：装货港(国) → 卸货港(国)
+  function routeCell(v) {
     const load = esc(v.load_port) + (v.load_country ? '<span class="country"> ' + esc(v.load_country) + '</span>' : '');
     const dis = esc(v.discharge_port) + (v.discharge_country ? '<span class="country"> ' + esc(v.discharge_country) + '</span>' : '');
+    return '<div class="route-seg">'
+      + '<span class="route-port">' + (load || '—') + '</span>'
+      + '<i class="route-arrow">→</i>'
+      + '<span class="route-port">' + (dis || '—') + '</span>'
+      + '</div>';
+  }
+
+  // 船期组合展示：离港日期 → 预计到港日期
+  function dateLine(v) {
+    return '<span class="date-line">' + esc(v.sail_date || '—')
+      + '<i class="route-arrow">→</i>' + esc(v.eta_date || '—') + '</span>';
+  }
+
+  // 航次补充信息：预估总运费 / COA 证书号 / 备注
+  function voyageMeta(v) {
+    const coa = HZData.find('oceanCoas', v.id);
+    return '<div class="voyage-meta">'
+      + '<span>预估总运费 <b>' + (Number(v.freight_total) > 0 ? fmtNum(v.freight_total) + ' $' : '—') + '</b></span>'
+      + '<span>品质证书 <b>' + (coa ? esc(coa.certificate_no) : '未登记') + '</b></span>'
+      + (v.remark ? '<span class="meta-remark">备注 ' + esc(v.remark) + '</span>' : '')
+      + '</div>';
+  }
+
+  // 港口现货联动子表：按卸货港精确匹配（normalized_port）+ 同船置顶高亮（vessel_clean）
+  function spotSubTable(v) {
+    const portNorm = HZData.normalizePort(v.discharge_port);
+    const vesselNorm = HZData.cleanVessel(v.vessel_name);
+
+    // 联动匹配：现货港口归一后与航次卸货港精确一致
+    const matched = spots.filter(s => s.normalized_port === portNorm);
+    // 同船（船名清洗后一致）置顶展示
+    matched.sort((a, b) => (b.vessel_clean === vesselNorm) - (a.vessel_clean === vesselNorm));
+
+    const sameShipCount = matched.filter(s => s.vessel_clean === vesselNorm && vesselNorm).length;
+    const metaHtml = '<span class="spot-sub-meta">'
+      + '共 <b>' + matched.length + '</b> 条参考 · 数据日期 ' + esc(matched[0] ? matched[0].data_date : '—')
+      + (sameShipCount ? ' · 含同船 <b>' + sameShipCount + '</b> 条' : '')
+      + '</span>';
+
+    if (!matched.length) {
+      return '<div class="spot-sub">'
+        + '<div class="spot-sub-title">港口现货参考 · 卸货港 ' + esc(v.discharge_port) + '</div>'
+        + '<div class="spot-sub-empty">该港口暂无现货参考数据</div>'
+        + '</div>';
+    }
+
+    let body = '';
+    matched.forEach((s, i) => {
+      const sameShip = vesselNorm && s.vessel_clean === vesselNorm;
+      body += '<tr' + (sameShip ? ' class="spot-same-ship"' : '') + '>'
+        + '<td class="spot-th-no">' + (i + 1) + '</td>'
+        + '<td>' + esc(s.variety || '—') + '</td>'
+        + spotNumCell(s.fe) + spotNumCell(s.sio2) + spotNumCell(s.al2o3)
+        + spotNumCell(s.p) + spotNumCell(s.s) + spotNumCell(s.mn) + spotNumCell(s.moisture)
+        + '<td class="spot-vessel">' + esc(s.vessel || '—') + (sameShip ? '<i class="same-ship-tag">同船</i>' : '') + '</td>'
+        + '<td class="spot-berth">' + esc(s.berth || '—') + '</td>'
+        + '</tr>';
+    });
+
+    return '<div class="spot-sub">'
+      + '<div class="spot-sub-title">港口现货参考 · 卸货港 ' + esc(v.discharge_port) + metaHtml + '</div>'
+      + '<div class="spot-table-wrap"><table class="spot-table">'
+      + '<thead><tr><th class="spot-th-no">序号</th><th>品种</th>'
+      + '<th class="spot-th-num">Fe%</th><th class="spot-th-num">SiO₂%</th><th class="spot-th-num">Al₂O₃%</th>'
+      + '<th class="spot-th-num">P%</th><th class="spot-th-num">S%</th><th class="spot-th-num">Mn%</th><th class="spot-th-num">水分%</th>'
+      + '<th>船名</th><th>货位</th></tr></thead>'
+      + '<tbody>' + body + '</tbody></table></div>'
+      + '</div>';
+  }
+
+  // 主行 + 详情行（DocumentFragment）：主行 10 列，详情行承载 voyageMeta + spotSubTable
+  function renderRow(v) {
+    const frag = document.createDocumentFragment();
 
     // 状态推进：未完成航次显示「推进」按钮，直达下一步状态
     const idx = STATUS_ORDER.indexOf(v.status);
@@ -232,18 +311,25 @@
     // 品质证书：该航次已登记 COA 时按钮高亮标记
     const hasCoa = coas.some(c => c.voyage_id === v.id);
 
+    // 货种 · 货量组合展示
+    const cargo = '<div class="cargo-cell">'
+      + '<span class="cargo-name">' + esc(v.cargo_type || '—') + '</span>'
+      + '<span class="cargo-qty">' + fmtNum(v.quantity) + ' 万吨</span>'
+      + '</div>';
+
+    const tr = document.createElement('tr');
+    tr.className = 'v-row';
+    tr.dataset.id = v.id;
+    tr.dataset.discharge = HZData.normalizePort(v.discharge_port);
     tr.innerHTML = [
-      '<td class="col-index"></td>',
+      '<td class="col-expand"><button class="row-expand" type="button" title="展开港口现货参考"><i class="exp-chev"></i></button></td>',
       '<td class="col-code">' + esc(v.voyage_code) + '</td>',
       '<td class="col-vessel">' + esc(v.vessel_name) + '</td>',
       '<td>' + esc(v.mine_name || '—') + '</td>',
-      '<td>' + (load || '—') + '</td>',
-      '<td>' + (dis || '—') + '</td>',
-      '<td>' + esc(v.cargo_type || '—') + '</td>',
-      '<td class="col-num">' + fmtNum(v.quantity) + '</td>',
+      '<td class="col-route">' + routeCell(v) + '</td>',
+      '<td class="col-cargo">' + cargo + '</td>',
       '<td class="col-num">' + fmtNum(v.freight_rate) + '</td>',
-      '<td class="col-date">' + esc(v.sail_date || '—') + '</td>',
-      '<td class="col-date">' + esc(v.eta_date || '—') + '</td>',
+      '<td class="col-date">' + dateLine(v) + '</td>',
       '<td><span class="status-tag ' + esc(v.status) + '">' + esc(STATUS[v.status] || v.status) + '</span></td>',
       '<td class="col-action"><div class="cell-actions">' +
         (canAdvance ? '<button class="row-act advance" type="button" title="推进至「' +
@@ -254,7 +340,17 @@
         '<button class="row-act remove" type="button">删除</button>' +
       '</div></td>'
     ].join('');
-    return tr;
+    frag.appendChild(tr);
+
+    // 详情行：默认隐藏，点击主行展开按钮时显示
+    const detail = document.createElement('tr');
+    detail.className = 'detail-row';
+    detail.dataset.parent = v.id;
+    detail.hidden = true;
+    detail.innerHTML = '<td colspan="10">' + voyageMeta(v) + spotSubTable(v) + '</td>';
+    frag.appendChild(detail);
+
+    return frag;
   }
 
   // 排序：默认创建时间倒序（新航次在前）
@@ -263,76 +359,66 @@
       (Number(b.created_at) || 0) - (Number(a.created_at) || 0));
   }
 
-  // ===== 检索 =====
-  // 数据行约定：tr 携带 data-id / data-vessel / data-mine / data-cargo / data-status
+  // ===== 港口胶囊筛选（卸货港维度快捷过滤，替代传统检索栏） =====
+  // 数据行约定：tr.v-row 携带 data-id / data-discharge（港口归一化值）
+  let portFilter = '';
   let applyFilter = null;
 
-  function initSearch() {
-    const form = document.getElementById('searchForm');
-    if (!form) return;
-
-    const vesselInput = document.getElementById('searchVessel');
-    const mineSelect = document.getElementById('searchMine');
-    const cargoSelect = document.getElementById('searchCargo');
-    const statusSelect = document.getElementById('searchStatus');
-
-    applyFilter = function () {
-      const kw = (vesselInput.value || '').trim().toLowerCase();
-      const mine = mineSelect.value;
-      const cargo = cargoSelect.value;
-      const status = statusSelect.value;
-
-      let visible = 0;
-      document.querySelectorAll('.ledger-table tbody tr').forEach(row => {
-        if (row.classList.contains('empty-row')) return;
-
-        const ok =
-          (!kw || (row.dataset.vessel || '').toLowerCase().includes(kw) ||
-            (row.dataset.mine || '').toLowerCase().includes(kw)) &&
-          (!mine || row.dataset.mine === mine) &&
-          (!cargo || row.dataset.cargo === cargo) &&
-          (!status || row.dataset.status === status);
-
-        row.hidden = !ok;
-        if (ok) visible += 1;
-      });
-
-      const emptyRow = document.querySelector('.ledger-table .empty-row');
-      if (emptyRow) emptyRow.hidden = visible > 0;
-
-      renderPage();
+  // 全部港口名：卸货港字典 ∪ 航次卸货港 ∪ 现货港口（normalizePort 去重）
+  function allPortNames() {
+    const seen = {};
+    const names = [];
+    const push = p => {
+      const key = HZData.normalizePort(p);
+      if (key && !seen[key]) { seen[key] = true; names.push(p); }
     };
+    DISCHARGE_PORT_DICT.forEach(push);
+    voyages.forEach(v => push(v.discharge_port));
+    spots.forEach(s => push(s.port));
+    return names;
+  }
 
-    form.addEventListener('submit', e => {
-      e.preventDefault();
-      applyFilter();
-    });
+  // 渲染筛选胶囊（'全部' + 各港口，active 态跟随 portFilter）
+  function refreshPortChips() {
+    const box = document.getElementById('portChips');
+    if (!box) return;
+    const names = allPortNames();
+    box.innerHTML = ['全部'].concat(names).map(p =>
+      '<button type="button" class="port-chip' + (p === (portFilter || '全部') ? ' active' : '') +
+      '" data-port="' + esc(p) + '">' + esc(p) + '</button>'
+    ).join('');
+  }
 
-    form.addEventListener('reset', () => {
-      requestAnimationFrame(() => applyFilter());
+  // 胶囊事件绑定（click 委托）：点击切换筛选
+  function initPortChips() {
+    const box = document.getElementById('portChips');
+    if (!box) return;
+    box.addEventListener('click', e => {
+      const chip = e.target.closest('[data-port]');
+      if (!chip) return;
+      const p = chip.getAttribute('data-port');
+      portFilter = (p === '全部') ? '' : p;
+      refreshPortChips();
+      if (applyFilter) applyFilter();
     });
   }
 
-  // 检索下拉选项刷新：关联矿山（矿山主数据）、货种（现有航次聚合）
-  function refreshSearchOptions() {
-    const mineSelect = document.getElementById('searchMine');
-    if (mineSelect) {
-      const cur = mineSelect.value;
-      const names = Array.from(new Set(loadMines().map(m => m.short_name || m.mine_name).filter(Boolean)));
-      mineSelect.innerHTML = '<option value="">全部</option>' +
-        names.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
-      mineSelect.value = names.includes(cur) ? cur : '';
-    }
+  // 筛选执行：按卸货港归一化精确匹配（tr.v-row 的 data-discharge）
+  applyFilter = function () {
+    const kw = HZData.normalizePort(portFilter);
 
-    const cargoSelect = document.getElementById('searchCargo');
-    if (cargoSelect) {
-      const cur = cargoSelect.value;
-      const cargos = Array.from(new Set(voyages.map(v => v.cargo_type).filter(Boolean)));
-      cargoSelect.innerHTML = '<option value="">全部</option>' +
-        cargos.map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('');
-      cargoSelect.value = cargos.includes(cur) ? cur : '';
-    }
-  }
+    let visible = 0;
+    document.querySelectorAll('.ledger-table tbody tr.v-row').forEach(row => {
+      const ok = !kw || row.dataset.discharge === kw;
+      row.hidden = !ok;
+      if (ok) visible += 1;
+    });
+
+    const emptyRow = document.querySelector('.ledger-table .empty-row');
+    if (emptyRow) emptyRow.hidden = visible > 0;
+
+    renderPage();
+  };
 
   // ===== 分页（基于检索后的可见行切片显示） =====
   let pageSize = 10;
@@ -340,7 +426,7 @@
 
   function renderPage() {
     const $ = id => document.getElementById(id);
-    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(r => !r.hidden);
+    const rows = Array.from(tbody.querySelectorAll('tr.v-row')).filter(r => !r.hidden);
 
     const total = rows.length;
     const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -351,6 +437,7 @@
     rows.forEach((r, i) => {
       r.hidden = i < start || i >= start + pageSize;
     });
+    syncDetailRows();
 
     $('pagerTotal').textContent = total;
     $('pgPages').textContent = pages;
@@ -360,6 +447,27 @@
     $('pgPrev').disabled = curPage <= 1;
     $('pgNext').disabled = curPage >= pages;
     $('pgLast').disabled = curPage >= pages;
+  }
+
+  // ===== 行展开状态（详情行跟随父行可见性 + 展开记忆） =====
+  let expandedIds = new Set();
+
+  function syncDetailRows() {
+    tbody.querySelectorAll('tr.detail-row').forEach(d => {
+      const parent = tbody.querySelector('tr.v-row[data-id="' + d.dataset.parent + '"]');
+      d.hidden = !parent || parent.hidden || !expandedIds.has(d.dataset.parent);
+    });
+  }
+
+  function toggleExpand(id, parentRow) {
+    if (expandedIds.has(id)) {
+      expandedIds.delete(id);
+      if (parentRow) parentRow.classList.remove('expanded');
+    } else {
+      expandedIds.add(id);
+      if (parentRow) parentRow.classList.add('expanded');
+    }
+    syncDetailRows();
   }
 
   function bindPager() {
@@ -387,33 +495,25 @@
     $('pgInput').addEventListener('keydown', e => { if (e.key === 'Enter') jump(); });
   }
 
-  // ===== 统计卡 + 列表小标题 =====
+  // ===== 统计（banner 指标 + 现货参考条数） =====
   function updateStats() {
-    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+    const rows = Array.from(tbody.querySelectorAll('tr.v-row'));
     document.getElementById('voyageCount').textContent = rows.length;
 
     // 全部航次口径
     const volume = voyages.reduce((s, v) => s + (Number(v.quantity) || 0), 0);
-    const freight = voyages.reduce((s, v) => s + (Number(v.freight_total) || 0), 0);
-    const sailing = voyages.filter(v => v.status === 'sailing').length;
-
     document.getElementById('voyageVolume').textContent = fmtNum(volume);
-    document.getElementById('tTotal').textContent = voyages.length;
-    document.getElementById('tSailing').textContent = sailing;
-    document.getElementById('tVolume').textContent = fmtNum(volume);
-    document.getElementById('tFreight').textContent = fmtNum(freight);
+
+    // 港口现货参考数据条数（banner 中展示）
+    const spotCount = document.getElementById('spotCount');
+    if (spotCount) spotCount.textContent = spots.length;
   }
 
   // 按当前数据全量重建表格（新增/编辑/推进/删除后统一走这里）
   function renderAll() {
-    tbody.querySelectorAll('tr:not(.empty-row)').forEach(row => row.remove());
+    expandedIds.clear();
+    tbody.querySelectorAll('tr.v-row, tr.detail-row').forEach(row => row.remove());
     sortedVoyages().forEach(v => tbody.appendChild(renderRow(v)));
-
-    // 重新编号（按当前展示顺序）
-    let i = 0;
-    tbody.querySelectorAll('tr:not(.empty-row)').forEach(row => {
-      row.querySelector('.col-index').textContent = ++i;
-    });
 
     updateStats();
     const emptyRow = tbody.querySelector('.empty-row');
@@ -600,7 +700,6 @@
 
     if (!save()) return;
     closeEditor();
-    refreshSearchOptions();
     renderAll();
   }
 
@@ -617,9 +716,17 @@
     });
   }
 
-  // ===== 表格操作：推进 / 编辑 / 删除（事件委托） =====
+  // ===== 表格操作：展开 / 推进 / 编辑 / 删除（事件委托） =====
   function initTableActions() {
     tbody.addEventListener('click', e => {
+      // 行展开：切换详情行（港口现货联动子表）显示
+      const expandBtn = e.target.closest('.row-expand');
+      if (expandBtn) {
+        const parentRow = expandBtn.closest('tr.v-row');
+        if (parentRow) toggleExpand(parentRow.dataset.id, parentRow);
+        return;
+      }
+
       const row = e.target.closest('tr[data-id]');
       if (!row) return;
       const v = voyages.find(x => x.id === row.dataset.id);
@@ -660,7 +767,6 @@
         if (!confirm('确认删除航次 ' + v.voyage_code + '（' + v.vessel_name + '）吗？删除后不可恢复。')) return;
         voyages = voyages.filter(x => x.id !== v.id);
         save();
-        refreshSearchOptions();
         renderAll();
       }
     });
@@ -953,85 +1059,30 @@
   }
 
 
-  // ===== 港口现货区块（静态参考数据展示，自 ports 模块迁移） =====
-  let spotFilter = '全部';
+  // ===== 港口现货联动子表（行展开时渲染，数据经 HZData 'oceanSpots'） =====
 
   // 数值单元格：缺测（原表「–」）显示灰色占位
   const spotNumCell = v => (v === null || v === undefined || v === '')
     ? '<td class="spot-na">–</td>'
     : '<td class="spot-num">' + esc(v) + '</td>';
 
-  function renderSpotMarket() {
-    const box = $('spotSection');
-    if (!box) return;
-
-    // 按数据出现顺序提取港口清单，生成筛选胶囊
-    const seen = {};
-    const portList = [];
-    SPOT_SEED.rows.forEach(r => {
-      if (!seen[r.port]) { seen[r.port] = true; portList.push(r.port); }
-    });
-    const chips = ['全部'].concat(portList).map(p =>
-      '<button type="button" class="spot-chip' + (p === spotFilter ? ' active' : '') + '" data-spot="' + esc(p) + '">' + esc(p) + '</button>'
-    ).join('');
-
-    const rows = SPOT_SEED.rows.filter(r => spotFilter === '全部' || r.port === spotFilter);
-
-    let body = '';
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
-      // 相邻同序号且同船名（一船多品种）行合并：序号与船名使用 rowspan，与原表层级一致
-      let span = 1;
-      while (i + span < rows.length && rows[i + span].no === r.no && rows[i + span].vessel === r.vessel) span++;
-      const mergeOpen = (i === 0 || rows[i - 1].no !== r.no || rows[i - 1].vessel !== r.vessel);
-      body += '<tr>'
-        + (mergeOpen ? '<td class="spot-no"' + (span > 1 ? ' rowspan="' + span + '"' : '') + '>' + r.no + '</td>' : '')
-        + '<td>' + esc(r.port) + '</td>'
-        + '<td class="spot-variety">' + esc(r.variety) + '</td>'
-        + spotNumCell(r.fe) + spotNumCell(r.sio2) + spotNumCell(r.al2o3)
-        + spotNumCell(r.p) + spotNumCell(r.s) + spotNumCell(r.mn) + spotNumCell(r.moisture)
-        + (mergeOpen ? '<td class="spot-vessel"' + (span > 1 ? ' rowspan="' + span + '"' : '') + '>' + esc(r.vessel) + '</td>' : '')
-        + '<td class="spot-berth">' + esc(r.berth || '—') + '</td>'
-        + '</tr>';
-    }
-
-    box.innerHTML =
-      '<section class="card spot-card">'
-      + '<div class="card-head"><div class="card-title">港口现货</div>'
-      + '<div class="spot-meta">数据来源：' + esc(SPOT_SEED.source) + ' · 数据日期：' + esc(SPOT_SEED.dataDate) + ' · 共 ' + SPOT_SEED.rows.length + ' 条</div></div>'
-      + '<div class="spot-chips">' + chips + '</div>'
-      + '<div class="spot-table-wrap"><table class="zone-table spot-table">'
-      + '<thead><tr><th style="width:44px;">序号</th><th style="width:76px;">港口</th><th>品种</th>'
-      + '<th class="spot-th-num">Fe%</th><th class="spot-th-num">SiO₂%</th><th class="spot-th-num">Al₂O₃%</th>'
-      + '<th class="spot-th-num">P%</th><th class="spot-th-num">S%</th><th class="spot-th-num">Mn%</th><th class="spot-th-num">水分%</th>'
-      + '<th style="width:210px;">船名</th><th style="width:150px;">货位</th></tr></thead>'
-      + '<tbody>' + body + '</tbody></table></div>'
-      + '</section>';
-  }
-
-  // 现货筛选：仅过滤表格行，不刷新页面
-  $('spotSection').addEventListener('click', e => {
-    const chip = e.target.closest('[data-spot]');
-    if (!chip) return;
-    spotFilter = chip.getAttribute('data-spot');
-    renderSpotMarket();
-  });
-
 
   // ===== 初始化 =====
   seedVoyages();          // 首次打开预置示例航次（关联五大矿山）
   seedCoas();             // 首次打开预置力拓样例品质证书（COA）
+  seedSpots();            // 首次打开预置港口现货参考数据（经 HZData 落库）
+  spots = HZData.list('oceanSpots');   // 从统一数据源恢复现货列表（已归一化）
 
-  $('oceanDashBtn').addEventListener('click', () => {
-    location.href = '/ocean/ocean-dashboard.html';
-  });
+  // 填充卸货港快捷选项（datalist，经 HZData 字典）
+  const disPortList = document.getElementById('disPortOptions');
+  if (disPortList) {
+    disPortList.innerHTML = DISCHARGE_PORT_DICT.map(p => '<option value="' + esc(p) + '"></option>').join('');
+  }
 
-  initSearch();
+  initPortChips();
   initEditor();
   initTableActions();
   initCoa();              // COA 品质证书抽屉事件绑定
   bindPager();
-  refreshSearchOptions();
-  renderAll();            // 启动时从 localStorage 恢复数据并渲染
-  renderSpotMarket();     // 渲染港口现货参考数据区块
+  renderAll();            // 启动时从 localStorage 恢复数据并渲染（含现货联动子表）
 })();

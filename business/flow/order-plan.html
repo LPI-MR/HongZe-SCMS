@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>运输方案 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 按钮与输入组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务流程模块样式：步骤条 / 折叠面板 / 表单网格 / 校验与摘要 -->
+  <link rel="stylesheet" href="flow.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 订单不存在状态（由 order-plan.js 控制） -->
+      <div class="flow-panel" id="missing" hidden>
+        <div class="empty-box">
+          <div class="empty-title">订单不存在</div>
+          <div class="empty-desc">该订单可能已被删除，请返回工作台确认。</div>
+          <a class="btn-primary" href="../business.html">返回工作台</a>
+        </div>
+      </div>
+
+      <!-- 四步流程步骤条：前三步已完成，当前第 4 步 -->
+      <div class="flow-steps" id="steps" hidden>
+        <a class="step done" id="step-back-form"><span class="idx">1</span>录入订单</a>
+        <span class="step-line done"></span>
+        <a class="step done" id="step-back-port"><span class="idx">2</span>港口信息</a>
+        <span class="step-line done"></span>
+        <a class="step done" id="step-back-capacity"><span class="idx">3</span>运力方案</a>
+        <span class="step-line"></span>
+        <span class="step current"><span class="idx">4</span>运输方案</span>
+      </div>
+
+      <!-- 页面头部：标题 + 状态徽标 + 编辑 / 保存 / 导出操作 -->
+      <div class="form-head" id="head" hidden>
+        <div>
+          <div class="form-title">运输组织方案</div>
+          <div class="form-sub">订单 <span id="head-mono" style="font-family:monospace">—</span> · <span id="head-status">—</span></div>
+        </div>
+        <div class="form-head-ops">
+          <span class="saved-tip" id="saved-tip" hidden>✓ 方案已保存</span>
+          <button type="button" class="btn-ghost js-edit">编辑方案</button>
+          <button type="button" class="btn-primary js-save" hidden>保存方案</button>
+          <button type="button" class="btn-ghost js-pdf">下载 PDF</button>
+        </div>
+      </div>
+
+      <!-- 一、订单信息 -->
+      <section class="flow-panel" id="order-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">一、订单信息</span>
+          <span class="panel-sub">基础合同要素</span>
+        </div>
+        <div class="plan-kv" id="order-kv"></div>
+      </section>
+
+      <!-- 二、港口信息（无港口数据时显示引导提示） -->
+      <section class="flow-panel" id="port-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">二、港口信息</span>
+          <span class="panel-sub">靠泊与作业安排</span>
+        </div>
+        <div class="plan-kv" id="port-kv"></div>
+      </section>
+
+      <!-- 三、铁路运力信息 -->
+      <section class="flow-panel" id="rail-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">三、铁路运力信息</span>
+          <span class="panel-sub">铁路直达 · 公铁联运</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>通道</th><th>起点</th><th>中转</th><th>终点</th><th class="num">闲置运力（吨/天）</th><th class="num">运价（元/吨）</th><th class="num">时效（天）</th><th>承运商</th></tr>
+            </thead>
+            <tbody id="rail-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 四、公路运力信息 -->
+      <section class="flow-panel" id="road-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">四、公路运力信息</span>
+          <span class="panel-sub">公路直达</span>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>通道</th><th>起点</th><th>终点</th><th class="num">闲置运力（吨/天）</th><th class="num">运价（元/吨）</th><th class="num">时效（天）</th><th>承运商</th></tr>
+            </thead>
+            <tbody id="road-rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 五、运输方案：分配摘要 + 批次可编辑表 + 汇总指标 -->
+      <section class="flow-panel" id="plan-section" hidden>
+        <div class="panel-head">
+          <span class="panel-title">五、运输方案</span>
+          <span class="panel-sub">批次分配 · 汇总指标</span>
+        </div>
+        <div class="plan-summary" id="plan-summary"></div>
+        <div class="table-wrap">
+          <table class="data-table batch-table">
+            <thead>
+              <tr><th>批次</th><th class="num">运量（吨）</th><th>通道</th><th class="num">时效（天）</th><th class="num">单价（元/吨）</th><th class="num">运费小计</th><th></th></tr>
+            </thead>
+            <tbody id="batch-rows"></tbody>
+          </table>
+        </div>
+        <button type="button" class="add-route-btn" id="btn-add-batch" hidden>＋ 添加运输批次</button>
+        <div class="metric-grid" id="plan-metrics" style="grid-template-columns:repeat(2,1fr);margin-bottom:0;margin-top:16px">
+          <div class="metric-card">
+            <div class="metric-label">运输总价</div>
+            <div class="metric-value c-blue" id="m-freight">—</div>
+            <div class="metric-note" id="m-freight-note">暂无批次</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">预计时效</div>
+            <div class="metric-value c-purple"><span id="m-lead">0</span><span class="unit">天</span></div>
+            <div class="metric-note" id="m-lead-note">加权平均 · 最长时效 0 天</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 底部操作栏 -->
+      <div class="flow-footer" id="footer" hidden>
+        <a class="btn-ghost" id="btn-prev">← 上一步</a>
+        <div style="display:flex;gap:12px">
+          <button type="button" class="btn-ghost js-edit">编辑方案</button>
+          <button type="button" class="btn-primary js-save" hidden>保存方案</button>
+          <button type="button" class="btn-ghost js-pdf">下载 PDF</button>
+          <a class="btn-ghost" id="btn-detail">订单详情</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 打印导出区域（window.print 触发，屏幕上隐藏） -->
+  <div class="print-area" id="print-area">
+    <div class="rpt-title">运输组织方案报告</div>
+    <div class="rpt-sub" id="rpt-sub"></div>
+    <h2>一、订单信息</h2>
+    <div class="rpt-kv" id="rpt-order-kv"></div>
+    <div id="rpt-port-block">
+      <h2>二、港口信息</h2>
+      <div class="rpt-kv" id="rpt-port-kv"></div>
+    </div>
+    <h2>三、铁路运力信息</h2>
+    <table>
+      <thead>
+        <tr><th>通道</th><th>起点</th><th>中转</th><th>终点</th><th>闲置运力（吨/天）</th><th>运价（元/吨）</th><th>时效（天）</th><th>承运商</th></tr>
+      </thead>
+      <tbody id="rpt-rail-rows"></tbody>
+    </table>
+    <h2>四、公路运力信息</h2>
+    <table>
+      <thead>
+        <tr><th>通道</th><th>起点</th><th>终点</th><th>闲置运力（吨/天）</th><th>运价（元/吨）</th><th>时效（天）</th><th>承运商</th></tr>
+      </thead>
+      <tbody id="rpt-road-rows"></tbody>
+    </table>
+    <h2>五、运输方案</h2>
+    <table>
+      <thead>
+        <tr><th>批次</th><th>运量（吨）</th><th>通道</th><th>时效（天）</th><th>单价（元/吨）</th><th>运费小计</th></tr>
+      </thead>
+      <tbody id="rpt-batch-rows"></tbody>
+    </table>
+    <div class="rpt-metrics" id="rpt-metrics"></div>
+  </div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 业务流程共享数据层 -->
+  <script src="flow-data.js"></script>
+  <!-- 运输方案脚本 -->
+  <script src="order-plan.js"></script>
+</body>
+</html>
