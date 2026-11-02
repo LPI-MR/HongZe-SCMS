@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>一次性数据同步控制台 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 客户管理模块样式：同步控制台 / 统一库共用 -->
+  <link rel="stylesheet" href="customers.css" />
+</head>
+<body>
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main">
+      <section class="ledger">
+        <!-- 页头 -->
+        <div class="ledger-header">
+          <div>
+            <div class="page-title">客户管理 · 一次性数据同步控制台</div>
+            <div class="page-desc">将六个存量模块的合规企业主体一次性同步至客户管理统一库（支持断点续传 / 全程自动打标）</div>
+          </div>
+          <div class="header-actions">
+            <a class="btn btn-ghost" href="/customers/customers.html" type="button">查看统一库</a>
+            <button class="btn btn-ghost" id="dlLogBtn" type="button" disabled>下载执行日志</button>
+            <button class="btn btn-ghost" id="dlReportBtn" type="button" disabled>下载数据报告</button>
+          </div>
+        </div>
+
+        <!-- 同步进度卡 -->
+        <div class="ledger-card">
+          <div class="ledger-banner">
+            <span class="banner-title">同步进度</span>
+            <span class="banner-stat" id="batchInfo">尚未启动同步</span>
+          </div>
+
+          <!-- 阶段管道 -->
+          <div class="pipe" id="pipe"></div>
+
+          <!-- 总进度条 -->
+          <div class="prog-wrap">
+            <div class="prog-head">
+              <span class="prog-phase" id="progPhase">待启动</span>
+              <span class="prog-percent" id="progPercent">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+            <div class="prog-meta" id="progMeta"></div>
+          </div>
+
+          <!-- 模块清单 -->
+          <div class="mod-grid" id="modGrid"></div>
+
+          <!-- 实时执行日志 -->
+          <div class="console-log" id="consoleLog"></div>
+        </div>
+
+        <!-- 执行操作 -->
+        <div class="ledger-card" style="margin-top: var(--space-md);">
+          <div class="ledger-banner">
+            <span class="banner-title">执行操作</span>
+            <span class="banner-stat">同步过程对六个存量模块只读，不影响现有业务</span>
+          </div>
+          <div class="filter-bar" style="border-bottom: none;">
+            <button class="btn btn-primary" id="btnStart" type="button">开始同步</button>
+            <button class="btn btn-ghost" id="btnClearCp" type="button">清除断点</button>
+            <button class="btn btn-ghost" id="btnViewReport" type="button">查看上次报告</button>
+          </div>
+        </div>
+
+        <!-- 测试辅助 -->
+        <div class="ledger-card" style="margin-top: var(--space-md);">
+          <div class="ledger-banner">
+            <span class="banner-title">测试辅助（仅测试环境使用）</span>
+            <span class="banner-stat" id="testState">未注入测试记录</span>
+          </div>
+          <div class="filter-bar test-panel" style="border-bottom: none;">
+            <button class="btn btn-ghost" id="btnInject" type="button">注入测试记录</button>
+            <button class="btn btn-ghost" id="btnClearTest" type="button">清除测试记录</button>
+            <span class="test-note">注入：中国矿产资源集团有限公司 → 铁路供应商管理；中国宝武钢铁集团有限公司 → 钢厂管理。测试记录带 <b>__syncTest</b> 标记，可一键清除还原。</span>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 统计报告抽屉 -->
+  <div class="drawer-mask" id="drawerMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="drawerTitle">同步统计报告</span>
+        <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+    </aside>
+  </div>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 一次性数据同步引擎 -->
+  <script src="sync-engine.js"></script>
+  <!-- 同步控制台脚本 -->
+  <script src="sync.js"></script>
+</body>
+</html>

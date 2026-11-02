@@ -22,7 +22,36 @@
 
   /* ==================== 基础读写与 ID ==================== */
 
+  /* ==================== 后端数据适配器（预留对接接口） ==================== */
+
+  // 各表可注册后端适配器：use('orders', { raw: () => window.__serverCache__.flowOrders })
+  // raw() 需同步返回数组（异步拉取请先缓存到内存再返回）；异常或非法返回时自动回退 localStorage；
+  // 传 null 注销适配器，恢复纯本地读写。注册后该表读操作由适配器接管，写仍落本地（可作离线缓存层）。
+  const adapters = {};    // 模块表名 -> 适配器实例
+  const KEY_TO_NAME = {}; // localStorage 键 -> 模块表名（反向索引）
+  Object.keys(KEYS).forEach(name => { KEY_TO_NAME[KEYS[name]] = name; });
+
+  // 注册/注销数据适配器：name 取 KEYS 中的模块表名（orders/ports/capacities/...）
+  function use(name, adapter) {
+    if (!Object.prototype.hasOwnProperty.call(KEYS, name)) return false;
+    if (adapter) {
+      if (typeof adapter.raw !== 'function') return false;
+      adapters[name] = adapter;
+    } else {
+      delete adapters[name];
+    }
+    return true;
+  }
+
   function read(key) {
+    // 优先走已注册的后端适配器（同步返回数组才接管），否则回退 localStorage
+    const adapter = KEY_TO_NAME[key] ? adapters[KEY_TO_NAME[key]] : null;
+    if (adapter) {
+      try {
+        const v = adapter.raw();
+        if (Array.isArray(v)) return v;
+      } catch (e) { /* 适配器异常：回退本地数据 */ }
+    }
     try {
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : [];
@@ -108,7 +137,7 @@
   // 来源矿山选项
   const MINE_OPTIONS = ['力拓', 'BHP 必和必拓', '淡水河谷', 'FMG', '其他'];
 
-  // 矿石贸易商选项（上游客户下拉）
+  // 矿石贸易商选项（订单客户下拉：矿石贸易商为我方付费客户）
   const TRADER_OPTIONS = ['中矿国链', '四川云贸', '厦门象屿', '五矿发展', '中钢集团', '建发集团', '物产中大', '河北物流', '浙商中拓', '厦门国贸'];
 
   // 铁路承运商选项
@@ -329,6 +358,12 @@
     if (idx >= 0) list[idx] = order;
     else list.push(order);
     write(KEYS.orders, list);
+    // 订单台账联动：流程订单达同步点（待确认及之后）自动同步进台账（FR-03）
+    if (window.HZBusinessData && typeof window.HZBusinessData.syncFlowOrder === 'function') {
+      try { window.HZBusinessData.syncFlowOrder(order); } catch (e) { /* 同步失败不阻断流程 */ }
+    }
+    // 海运管理联动：航运信息（船舶/货量）录入后自动新增同步生成航次（R1）
+    try { syncVoyageToOcean(order); } catch (e) { /* 同步失败不阻断流程 */ }
   }
 
   // 保存订单（自动刷新更新时间）
@@ -348,6 +383,12 @@
     write(KEYS.shippings, read(KEYS.shippings).filter(s => s.orderId !== id));
     write(KEYS.milestones, read(KEYS.milestones).filter(m => m.orderId !== id));
     write(KEYS.logs, read(KEYS.logs).filter(l => l.orderId !== id));
+    // 订单台账联动：已同步进台账的流程订单一并删除（FR-03）
+    if (window.HZBusinessData && typeof window.HZBusinessData.removeFlowOrder === 'function') {
+      try { window.HZBusinessData.removeFlowOrder(id); } catch (e) { /* 联动失败不阻断删除 */ }
+    }
+    // 海运管理联动：清理由本订单同步生成的航次（R1）
+    try { removeVoyageByFlowRef(id); } catch (e) { /* 联动失败不阻断删除 */ }
   }
 
   // 仅更新订单状态
@@ -372,6 +413,102 @@
       fromStatus: from, toStatus: to, remark: remark || '',
     });
     return true;
+  }
+
+  /* ==================== 海运管理联动（R1：航运信息新增同步） ==================== */
+
+  // 读取海运航次（hz_ocean_voyages 纯数组，海运管理模块权威数据；本层只做新增/更新同步，不改海运侧字段）
+  function readOceanVoyages() {
+    try {
+      const v = JSON.parse(localStorage.getItem('hz_ocean_voyages'));
+      return Array.isArray(v) ? v : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // 航运信息新增同步：订单录入船舶 + 货量后，自动在海运管理生成/更新对应航次（幂等，flow_ref 关联流程订单）
+  // 单位经 HZUnits 转换（业务侧吨 → 海运侧万吨），非法/零值不落库；仅覆盖业务侧字段，
+  // 海运侧 status / freight_rate / load_port / remark 等由海运模块维护
+  function syncVoyageToOcean(order) {
+    const U = window.HZUnits;
+    if (!order || !order.id || !U) return false;
+    const vessel = String(order.vessel || '').trim();
+    const wanTon = U.normalizeTo(order.cargoTotal, 'ton', 'wanTon'); // 吨 → 万吨，非法/0 返回 null
+    if (!vessel || wanTon == null) return false; // 航运信息（船名/货量）未录入完整：不同步
+
+    const voyages = readOceanVoyages();
+    const now = Date.now();
+    let rec = null;
+    for (let i = 0; i < voyages.length; i++) {
+      if (voyages[i].flow_ref === order.id) { rec = voyages[i]; break; }
+    }
+
+    // 矿山 id 回填：按简称/全称匹配矿山主数据（hz_mines，矿山模块权威数据）
+    let mineId = '';
+    if (order.mine) {
+      let mines = [];
+      try {
+        const m = JSON.parse(localStorage.getItem('hz_mines'));
+        if (Array.isArray(m)) mines = m;
+      } catch (e) { /* 矿山数据缺失时退化为空关联 */ }
+      for (let i = 0; i < mines.length; i++) {
+        if ((mines[i].short_name || mines[i].mine_name) === order.mine) { mineId = mines[i].id || ''; break; }
+      }
+    }
+
+    if (!rec) {
+      // 新增航次：航次号 S- 三位流水（与海运模块 genCode 同规则扫描最大流水 + 1）
+      let maxSeq = 0;
+      voyages.forEach(v => {
+        const n = /^S-(\d+)$/.exec(v.voyage_code || '');
+        if (n) maxSeq = Math.max(maxSeq, Number(n[1]));
+      });
+      rec = {
+        id: 'v' + now.toString(36) + Math.random().toString(36).slice(2, 7),
+        voyage_code: 'S-' + String(maxSeq + 1).padStart(3, '0'),
+        load_port: '', load_country: '', discharge_country: '',
+        freight_rate: 0, eta_date: '',
+        status: 'pending',
+        remark: '来自业务管理 · 订单 ' + order.id,
+        flow_ref: order.id,
+        created_at: now,
+        created_by: '业务管理',
+      };
+      voyages.push(rec);
+    }
+
+    // 仅覆盖业务侧字段，海运侧字段（status/freight_rate/load_port/remark）保留
+    rec.vessel_name = vessel;
+    rec.discharge_port = order.destPort || '';
+    rec.cargo_type = order.cargoName || '';
+    rec.quantity = wanTon;
+    rec.mine_name = order.mine || '';
+    if (mineId) rec.mine_id = mineId;
+    rec.sail_date = order.departure ? String(order.departure).slice(0, 10) : '';
+    rec.freight_total = Math.round(wanTon * 10000 * (Number(rec.freight_rate) || 0));
+    rec.updated_at = now;
+
+    try {
+      localStorage.setItem('hz_ocean_voyages', JSON.stringify(voyages));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 清理由指定流程订单同步生成的航次（流程订单删除时级联，仅删 flow_ref 命中的记录）
+  function removeVoyageByFlowRef(flowRef) {
+    if (!flowRef) return false;
+    const voyages = readOceanVoyages();
+    const kept = voyages.filter(v => v.flow_ref !== flowRef);
+    if (kept.length === voyages.length) return false;
+    try {
+      localStorage.setItem('hz_ocean_voyages', JSON.stringify(kept));
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   /* ==================== 港口信息 ==================== */
@@ -608,6 +745,7 @@
 
   window.HZFlowData = {
     KEYS: KEYS,
+    use: use,
     STATUS_META: STATUS_META,
     STATUS_ORDER: STATUS_ORDER,
     STATUS_FLOW: STATUS_FLOW,

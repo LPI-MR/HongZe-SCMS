@@ -13,7 +13,7 @@
   const LS_LOGS = 'hz_order_logs';           // 订单流转日志
 
   // 种子版本号：种子内容变更时递增，浏览器检测到不匹配自动丢弃旧缓存、加载最新种子
-  const SEED_VERSION = 'v2';
+  const SEED_VERSION = 'v3';
 
   // ===== 状态机定义（迁移 hongze_demo 状态机规则，中文化适配） =====
   // 订单正向单向推进、禁止跳级；「已终止」为终态，任意状态可转入
@@ -98,7 +98,8 @@
   // 引用现有合同种子（c-seed-001 / 002 / 004 履行中合同）；矿山（hz_mines）与航次
   // （hz_ocean_voyages）按简称 / 航次号回填 id，对应模块未初始化时退化为空关联（仅展示）
   // 编号规则迁移 hongze_demo：HZ + yyyyMMdd + 4位流水，同一签订日内流水递增
-  // 列：[合同种子id, 矿山简称, 航次号, 车次号数组, 客户, 货物, 货量(万吨), 金额(元), 签订(天前), 计划完成(天后), 状态, 备注]
+  // 列：[合同种子id, 矿山简称, 航次号, 车次号数组, 客户, 货物, 货量(吨), 金额(元), 签订(天前), 计划完成(天后), 状态, 备注]
+  // 货量统一「吨」口径（R2 单位基座）：17.5 万吨 = 175000 吨，跨模块引用不再错位
   function buildOrders() {
     const DAY = 24 * 60 * 60 * 1000;
     const base = Date.now();
@@ -118,15 +119,15 @@
     });
 
     const seedDef = [
-      ['c-seed-001', '福斯特库', 'S-004', [], '武安市鑫源矿业有限公司', '超特粉', 17.5, 10850000, 90, -5, '已完成', '已交付完毕，客户验收通过'],
-      ['c-seed-001', '力拓', 'S-001', ['YS1013-004', 'YS1012-018'], '武安市鑫源矿业有限公司', 'PB粉', 17, 10540000, 75, 30, '已发运', '澳矿进口，港口直发武安'],
-      ['c-seed-001', '必和必拓', 'S-002', [], '武安市鑫源矿业有限公司', '纽曼粉', 18, 11160000, 60, 45, '执行中', '待装船，疏港计划已排定'],
-      ['c-seed-001', '淡水河谷', 'S-003', ['YS1013-006'], '武安市鑫源矿业有限公司', '卡拉加斯粉', 30, 19500000, 60, 50, '执行中', '巴西矿进口，青岛港卸货'],
-      ['c-seed-002', '', '', ['YS1013-008', 'YS1013-009'], '河北新金钢铁有限公司', '钢坯', 3.5, 8400000, 30, 40, '执行中', '汽运分批配送'],
-      ['c-seed-002', '', '', [], '河北新金钢铁有限公司', '钢坯', 4, 9600000, 30, 60, '已确认', '华北区域销售，分批交货'],
-      ['c-seed-004', '', '', [], '河北陆港保税物流有限公司', '港口仓储服务', 5, 1520000, 30, 120, '待确认', '中转仓储服务框架订单'],
-      ['c-seed-002', '西芒杜', '', [], '河北新金钢铁有限公司', '高品位块矿', 1.5, 4200000, 15, 30, '已终止', '客户需求变更，双方协商终止'],
-      ['c-seed-002', '', '', [], '河北新金钢铁有限公司', '钢坯', 2, 4800000, 3, 90, '待确认', '新增补库需求，待评审确认']
+      ['c-seed-001', '福斯特库', 'S-004', [], '武安市鑫源矿业有限公司', '超特粉', 175000, 10850000, 90, -5, '已完成', '已交付完毕，客户验收通过'],
+      ['c-seed-001', '力拓', 'S-001', ['YS1013-004', 'YS1012-018'], '武安市鑫源矿业有限公司', 'PB粉', 170000, 10540000, 75, 30, '已发运', '澳矿进口，港口直发武安'],
+      ['c-seed-001', '必和必拓', 'S-002', [], '武安市鑫源矿业有限公司', '纽曼粉', 180000, 11160000, 60, 45, '执行中', '待装船，疏港计划已排定'],
+      ['c-seed-001', '淡水河谷', 'S-003', ['YS1013-006'], '武安市鑫源矿业有限公司', '卡拉加斯粉', 300000, 19500000, 60, 50, '执行中', '巴西矿进口，青岛港卸货'],
+      ['c-seed-002', '', '', ['YS1013-008', 'YS1013-009'], '河北新金钢铁有限公司', '钢坯', 35000, 8400000, 30, 40, '执行中', '汽运分批配送'],
+      ['c-seed-002', '', '', [], '河北新金钢铁有限公司', '钢坯', 40000, 9600000, 30, 60, '已确认', '华北区域销售，分批交货'],
+      ['c-seed-004', '', '', [], '河北陆港保税物流有限公司', '港口仓储服务', 50000, 1520000, 30, 120, '待确认', '中转仓储服务框架订单'],
+      ['c-seed-002', '西芒杜', '', [], '河北新金钢铁有限公司', '高品位块矿', 15000, 4200000, 15, 30, '已终止', '客户需求变更，双方协商终止'],
+      ['c-seed-002', '', '', [], '河北新金钢铁有限公司', '钢坯', 20000, 4800000, 3, 90, '待确认', '新增补库需求，待评审确认']
     ];
 
     // 合同种子静态可靠：订单的合同号冗余直接取合同 code
@@ -359,6 +360,78 @@
     return saveLogs(logs);
   }
 
+  // ===== 流程订单 → 订单台账自动同步（业务总览 → 订单台账链路） =====
+  // 状态映射唯一出处：流程九态 → 台账订单状态；录入中/待港口/待运力/待方案未达同步点，不进台账
+  const FLOW_TO_LEDGER_STATUS = {
+    draft: null, port: null, capacity: null, plan: null,
+    pending_confirm: '待确认',
+    confirmed: '已确认',
+    shipping: '执行中',
+    shipped: '已发运',
+    completed: '已完成'
+  };
+
+  // 单条流程订单同步：按 from_flow + flow_id 识别既有记录覆盖更新，不产生重复；
+  // 首次同步若流程订单号与台账既有编号撞号，改用台账下一可用编号，绝不覆盖人工数据
+  function syncFlowOrder(flowOrder) {
+    if (!flowOrder || !flowOrder.id) return false;
+    const status = FLOW_TO_LEDGER_STATUS[flowOrder.status];
+    const list = loadOrders();
+
+    // 未达同步点：无痕（台账内不应有记录，兜底清理）
+    if (!status) {
+      const filtered = list.filter(o => !(o.from_flow && o.flow_id === flowOrder.id));
+      if (filtered.length !== list.length) saveOrders(filtered);
+      return false;
+    }
+
+    const now = Date.now();
+    let rec = list.find(o => o.from_flow && o.flow_id === flowOrder.id);
+
+    if (!rec) {
+      // 首次同步：流程订单号被台账人工数据占用时换台账新编号
+      let orderCode = flowOrder.id;
+      if (list.some(o => o.order_code === orderCode)) orderCode = nextOrderCode(list, now);
+      rec = {
+        id: 'o-flow-' + flowOrder.id,
+        order_code: orderCode,
+        contract_id: '',
+        contract_code: '',
+        mine_id: '',
+        voyage_id: flowOrder.vessel || '',
+        trip_ids: [],
+        remark: '来自业务流程',
+        from_flow: true,
+        flow_id: flowOrder.id,
+        created_by: '业务流程',
+        sign_date: fmtDate(flowOrder.createdAt || now),
+        created_at: now
+      };
+    }
+
+    // 字段映射：客户←贸易商；货量←吨（全系统统一「吨」口径，R2）；金额←总量×单价（元）；矿山←来源矿山；状态←状态映射
+    rec.customer = flowOrder.trader || '';
+    rec.cargo_name = flowOrder.cargoName || '';
+    rec.cargo_qty = Number(flowOrder.cargoTotal) || 0;
+    rec.amount = Math.round((Number(flowOrder.cargoTotal) || 0) * (Number(flowOrder.cargoPrice) || 0));
+    rec.mine_name = flowOrder.mine || '';
+    rec.status = status;
+    rec.updated_at = now;
+
+    const idx = list.findIndex(o => o.id === rec.id);
+    if (idx >= 0) list[idx] = rec; else list.push(rec);
+    return saveOrders(list);
+  }
+
+  // 流程订单删除联动：已同步进台账的记录一并删除；未达同步点删除无痕
+  function removeFlowOrder(flowId) {
+    if (!flowId) return false;
+    const list = loadOrders();
+    const filtered = list.filter(o => !(o.from_flow && o.flow_id === flowId));
+    if (filtered.length === list.length) return false;
+    return saveOrders(filtered);
+  }
+
   // ===== 挂到 window，供订单台账 / 执行跟踪 / 结算管理使用 =====
   window.HZBusinessData = {
     LS_ORDERS: LS_ORDERS, LS_SETTLEMENTS: LS_SETTLEMENTS, LS_LOGS: LS_LOGS,
@@ -369,6 +442,8 @@
     nextOrderCode: nextOrderCode, nextSettleCode: nextSettleCode,
     loadOrders: loadOrders, saveOrders: saveOrders,
     loadSettlements: loadSettlements, saveSettlements: saveSettlements,
-    loadLogs: loadLogs, saveLogs: saveLogs, pushLog: pushLog
+    loadLogs: loadLogs, saveLogs: saveLogs, pushLog: pushLog,
+    FLOW_TO_LEDGER_STATUS: FLOW_TO_LEDGER_STATUS,
+    syncFlowOrder: syncFlowOrder, removeFlowOrder: removeFlowOrder
   };
 })();

@@ -9,7 +9,7 @@
   <!-- 业务流程模块样式：步骤条 / 折叠面板 / 表单网格 / 校验与摘要 -->
   <link rel="stylesheet" href="flow.css" />
 </head>
-<body>
+<body class="page-order-port lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -51,6 +51,8 @@
         <span class="saved-tip" id="saved-tip" hidden>✓ 已自动保存草稿</span>
       </div>
 
+      <!-- 内容滚动区：步骤条与页头固定，仅此区域上下滚动（R2 视口锁定规范） -->
+      <div class="main-scroll">
       <!-- 港口信息面板 -->
       <section class="flow-collapse open" id="panel" hidden>
         <button type="button" class="collapse-head" data-collapse>
@@ -60,11 +62,15 @@
           <span class="head-extra" id="sum-port">未填写</span>
         </button>
         <div class="collapse-body">
+          <div class="port-summary" id="port-summary" hidden></div>
           <div class="fgrid">
             <div class="field">
-              <label class="field-label">港口名称</label>
-              <input class="field-input" data-field="portName" placeholder="如：黄骅港" style="background:var(--gray-200)" />
-              <div class="hint">自动联动订单预计到达港口</div>
+              <label class="field-label">港口名称 <span class="link-tag">港口管理</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="portName" placeholder="选择港口或手动输入" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-linked="portName" data-linked-default="默认联动订单预计到达港口，可从「港口管理」选择"></div>
             </div>
             <div class="field">
               <label class="field-label">拥堵情况</label>
@@ -79,16 +85,25 @@
               <input class="field-input" type="number" data-field="waitHours" placeholder="如：12" />
             </div>
             <div class="field">
-              <label class="field-label">码头</label>
-              <input class="field-input" data-field="wharf" placeholder="如：黄骅港20万吨码头" />
+              <label class="field-label">码头 <span class="link-tag">港口管理</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="wharf" placeholder="选择港区或手动输入" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-linked="wharf" data-linked-default="可从已选港口的港区列表中选择"></div>
             </div>
             <div class="field">
-              <label class="field-label">泊位</label>
-              <input class="field-input" data-field="berth" placeholder="如：20 万吨级泊位 1 个、10 万吨级泊位 2 个" />
+              <label class="field-label">泊位 <span class="link-tag">港口管理</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="berth" placeholder="选择泊位等级或手动输入" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-linked="berth" data-linked-default="可从已选港口的泊位指标中选择"></div>
             </div>
             <div class="field span-2">
-              <label class="field-label">堆场</label>
+              <label class="field-label">堆场 <span class="link-tag">港口管理</span></label>
               <textarea class="field-input" data-field="yard" rows="3" placeholder="如：堆场容量 50 万吨，当前空闲 20 万吨" style="resize:vertical;min-height:70px"></textarea>
+              <div class="hint" data-linked="yard" data-linked-default="选择港口后可自动生成各港区设施摘要，也可手动填写"></div>
             </div>
           </div>
         </div>
@@ -101,8 +116,9 @@
         </div>
         <div class="info-grid" id="info-grid"></div>
       </div>
+      </div><!-- /.main-scroll -->
 
-      <!-- 底部操作栏 -->
+      <!-- 底部操作栏：固定于内容区下方，常驻可见 -->
       <div class="flow-footer" id="footer" hidden>
         <a class="btn-ghost" id="btn-prev">← 上一步</a>
         <button type="button" class="btn-primary" id="btn-next">保存并下一步 →</button>
@@ -115,8 +131,12 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 基础数据调用基座：港口管理联动数据源 -->
+  <script src="/common/hz-data.js"></script>
   <!-- 业务流程共享数据层 -->
   <script src="flow-data.js"></script>
+  <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
+  <script src="../business-data.js"></script>
   <!-- 港口录入脚本 -->
   <script src="order-port.js"></script>
 </body>

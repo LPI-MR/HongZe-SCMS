@@ -9,7 +9,7 @@
   <!-- 业务流程模块样式：步骤条 / 折叠面板 / 表单网格 / 校验与摘要 -->
   <link rel="stylesheet" href="flow.css" />
 </head>
-<body>
+<body class="lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -56,6 +56,8 @@
         </div>
       </div>
 
+      <!-- 内容滚动区：步骤条与页头固定，仅此区域上下滚动（R2 视口锁定规范） -->
+      <div class="main-scroll">
       <!-- 一、订单信息 -->
       <section class="flow-panel" id="order-section" hidden>
         <div class="panel-head">
@@ -135,8 +137,9 @@
           </div>
         </div>
       </section>
+      </div><!-- /.main-scroll -->
 
-      <!-- 底部操作栏 -->
+      <!-- 底部操作栏：固定于内容区下方，常驻可见 -->
       <div class="flow-footer" id="footer" hidden>
         <a class="btn-ghost" id="btn-prev">← 上一步</a>
         <div style="display:flex;gap:12px">
@@ -187,6 +190,8 @@
   <script src="/common/fetch.js"></script>
   <!-- 业务流程共享数据层 -->
   <script src="flow-data.js"></script>
+  <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
+  <script src="../business-data.js"></script>
   <!-- 运输方案脚本 -->
   <script src="order-plan.js"></script>
 </body>

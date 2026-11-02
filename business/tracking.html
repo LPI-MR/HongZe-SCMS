@@ -9,7 +9,7 @@
   <!-- 业务板块独立样式：订单台账 / 执行跟踪 / 结算管理共用 -->
   <link rel="stylesheet" href="business.css" />
 </head>
-<body>
+<body class="lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -33,6 +33,8 @@
           </div>
         </div>
 
+        <!-- 内容滚动区：页头固定，仅此区域上下滚动（R2 视口锁定规范） -->
+        <div class="main-scroll">
         <!-- 概览条：主指标（跟踪订单数）+ 派生指标 + 执行中占比（实时汇总跟踪数据，不含已终止订单） -->
         <div class="biz-overview">
           <div class="ov-primary">
@@ -43,7 +45,7 @@
           <div class="ov-divider"></div>
           <div class="ov-metrics">
             <div class="ov-metric">
-              <div class="ov-label">履行中</div>
+              <div class="ov-label tone-orange">履行中</div>
               <div class="ov-num" id="tRunning">0</div>
               <div class="ov-note">执行中 / 已发运</div>
             </div>
@@ -53,14 +55,14 @@
               <div class="ov-note">关联航次已到港</div>
             </div>
             <div class="ov-metric">
-              <div class="ov-label">本月完成</div>
+              <div class="ov-label tone-green">本月完成</div>
               <div class="ov-num" id="tMonthDone">0</div>
               <div class="ov-note">本月更新为已完成</div>
             </div>
           </div>
           <div class="ov-divider"></div>
           <div class="ov-rate">
-            <div class="ov-label">执行中占比</div>
+            <div class="ov-label tone-purple">执行中占比</div>
             <div class="ov-rate-bar"><i id="ovRunBar"></i></div>
             <div class="ov-note">执行中 <b id="ovRunRate">0%</b> / 跟踪订单</div>
           </div>
@@ -121,6 +123,7 @@
             </div>
           </div>
         </div>
+        </div><!-- /.main-scroll -->
       </section>
     </main>
   </div>

@@ -879,3 +879,487 @@ body.page-orders .main { min-width: 0; }
   .fv-stats { gap: 10px 22px; }
   .fv-stat-num { font-size: 20px; }
 }
+
+/* ============================================================
+   PRD 优化层 · R2：视口锁定滚动规范（业务管理板块全部页面）
+   主视觉区域（侧边导航 / 页头 / 概览 / 视图切换）固定稳定，
+   仅 .main-scroll 内容区上下滚动，禁止整页发生整体滚动。
+   ============================================================ */
+
+body.lock-view { overflow: hidden; }
+
+body.lock-view .layout { height: 100vh; }
+
+body.lock-view .main {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* 内容滚动区：唯一允许纵向滚动的容器 */
+body.lock-view .main-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 台账类页面：列表内容位于 section.ledger 内，同步转为弹性列布局 */
+body.lock-view .main > .ledger {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* 窄屏回退：恢复整页滚动，保证小屏可用性 */
+@media (max-width: 760px) {
+  body.lock-view { overflow: auto; }
+  body.lock-view .layout { height: auto; min-height: 100vh; }
+  body.lock-view .main { overflow: visible; }
+  body.lock-view .main-scroll { overflow: visible; }
+}
+
+/* ============================================================
+   PRD 优化层 · R5：全模块信息密度与质感提升（业务管理板块）
+   business.css 仅被工作台 / 台账 / 跟踪 / 结算四页加载，
+   故在 body.lock-view 作用域统一 Apple 色板与字体栈；
+   并对概览条 / 卡片流 / 工具条做定量密度收紧（8pt 基准）。
+   ============================================================ */
+
+body.lock-view {
+  /* Apple 色彩体系（与 page-order-form / page-order-detail 同规格） */
+  --color-primary: #0071e3;
+  --color-primary-dark: #0077ed;
+  --color-primary-light: rgba(0, 113, 227, 0.1);
+  --color-success: #34c759;
+  --color-danger: #ff3b30;
+  --color-warning: #ff9500;
+  --gray-100: #ffffff;
+  --gray-200: #f5f5f7;
+  --gray-300: #d2d2d7;
+  --gray-400: #b0b0b8;
+  --gray-500: #86868b;
+  --gray-600: #6e6e73;
+  --gray-700: #1d1d1f;
+  --gray-800: #1d1d1f;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 14px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.08);
+  /* 状态辅助底色对齐 Apple 软色 */
+  --assist-bg-orange: rgba(255, 149, 0, 0.12);
+  --assist-bg-green: rgba(52, 199, 89, 0.12);
+  --assist-bg-red: rgba(255, 59, 48, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+    "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  color: #1d1d1f;
+  background: #f5f5f7;
+}
+
+/* --- 概览条：收紧留白，提高信息密度 --- */
+body.lock-view .biz-overview {
+  padding: 18px 24px;
+  gap: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.045);
+}
+
+body.lock-view .biz-overview .ov-value { font-weight: 700; }
+body.lock-view .biz-overview .ov-num { font-weight: 700; }
+
+/* --- 跟踪卡片流：行距与卡内留白收紧 --- */
+body.lock-view .track-list { padding: 14px 16px; gap: 10px; }
+
+body.lock-view .track-card {
+  padding: 14px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.045);
+  border-radius: 12px;
+}
+
+body.lock-view .track-progress { gap: 24px; margin-top: 12px; padding-top: 12px; }
+
+/* --- 工具条：垂直留白收紧 --- */
+body.lock-view .table-toolbar,
+body.lock-view .fv-toolbar { padding: 12px 20px; }
+
+/* --- 台账表格：行悬停反馈 + 分隔线弱化 --- */
+body.lock-view .ledger-table tbody tr { transition: background-color 0.15s; }
+body.lock-view .ledger-table tbody tr:hover { background: rgba(0, 113, 227, 0.03); }
+
+/* --- 行内操作按钮：触感更利落 --- */
+body.lock-view .row-act { border-radius: 8px; }
+
+/* ============================================================
+   PRD 二期 · FR-04：Apple 风格表格全面重构
+   （订单台账 / 履约流程 / 执行跟踪 / 结算管理共用 business.css）
+   透明表头 + 发丝分隔线 + 三级字阶 + 等宽数值 + 浅色行反馈
+   ============================================================ */
+
+/* 表头：去灰底色块 → 透明底小号灰字，充当列标签层 */
+body.lock-view .ledger-table thead th {
+  background: transparent;
+  color: #86868b;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+}
+
+/* 表体：13px 正文 + 8pt 网格行高 + 发丝分隔线 */
+body.lock-view .ledger-table th,
+body.lock-view .ledger-table td { padding: 12px 16px; }
+
+body.lock-view .ledger-table tbody td {
+  color: #1d1d1f;
+  font-size: 13px;
+  line-height: 22px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.045);
+}
+
+/* 末行去底线：融入白卡底边 */
+body.lock-view .ledger-table tbody tr:last-child td { border-bottom: none; }
+
+/* 数值列：加深加粗 + 等宽数字（tabular-nums 基础类已有） */
+body.lock-view .ledger-table .col-num {
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+/* 行悬停：Apple 浅色反馈（150ms，替代整块灰底） */
+body.lock-view .ledger-table tbody tr { transition: background-color 0.15s ease; }
+body.lock-view .ledger-table tbody tr:hover td { background: rgba(0, 113, 227, 0.04); }
+
+/* 空状态：轻盈占位 */
+body.lock-view .ledger-table .empty-row td {
+  padding: 48px 0;
+  color: #86868b;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* 订单编号列：等宽字体强化单据属性 */
+body.lock-view .ledger-table td.mono-code {
+  font-family: "SF Mono", Consolas, Monaco, monospace;
+  font-size: 12.5px;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   R4 · 订单台账全链路视图：九态管道 / 流程行 / 进度点
+   管道分段颜色经 --fp-c 内联变量注入（与 flow-data.js STATUS_META 同源）
+   ============================================================ */
+
+/* --- 链路总览管道容器 --- */
+.flow-pipeline-wrap {
+  margin: 0 0 var(--space-md);
+}
+
+.flow-pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.flow-pipeline .fp-groups {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.flow-pipeline .fp-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 3 1 0;
+  min-width: 0;
+}
+
+.flow-pipeline .fp-group + .fp-group { flex: 3 1 0; }
+.flow-pipeline .fp-group:last-child { flex: 1 1 0; }
+
+/* 分组标题：竖排小签 */
+.flow-pipeline .fp-cap {
+  writing-mode: vertical-rl;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--gray-500);
+  padding: 2px 0;
+  border-left: 2px solid var(--gray-200);
+  padding-left: 6px;
+  flex: none;
+}
+
+.flow-pipeline .fp-segs {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 分段：宽度按该状态订单数比例伸缩（flex-grow 内联注入） */
+.flow-pipeline .fp-seg {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 6px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(142, 142, 147, 0.1); /* 降级：不支持 color-mix 时 */
+  background: color-mix(in srgb, var(--fp-c, #8e8e93) 10%, #fff);
+  color: var(--fp-c, var(--gray-600));
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.flow-pipeline .fp-seg:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--fp-c, #8e8e93) 22%, transparent);
+}
+
+.flow-pipeline .fp-seg.active {
+  border-color: var(--fp-c, var(--color-primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fp-c, #8e8e93) 18%, transparent);
+}
+
+.flow-pipeline .fp-seg.is-empty { opacity: 0.55; }
+
+.flow-pipeline .fp-num {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-pipeline .fp-label {
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* 段间箭头 */
+.flow-pipeline .fp-arrow {
+  flex: none;
+  width: 10px;
+  align-self: center;
+  height: 10px;
+  border-top: 1.5px solid var(--gray-300);
+  border-right: 1.5px solid var(--gray-300);
+  transform: rotate(45deg);
+  margin-right: 4px;
+}
+
+/* 组间分隔 */
+.flow-pipeline .fp-gap {
+  flex: none;
+  width: 1px;
+  background: var(--gray-200);
+  margin: 4px 0;
+}
+
+/* 已终止侧挂：独立于正向管道 */
+.flow-pipeline .fp-side {
+  flex: none;
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--gray-200);
+  padding-left: 14px;
+}
+
+.flow-pipeline .fp-side-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255, 59, 48, 0.07);
+  color: var(--color-danger);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.flow-pipeline .fp-side-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.18);
+}
+
+.flow-pipeline .fp-side-chip.active {
+  border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.14);
+}
+
+.flow-pipeline .fp-side-num {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-pipeline .fp-side-label {
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+/* --- 台账合并行：创建阶段流程订单（浅底色区分来源） --- */
+body.lock-view .ledger-table tbody tr.flow-row td {
+  background: rgba(0, 113, 227, 0.025);
+}
+
+body.lock-view .ledger-table tbody tr.flow-row:hover td {
+  background: rgba(0, 113, 227, 0.06);
+}
+
+body.lock-view .ledger-table td a.flow-detail-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+body.lock-view .ledger-table td a.flow-detail-link:hover { text-decoration: underline; }
+
+body.lock-view .ledger-table .flow-del {
+  color: var(--color-danger);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+body.lock-view .ledger-table .flow-del:hover { background: rgba(255, 59, 48, 0.08); }
+
+/* --- 九态迷你进度点（行内 Apple 进度风格） --- */
+.stage-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.stage-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gray-300);
+}
+
+.stage-dots i.done { background: var(--gray-400); }
+
+.stage-dots i.cur {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
+}
+
+/* --- 胶囊圆点：创建阶段四态（与 STATUS_META 颜色同源） --- */
+.pill .flow-dot.d-draft { background: #8e8e93; }
+.pill .flow-dot.d-port { background: #0071e3; }
+.pill .flow-dot.d-capacity { background: #ff9500; }
+.pill .flow-dot.d-plan { background: #af52de; }
+
+/* --- 管道窄屏降级：横向滚动（min-width 保证 9 段标签完整不截断） --- */
+@media (max-width: 1100px) {
+  .flow-pipeline { overflow-x: auto; }
+  .flow-pipeline .fp-groups { min-width: 840px; }
+}
+
+/* ============================================================
+   R3 · 业务板块 UI 精细化（Apple 页头 / 概览层级化 / 按钮尺寸）
+   仅视觉与布局调整，不改任何业务逻辑与数据交互；
+   作用域 body.lock-view（订单台账 / 执行跟踪 / 结算管理），不回写 common.css
+   ============================================================ */
+
+/* --- 页头 Apple 化：大标题 + 弱化描述（对齐业务总览 wb-title 规范） --- */
+body.lock-view .ledger-header .page-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+body.lock-view .ledger-header .page-desc {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--gray-500);
+}
+
+/* --- 次级按钮收窄：灰底按钮去除过长内边距（24px → 16px） --- */
+body.lock-view .btn-ghost { padding: 0 16px; }
+
+/* --- 概览条层级化：主指标锚点 / 次指标弱一级 / hairline 分隔 / 语义色点 --- */
+body.lock-view .biz-overview .ov-value {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+body.lock-view .biz-overview .ov-num {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+body.lock-view .biz-overview .ov-divider {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* 标签色点：默认主色蓝，语义变体 橙=履行 / 绿=完成 / 紫=比率 */
+body.lock-view .biz-overview .ov-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.lock-view .biz-overview .ov-label::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+body.lock-view .biz-overview .ov-label.tone-orange::before { background: #ff9500; }
+body.lock-view .biz-overview .ov-label.tone-green::before { background: var(--color-success); }
+body.lock-view .biz-overview .ov-label.tone-purple::before { background: #af52de; }
+
+/* --- 窄屏两列布局：概览条降为两列网格，分隔线隐藏 --- */
+@media (max-width: 900px) {
+  body.lock-view .biz-overview {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 24px;
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  body.lock-view .biz-overview .ov-divider { display: none; }
+
+  body.lock-view .biz-overview .ov-metrics { display: contents; }
+
+  body.lock-view .biz-overview .ov-primary,
+  body.lock-view .biz-overview .ov-metric,
+  body.lock-view .biz-overview .ov-rate,
+  body.lock-view .biz-overview .ov-side { min-width: 0; }
+
+  body.lock-view .biz-overview .ov-rate { grid-column: 1 / -1; }
+}
