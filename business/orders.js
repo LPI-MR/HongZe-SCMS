@@ -112,6 +112,19 @@
     return '<span class="status-tag ' + esc(STATUS_CLS[status] || '') + '">' + esc(status) + '</span>';
   }
 
+  // R4：九态迷你进度点（Apple 订单进度风格）——台账六态映射到工作流九态，当前态高亮
+  // STATUS_ORDER 下标 0-8：draft/port/capacity/plan/pending_confirm/confirmed/shipping/shipped/completed
+  const LEDGER_STAGE = { '待确认': 4, '已确认': 5, '执行中': 6, '已发运': 7, '已完成': 8 };
+  function stageDots(status) {
+    const cur = LEDGER_STAGE[status];
+    if (cur == null) return ''; // 已终止侧挂，不显示进度点
+    let html = '<span class="stage-dots" title="履约阶段：第 ' + (cur + 1) + ' / 9 步">';
+    for (let i = 0; i < 9; i++) {
+      html += '<i class="' + (i < cur ? 'done' : (i === cur ? 'cur' : '')) + '"></i>';
+    }
+    return html + '</span>';
+  }
+
   // ===== 订单检索 =====
   // 数据行约定：tbody 中每条订单为一行，携带 data-* 属性——
   //   data-id（唯一标识）、data-status、data-date（签订日期 YYYY-MM-DD）、data-amount（订单金额数值）
@@ -336,7 +349,7 @@
     const cells = [
       '<td class="col-check"><input type="checkbox" class="row-check" title="选择该订单" /></td>',
       '<td class="col-index"></td>',
-      '<td>' + esc(o.order_code) + '</td>',
+      '<td class="mono-code">' + esc(o.order_code) + '</td>',
       '<td>' + esc(o.contract_code || '—') + '</td>',
       '<td>' + esc(o.customer) + '</td>',
       '<td>' + esc(o.cargo_name || '—') + '</td>',
@@ -344,7 +357,7 @@
       '<td class="col-num">' + fmtAmount(o.amount) + '</td>',
       '<td>' + esc(o.mine_name || '—') + '</td>',
       '<td>' + esc(voyageText(o) || '—') + '</td>',
-      '<td>' + statusTag(o.status) + '</td>',
+      '<td>' + statusTag(o.status) + stageDots(o.status) + '</td>',
       '<td class="col-date">' + esc(o.sign_date || '—') + '</td>',
       '<td class="col-detail"><a class="detail-link" href="javascript:void(0)">详情</a></td>',
       '<td class="col-action"><div class="cell-actions">' +
@@ -362,11 +375,20 @@
   function renderAll() {
     tbody.querySelectorAll('tr:not(.empty-row)').forEach(row => row.remove());
     orders.forEach(o => tbody.appendChild(renderRow(o)));
+    // R4：合并视图——追加业务工作流创建阶段订单（orders-flow.js 提供，台账核心逻辑不变）
+    if (window.HZFlowMerge && typeof window.HZFlowMerge.appendRows === 'function') {
+      window.HZFlowMerge.appendRows(tbody);
+    }
     renumber();
     updateStats();
     toggleEmptyRow();
     if (applyFilter) applyFilter();
+    // 通知履约层（orders-flow.js）：表格已重建，刷新管道与胶囊计数
+    document.dispatchEvent(new CustomEvent('hz:orders-rendered'));
   }
+
+  // R4：供 orders-flow.js 在流程订单删除后触发台账全量重渲
+  window.HZLedgerRefresh = renderAll;
 
   // ===== 抽屉（详情 / 新增 / 编辑 / 流转，内容动态渲染） =====
   let currentId = null; // 当前抽屉对应的订单 id
@@ -402,7 +424,7 @@
       ['合同编号', esc(o.contract_code || '—')],
       ['客户', esc(o.customer || '—')],
       ['货物名称', esc(o.cargo_name || '—')],
-      ['货量（万吨）', fmtQty(o.cargo_qty)],
+      ['货量（吨）', fmtQty(o.cargo_qty)],
       ['订单金额（元）', fmtAmount(o.amount)],
       ['货源矿山', esc(o.mine_name || '—')],
       ['关联航次', esc(voyageText(o) || '—')],
@@ -507,8 +529,8 @@
           '<input class="field-input" type="text" id="fCargo" value="' + esc(isEdit ? (o.cargo_name || '') : '') + '" placeholder="输入货物名称" />' +
         '</div>' +
         '<div class="form-item">' +
-          '<label class="field-label" for="fQty">货量（万吨）</label>' +
-          '<input class="field-input" type="number" min="0" step="0.01" id="fQty" value="' + esc(isEdit ? (o.cargo_qty == null ? '' : o.cargo_qty) : '') + '" placeholder="0.00" />' +
+          '<label class="field-label" for="fQty">货量（吨）</label>' +
+          '<input class="field-input" type="number" min="0" step="1" id="fQty" value="' + esc(isEdit ? (o.cargo_qty == null ? '' : o.cargo_qty) : '') + '" placeholder="0" />' +
         '</div>' +
         '<div class="form-item">' +
           '<label class="field-label" for="fAmount">订单金额（元） <i class="required">*</i></label>' +
@@ -876,7 +898,7 @@
 
       const headers = [
         '序号', '订单编号', '合同编号', '客户', '货物名称',
-        '货量（万吨）', '订单金额（元）', '货源矿山', '关联航次', '关联车次',
+        '货量（吨）', '订单金额（元）', '货源矿山', '关联航次', '关联车次',
         '订单状态', '签订日期', '计划完成日期', '备注'
       ];
 

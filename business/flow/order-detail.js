@@ -269,7 +269,8 @@
 
   /* ==================== 头部与页签 ==================== */
 
-  // 九态流转条：已过态打勾 + 连线染色，当前态高亮
+  // 九态流转条：节点与前置连线组成不可拆分组（窄视口整组换行、连线断开）；
+  // 已过态打勾 + 连线染色，当前态高亮
   function renderStatusTrack() {
     const idx = data.STATUS_ORDER.indexOf(currentStatus);
     let html = '';
@@ -277,10 +278,8 @@
       const meta = data.STATUS_META[key];
       const done = i < idx;
       const current = i === idx;
-      if (i > 0) {
-        html += '<i class="st-line"' + (i <= idx ? ' style="background:' + meta.color + '"' : '') + '></i>';
-      }
       html += '<div class="st-node' + (current ? ' current' : '') + '">'
+        + (i > 0 ? '<i class="st-line"' + (i <= idx ? ' style="background:' + meta.color + '"' : '') + '></i>' : '')
         + '<i class="st-dot"' + (done || current ? ' style="background:' + meta.color + ';color:#fff"' : '') + '>'
         + (done ? '✓' : String(i + 1))
         + '</i>'
@@ -310,26 +309,41 @@
 
   /* ==================== 基本信息 ==================== */
 
-  // 订单信息键值对
+  // 订单信息键值对（字段图标 + 键值，FR-04 信息标识）
+  const KV_ICONS = {
+    trader: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="5.5" r="2.6"/><path d="M3.5 13.5c0-2.5 2-4.2 4.5-4.2s4.5 1.7 4.5 4.2"/></svg>',
+    contact: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 2.8h2.6l1.2 3-1.6 1.2a9 9 0 0 0 3.6 3.6l1.2-1.6 3 1.2v2.6c0 .5-.4.9-.9.9A11.5 11.5 0 0 1 2.3 3.7c0-.5.4-.9.9-.9z"/></svg>',
+    message: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10.5a1 1 0 0 1-1 1H8l-3.5 2.8v-2.8H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1z"/></svg>',
+    cargo: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.2 8 2l6 3.2v5.6L8 14l-6-3.2z"/><path d="M2 5.2 8 8.4l6-3.2M8 8.4V14"/></svg>',
+    scale: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M8 11V5M5.5 7.5 8 5l2.5 2.5"/></svg>',
+    price: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M5.6 4.6 8 7.4l2.4-2.8M8 7.4v4.2M5.9 9.3h4.2M5.9 11.2h4.2"/></svg>',
+    tag: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.5v-5h5L14 9l-4.5 4.5z"/><circle cx="5.5" cy="5.5" r="1"/></svg>',
+    mine: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12.5 6 5.5l2.5 4L10.5 7l3.5 5.5z"/><circle cx="11.5" cy="3.8" r="1.4"/></svg>',
+    vessel: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 10.5h11l-1.5 3h-8z"/><path d="M8 2.5v8M8 2.5 4.7 10.5M8 2.5l3.3 8"/></svg>',
+    port: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 14s4.5-4 4.5-7.5a4.5 4.5 0 1 0-9 0C3.5 10 8 14 8 14z"/><circle cx="8" cy="6.5" r="1.8"/></svg>',
+    users: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="5.5" r="2.3"/><path d="M2.5 13c0-2.2 1.6-3.7 3.5-3.7s3.5 1.5 3.5 3.7"/><path d="M10.5 3.6a2.3 2.3 0 0 1 0 4.3M11 9.5c1.6.4 2.7 1.8 2.7 3.5"/></svg>',
+    total: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="2.5" width="10" height="11" rx="2"/><path d="M6 6h4M6 8.8h4M6 11.6h2.5"/></svg>',
+  };
+
   function renderBasicKv() {
     const totalQty = data.customersTotalQty(order.customers);
     const items = [
-      ['贸易商', order.trader || '—'],
-      ['联系方式', order.traderContact || '—'],
-      ['联系信息', order.traderContactInfo || '—'],
-      ['货物名称', order.cargoName || '—'],
-      ['货物总量', data.fmtNum(Number(order.cargoTotal) || 0, '吨')],
-      ['货物单价', Number(order.cargoPrice) > 0 ? data.fmtMoney(Number(order.cargoPrice)) + ' /吨' : '—'],
-      ['货物品类', order.cargoQuality || '—'],
-      ['来源矿山', order.mine || '—'],
-      ['船名', order.vessel || '—'],
-      ['目的港口', order.destPort || '—'],
-      ['终端客户', data.customersDisplay(order.customers) || '—'],
-      ['客户合计', totalQty > 0 ? data.fmtNum(totalQty, '吨') : '—'],
+      ['trader', '贸易商', order.trader || '—'],
+      ['contact', '联系方式', order.traderContact || '—'],
+      ['message', '联系信息', order.traderContactInfo || '—'],
+      ['cargo', '货物名称', order.cargoName || '—'],
+      ['scale', '货物总量', data.fmtNum(Number(order.cargoTotal) || 0, '吨')],
+      ['price', '货物单价', Number(order.cargoPrice) > 0 ? data.fmtMoney(Number(order.cargoPrice)) + ' /吨' : '—'],
+      ['tag', '货物品类', order.cargoQuality || '—'],
+      ['mine', '来源矿山', order.mine || '—'],
+      ['vessel', '船名', order.vessel || '—'],
+      ['port', '目的港口', order.destPort || '—'],
+      ['users', '终端客户', data.customersDisplay(order.customers) || '—'],
+      ['total', '客户合计', totalQty > 0 ? data.fmtNum(totalQty, '吨') : '—'],
     ];
     els.basicKv.innerHTML = items.map(item =>
-      '<div class="kv"><span class="kv-label">' + item[0] + '</span>'
-      + '<span class="kv-value">' + data.esc(item[1]) + '</span></div>'
+      '<div class="kv"><span class="kv-label">' + (KV_ICONS[item[0]] || '') + item[1] + '</span>'
+      + '<span class="kv-value">' + data.esc(item[2]) + '</span></div>'
     ).join('');
   }
 

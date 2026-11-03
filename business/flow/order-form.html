@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="flow.css" />
 </head>
   <!-- page-order-form：苹果风格润色作用域（flow.css 末段覆盖样式仅作用于本页） -->
-  <body class="page-order-form">
+  <body class="page-order-form lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -49,6 +49,8 @@
         </div>
       </div>
 
+      <!-- 内容滚动区：步骤条与页头固定，仅此区域上下滚动（R2 视口锁定规范） -->
+      <div class="main-scroll">
       <!-- 客户面板（默认展开） -->
       <section class="flow-collapse open">
         <button type="button" class="collapse-head" data-collapse>
@@ -88,6 +90,10 @@
           <span class="head-extra" id="sum-cargo">未填写</span>
         </button>
         <div class="collapse-body">
+          <!-- 航运信息说明：录入后自动新增同步至海运管理模块（不引用海运现有数据） -->
+          <div class="link-bar">
+            <div class="link-tip" id="link-voyage-tip">航运信息录入后将自动<b>新增同步</b>至「海运管理」生成航次（货量单位：吨，海运侧自动换算为万吨）</div>
+          </div>
           <div class="fgrid cols-3">
             <div class="field">
               <label class="field-label">货物名称<span class="req">*</span></label>
@@ -95,34 +101,34 @@
                 <input class="field-input ss-input" data-field="cargoName" placeholder="如：PB粉" autocomplete="off" />
                 <div class="ss-panel" data-ss-panel></div>
               </div>
-              <div class="hint" data-hint="cargoName"></div>
+              <div class="hint" data-hint="cargoName" data-linked="cargoName" data-linked-default=""></div>
             </div>
             <div class="field">
               <label class="field-label">货物总量（吨）<span class="req">*</span></label>
               <input class="field-input" type="number" data-field="cargoTotal" placeholder="如：70000" />
-              <div class="hint" data-hint="cargoTotal"></div>
+              <div class="hint" data-hint="cargoTotal" data-linked="cargoTotal" data-linked-default=""></div>
             </div>
             <div class="field">
               <label class="field-label">货物单价（元/吨）<span class="req">*</span></label>
               <input class="field-input" type="number" data-field="cargoPrice" placeholder="如：800" />
-              <div class="hint" data-hint="cargoPrice"></div>
+              <div class="hint" data-hint="cargoPrice" data-linked="cargoPrice" data-linked-default="单价按合同定价条款人工录入（矿山参考价单位口径不一，不做自动填充）"></div>
             </div>
             <div class="field">
+              <label class="field-label">来源矿山<span class="link-tag">矿山管理</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="mine" placeholder="选择矿山自动关联基础 / 产品 / 价格信息" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-linked="mine" data-linked-default="可从「矿山管理」选择，联动货物品质与货物名称"></div>
+            </div>
+            <div class="field span-2">
               <label class="field-label">货物品质<span class="req">*</span></label>
               <input class="field-input" data-field="cargoQuality" placeholder="如：品位 62%、粒度 10-40mm" />
-              <div class="hint" data-hint="cargoQuality"></div>
-            </div>
-            <div class="field">
-              <label class="field-label">来源矿山</label>
-              <select class="field-input" id="sel-mine">
-                <option value="">请选择</option>
-              </select>
-            </div>
-            <div class="field" id="field-mine-other" hidden>
-              <label class="field-label">来源矿山（自定义）</label>
-              <input class="field-input" id="in-mine-custom" placeholder="如：力拓" maxlength="50" />
+              <div class="hint" data-hint="cargoQuality" data-linked="cargoQuality" data-linked-default=""></div>
             </div>
           </div>
+          <!-- 矿山信息卡：选择矿山后展示基础信息 / 产品信息 / 价格参考（数据源：矿山管理） -->
+          <div class="mine-info-card" id="mine-info-card" hidden></div>
         </div>
       </section>
 
@@ -138,6 +144,7 @@
             <div class="field">
               <label class="field-label">运输船舶</label>
               <input class="field-input" data-field="vessel" placeholder="如：远盛海 008" />
+              <div class="hint">手动录入船名，保存后自动同步至「海运管理」生成航次</div>
             </div>
             <div class="field">
               <label class="field-label">装船开始时间</label>
@@ -148,8 +155,12 @@
               <input class="field-input" type="datetime-local" data-field="departure" />
             </div>
             <div class="field">
-              <label class="field-label">预计到达港口</label>
-              <input class="field-input" data-field="destPort" placeholder="如：黄骅港" />
+              <label class="field-label">预计到达港口<span class="link-tag">港口管理</span></label>
+              <div class="ss">
+                <input class="field-input ss-input" data-field="destPort" placeholder="如：黄骅港" autocomplete="off" />
+                <div class="ss-panel" data-ss-panel></div>
+              </div>
+              <div class="hint" data-linked="destPort" data-linked-default="可从「港口管理」已录入港口中选择"></div>
             </div>
             <div class="field">
               <label class="field-label">上传时水尺数（米）</label>
@@ -182,8 +193,9 @@
         </div>
         <div class="summary-grid" id="summary-grid"></div>
       </div>
+      </div><!-- /.main-scroll -->
 
-      <!-- 底部操作栏 -->
+      <!-- 底部操作栏：固定于内容区下方，常驻可见 -->
       <div class="flow-footer">
         <a class="btn-ghost" href="../business.html">← 返回工作台</a>
         <div style="display:flex;align-items:center;gap:var(--space-sm)">
@@ -199,8 +211,14 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 基础数据基座：矿山 / 海运航次 / 港口 / 钢厂联动数据源 -->
+  <script src="/common/hz-data.js"></script>
+  <!-- 单位基座：吨/万吨统一换算与校验（跨模块数据交互必经 HZUnits，R2） -->
+  <script src="/common/units.js"></script>
   <!-- 业务流程共享数据层 -->
   <script src="flow-data.js"></script>
+  <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
+  <script src="../business-data.js"></script>
   <!-- 订单录入脚本 -->
   <script src="order-form.js"></script>
 </body>

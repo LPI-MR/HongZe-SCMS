@@ -38,9 +38,6 @@
     title: $('form-title'),
     sub: $('form-sub'),
     savedTip: $('saved-tip'),
-    mineSelect: $('sel-mine'),
-    mineOtherField: $('field-mine-other'),
-    mineCustom: $('in-mine-custom'),
     custList: $('cust-list'),
     diffTip: $('diff-tip'),
     summaryCard: $('summary-card'),
@@ -144,6 +141,7 @@
   function updateField(field, value) {
     order[field] = value;
     clearError(field);
+    unmarkLinked(field);
     onOrderChanged();
   }
 
@@ -175,8 +173,11 @@
         '</div>' +
         '<div class="fgrid cols-3">' +
           '<div class="field span-2">' +
-            '<label class="field-label">终端钢厂</label>' +
-            '<input class="field-input" data-cust-name="' + data.esc(c.id) + '" value="' + data.esc(c.name) + '" placeholder="如：河钢集团" />' +
+            '<label class="field-label">终端钢厂<span class="link-tag">钢厂管理</span></label>' +
+            '<div class="ss">' +
+              '<input class="field-input ss-input" data-cust-name="' + data.esc(c.id) + '" value="' + data.esc(c.name) + '" placeholder="选择钢厂或手动输入" autocomplete="off" />' +
+              '<div class="ss-panel" data-ss-panel></div>' +
+            '</div>' +
           '</div>' +
           '<div class="field">' +
             '<label class="field-label">销售数量（吨）</label>' +
@@ -253,17 +254,45 @@
     refreshSummaryCard();
   }
 
-  /* ==================== 搜索下拉（原生实现，含"其他"自定义选项） ==================== */
+  /* ==================== 基础数据联动（矿山 / 港口 / 钢厂） ==================== */
 
-  function setupSearchSelect(container, options, otherPlaceholder) {
+  // 联动数据源：经 HZData 统一接口读取基础模块已录入数据（后端化后仅需替换 HZData 适配器）
+  // 注：航运信息不再引用海运管理现有航次——录入后由数据层新增同步至海运管理（R1）
+  const hz = window.HZData;
+  const mines = hz ? hz.list('mines') : [];
+  const steels = hz ? hz.list('steel') : [];
+  const ports = hz ? hz.list('ports') : [];
+  const steelNames = steels.map(s => s.name).filter(Boolean);
+
+  // 矿山在营状态优先展示
+  const isActiveMine = m => /^(active|enabled|启用|在营)$/i.test(String(m.status || ''));
+  mines.sort((a, b) => (isActiveMine(b) ? 1 : 0) - (isActiveMine(a) ? 1 : 0));
+
+  /* ==================== 搜索下拉（原生实现，含"其他"自定义选项与联动回调） ==================== */
+
+  // 选项归一：字符串 → {value,label}；对象 → {value,label,sub,...}（保留 payload 等扩展字段）
+  function normOption(o) {
+    if (typeof o === 'string') return { value: o, label: o, sub: '' };
+    const n = Object.assign({}, o);
+    if (!n.label) n.label = n.value;
+    if (n.sub == null) n.sub = '';
+    return n;
+  }
+
+  // setupSearchSelect(container, options, otherPlaceholder, onSelect)
+  // options：字符串数组或 {value,label,sub} 数组；onSelect(normOpt, value) 选中回调（"其他"自定义时 normOpt 为 null）
+  // .ss-input 带 data-field 时选中自动写入订单字段；带 data-link 时仅触发 onSelect（联动入口不落单字段）
+  function setupSearchSelect(container, options, otherPlaceholder, onSelect) {
     const input = container.querySelector('.ss-input');
     const panel = container.querySelector('[data-ss-panel]');
 
     function renderPanel(keyword) {
       const q = (keyword || '').trim().toLowerCase();
-      const list = options.filter(o => !q || o.toLowerCase().indexOf(q) !== -1);
+      const list = options.map(normOption).filter(o =>
+        !q || (o.label + ' ' + o.value + ' ' + o.sub).toLowerCase().indexOf(q) !== -1);
       let html = list.map(o =>
-        '<div class="ss-option" data-value="' + data.esc(o) + '">' + data.esc(o) + '</div>'
+        '<div class="ss-option" data-value="' + data.esc(o.value) + '">' + data.esc(o.label) +
+        (o.sub ? '<span class="ss-sub">' + data.esc(o.sub) + '</span>' : '') + '</div>'
       ).join('');
       if (!list.length) {
         html += '<div class="ss-option" style="color:var(--gray-400);cursor:default">无匹配项</div>';
@@ -292,7 +321,8 @@
       if (!v) return;
       input.value = v;
       panel.classList.remove('open');
-      updateField(input.dataset.field, v);
+      if (input.dataset.field) updateField(input.dataset.field, v);
+      if (onSelect) onSelect(null, v);
     }
 
     input.addEventListener('focus', () => {
@@ -305,7 +335,11 @@
       if (opt) {
         input.value = opt.dataset.value;
         panel.classList.remove('open');
-        updateField(input.dataset.field, opt.dataset.value);
+        if (input.dataset.field) updateField(input.dataset.field, opt.dataset.value);
+        if (onSelect) {
+          const hit = options.map(normOption).find(o => o.value === opt.dataset.value);
+          onSelect(hit || null, opt.dataset.value);
+        }
         return;
       }
       if (e.target.closest('[data-other]')) renderCustom();
@@ -315,6 +349,156 @@
     document.addEventListener('click', e => {
       if (!container.contains(e.target)) panel.classList.remove('open');
     });
+  }
+
+  /* ==================== 联动选项构造与填充回调 ==================== */
+
+  // 联动填充：仅空字段自动填充、不覆盖已填值（手动修改后以手动值为准）；返回是否实际填充
+  function fillIfEmpty(field, value, source) {
+    if (value === '' || value == null || value === 0) return false;
+    const cur = order[field];
+    if (!(cur === '' || cur === 0 || cur == null)) return false;
+    order[field] = NUMERIC_FIELDS.indexOf(field) !== -1 ? Number(value) : value;
+    const input = document.querySelector('[data-field="' + field + '"]');
+    if (input) input.value = order[field];
+    // 先清校验态再写联动徽标：两者写同一 hint 元素，顺序颠倒会擦除徽标
+    clearError(field);
+    markLinked(field, source);
+    return true;
+  }
+
+  // 「已联动」微标：字段 hint 标注数据来源
+  function markLinked(field, source) {
+    const hint = document.querySelector('[data-linked="' + field + '"]');
+    if (hint) hint.innerHTML = '<span class="link-badge">已联动</span>' + data.esc(source);
+  }
+
+  // 手动编辑后恢复字段默认提示（以手动值为准）
+  function unmarkLinked(field) {
+    const hint = document.querySelector('[data-linked="' + field + '"]');
+    if (hint && hint.dataset.linkedDefault != null) {
+      hint.textContent = hint.dataset.linkedDefault;
+      hint.classList.remove('err');
+    }
+  }
+
+  // 选项集：货物名称 = 常用品类 ∪ 矿山主流产品（去重）
+  const cargoNameOptions = (function () {
+    const seen = {};
+    const list = [];
+    function add(v, sub) {
+      v = String(v || '').trim();
+      if (!v || seen[v]) return;
+      seen[v] = true;
+      list.push({ value: v, label: v, sub: sub || '' });
+    }
+    data.CARGO_CATEGORIES.forEach(c => add(c, '常用品类'));
+    mines.forEach(m => String(m.main_products || '').split(',').forEach(p => add(p, m.short_name || m.mine_name)));
+    return list;
+  })();
+
+  // 选项集：来源矿山 = 矿山管理条目 ∪ 内置 MINE_OPTIONS（"其他"由下拉自带）
+  const mineOptions = (function () {
+    const list = mines.map(m => ({
+      value: m.short_name || m.mine_name,
+      label: m.short_name || m.mine_name,
+      sub: m.ore_grade || '',
+    }));
+    data.MINE_OPTIONS.forEach(m => {
+      if (m === '其他' || list.some(o => o.value === m)) return;
+      list.push({ value: m, label: m, sub: '' });
+    });
+    return list;
+  })();
+
+  // 选项集：到达港口 = 港口管理条目 ∪ 主要接卸港字典（去重）
+  const destPortOptions = (function () {
+    const seen = {};
+    const list = [];
+    ports.forEach(p => {
+      const name = String(p.name || '').trim();
+      if (!name || seen[name]) return;
+      seen[name] = true;
+      list.push({ value: name, label: name, sub: p.subtitle || '' });
+    });
+    const dict = hz ? (hz.dict('dischargePorts') || []) : [];
+    dict.forEach(d => {
+      const name = String(d.name || '').trim();
+      if (!name || seen[name]) return;
+      seen[name] = true;
+      list.push({ value: name, label: name, sub: '主要接卸港' });
+    });
+    return list;
+  })();
+
+  // 矿山信息卡：基础 / 产品 / 价格三段展示（数据源：矿山管理；价格口径不一，仅参考不自动回填）
+  const MINE_TYPE_LABEL = { coal: '煤矿', iron: '铁矿', nonferrous: '有色金属矿', nonmetal: '非金属矿', other: '其他' };
+  const MINE_STATUS_LABEL = { active: '在用', inactive: '停用' };
+
+  function renderMineCard(mine) {
+    const card = document.getElementById('mine-info-card');
+    if (!card) return;
+    if (!mine) { card.hidden = true; card.innerHTML = ''; return; }
+
+    // 基础信息（年产能/储量单位：万吨——矿山模块口径）
+    const baseItems = [
+      ['矿山全称', mine.mine_name || '—'],
+      ['矿山类型', MINE_TYPE_LABEL[mine.mine_type] || mine.mine_type || '—'],
+      ['经营状态', MINE_STATUS_LABEL[mine.status] || mine.status || '—'],
+      ['年产能', mine.annual_capacity ? data.fmtNum(mine.annual_capacity) + ' 万吨/年' : '—'],
+      ['保有储量', mine.reserve ? data.fmtNum(mine.reserve) + ' 万吨' : '—'],
+      ['矿石品位', mine.ore_grade || '—'],
+    ];
+    // 产品信息：main_products 逗号拆分为标签
+    const products = String(mine.main_products || '').split(',').map(s => s.trim()).filter(Boolean);
+    // 价格参考（price_refs：{name, tag, product, value, unit, delta, direction, updated, source}）
+    const refs = (Array.isArray(mine.price_refs) ? mine.price_refs : []).filter(r => r && r.name);
+
+    let html =
+      '<div class="mic-head"><span class="mic-title">矿山信息 · ' + data.esc(mine.short_name || mine.mine_name || '') + '</span>' +
+      '<span class="mic-src">数据源：矿山管理</span></div>' +
+      '<div class="mic-grid">' + baseItems.map(it =>
+        '<div class="mic-item"><span class="mic-label">' + data.esc(it[0]) + '</span>' +
+        '<span class="mic-value">' + data.esc(it[1]) + '</span></div>').join('') + '</div>';
+
+    if (products.length) {
+      html += '<div class="mic-seg"><span class="mic-seg-title">产品信息</span><div class="mic-tags">' +
+        products.map(p => '<span class="mic-tag">' + data.esc(p) + '</span>').join('') + '</div></div>';
+    }
+    if (refs.length) {
+      html += '<div class="mic-seg"><span class="mic-seg-title">价格参考（价格口径不一，仅作参考，不自动填充单价）</span>' +
+        '<table class="mic-table"><thead><tr><th>价格项</th><th>品种</th><th>最新价</th><th>涨跌</th><th>更新</th><th>来源</th></tr></thead><tbody>' +
+        refs.map(r => {
+          const d = Number(r.delta);
+          const dir = String(r.direction || '');
+          const dTxt = Number.isFinite(d) && d !== 0
+            ? '<span class="mic-delta ' + (dir === 'down' ? 'down' : 'up') + '">' + (dir === 'down' ? '▼' : '▲') + ' ' + Math.abs(d) + '</span>'
+            : '<span class="mic-delta flat">—</span>';
+          return '<tr>' +
+            '<td>' + data.esc(r.name) + '</td>' +
+            '<td>' + data.esc(r.product || '—') + '</td>' +
+            '<td class="mono">' + data.esc(String(r.value != null ? r.value : '—')) + '<i>' + data.esc(r.unit || '') + '</i></td>' +
+            '<td>' + dTxt + '</td>' +
+            '<td>' + data.esc(r.updated || '—') + '</td>' +
+            '<td>' + data.esc(r.source || '—') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }
+
+    card.innerHTML = html;
+    card.hidden = false;
+  }
+
+  // 矿山联动：自动填充 cargoQuality ← ore_grade、cargoName ← main_products 首项（仅空字段），
+  // 并渲染矿山信息卡（基础 / 产品 / 价格）
+  function onMineSelected(opt) {
+    const mine = opt ? mines.find(m => (m.short_name || m.mine_name) === opt.value) : null;
+    renderMineCard(mine);
+    if (!mine) return; // 内置选项或自定义矿山，无联动
+    const src = '矿山「' + opt.value + '」';
+    const firstProduct = String(mine.main_products || '').split(',')[0].trim();
+    const a = fillIfEmpty('cargoQuality', mine.ore_grade, src);
+    const b = fillIfEmpty('cargoName', firstProduct, src);
+    if (a || b) onOrderChanged();
   }
 
   /* ==================== 保存草稿 / 生成订单 ==================== */
@@ -383,41 +567,26 @@
     }
   });
 
-  // 搜索下拉：客户 / 货物名称
+  // 字段默认提示（联动来源说明）
+  document.querySelectorAll('[data-linked]').forEach(h => {
+    if (h.dataset.linkedDefault) h.textContent = h.dataset.linkedDefault;
+  });
+
+  // 搜索下拉分发：客户 / 货物名称 / 来源矿山 / 到港港口（船舶改手动录入，保存后同步海运）
   document.querySelectorAll('.ss').forEach(container => {
-    const field = container.querySelector('.ss-input').dataset.field;
-    setupSearchSelect(container, field === 'trader' ? data.TRADER_OPTIONS : data.CARGO_CATEGORIES,
-      field === 'trader' ? '如：中矿国链' : '如：PB粉');
+    const input = container.querySelector('.ss-input');
+    if (!input) return;
+    const field = input.dataset.field;
+    if (field === 'trader') { setupSearchSelect(container, data.TRADER_OPTIONS, '如：中矿国链'); return; }
+    if (field === 'cargoName') { setupSearchSelect(container, cargoNameOptions, '如：PB粉'); return; }
+    if (field === 'mine') { setupSearchSelect(container, mineOptions, '如：力拓', onMineSelected); return; }
+    if (field === 'destPort') { setupSearchSelect(container, destPortOptions, '如：黄骅港'); }
   });
 
-  // 来源矿山三态：普通选项 / "其他"切换自定义输入
-  data.MINE_OPTIONS.forEach(m => {
-    const opt = document.createElement('option');
-    opt.value = m;
-    opt.textContent = m;
-    els.mineSelect.appendChild(opt);
-  });
-  let mineSelectValue = !order.mine ? '' : (data.MINE_OPTIONS.indexOf(order.mine) !== -1 ? order.mine : '其他');
-  els.mineSelect.value = mineSelectValue;
-  els.mineCustom.value = order.mine || '';
-  els.mineOtherField.hidden = mineSelectValue !== '其他';
-
-  els.mineSelect.addEventListener('change', e => {
-    mineSelectValue = e.target.value;
-    if (mineSelectValue === '其他') {
-      order.mine = ''; // 切换到自定义输入，清空已有值
-    } else {
-      order.mine = mineSelectValue;
-    }
-    els.mineCustom.value = order.mine;
-    els.mineOtherField.hidden = mineSelectValue !== '其他';
-    onOrderChanged();
-  });
-
-  els.mineCustom.addEventListener('input', e => {
-    order.mine = e.target.value;
-    onOrderChanged();
-  });
+  // 编辑态：已选矿山时恢复信息卡展示
+  if (order.mine) {
+    renderMineCard(mines.find(m => (m.short_name || m.mine_name) === order.mine) || null);
+  }
 
   // 折叠面板开合
   document.querySelectorAll('[data-collapse]').forEach(head => {
@@ -427,11 +596,33 @@
   });
 
   // 终端客户动态行：委托绑定（渲染后无需重复绑定）
+
+  // 行内钢厂下拉面板：按关键词过滤钢厂管理已录入数据（容器级委托，避免逐行绑定监听）
+  function renderCustPanel(input) {
+    const panel = input.closest('.ss').querySelector('[data-ss-panel]');
+    const q = input.value.trim().toLowerCase();
+    const list = steelNames.filter(n => !q || n.toLowerCase().indexOf(q) !== -1);
+    let html = list.map(n =>
+      '<div class="ss-option" data-value="' + data.esc(n) + '">' + data.esc(n) + '</div>'
+    ).join('');
+    if (!list.length) {
+      html += '<div class="ss-option ss-empty">无匹配项，可直接手动输入</div>';
+    }
+    panel.innerHTML = html;
+    panel.classList.add('open');
+  }
+
+  els.custList.addEventListener('focusin', e => {
+    const nameInput = e.target.closest('[data-cust-name]');
+    if (nameInput) renderCustPanel(nameInput);
+  });
+
   els.custList.addEventListener('input', e => {
     const nameInput = e.target.closest('[data-cust-name]');
     if (nameInput) {
       const c = findCustomer(nameInput.dataset.custName);
       if (c) c.name = nameInput.value;
+      renderCustPanel(nameInput); // 输入过滤时保持面板打开
       onOrderChanged();
       return;
     }
@@ -444,12 +635,32 @@
   });
 
   els.custList.addEventListener('click', e => {
+    // 钢厂下拉选项选择
+    const opt = e.target.closest('.ss-option[data-value]');
+    if (opt) {
+      const input = opt.closest('.ss').querySelector('[data-cust-name]');
+      if (input) {
+        input.value = opt.dataset.value;
+        const c = findCustomer(input.dataset.custName);
+        if (c) c.name = input.value;
+        onOrderChanged();
+      }
+      opt.closest('.ss-panel').classList.remove('open');
+      return;
+    }
     const del = e.target.closest('[data-del-cust]');
     if (del) {
       const idx = order.customers.findIndex(c => c.id === del.dataset.delCust);
       if (idx >= 0) order.customers.splice(idx, 1);
       renderCustomers();
       onOrderChanged();
+    }
+  });
+
+  // 点击页面其他区域收起所有下拉面板（含客户行动态面板）
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.ss')) {
+      document.querySelectorAll('.ss-panel.open').forEach(p => p.classList.remove('open'));
     }
   });
 

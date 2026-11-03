@@ -9,7 +9,7 @@
   <!-- 业务板块独立样式：订单台账 / 执行跟踪 / 结算管理共用 -->
   <link rel="stylesheet" href="business.css" />
 </head>
-<body>
+<body class="lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -37,12 +37,14 @@
           </div>
         </div>
 
+        <!-- 内容滚动区：页头固定，仅此区域上下滚动（R2 视口锁定规范） -->
+        <div class="main-scroll">
         <!-- 收付双轨概览条：应收轨（回款进度）+ 应付轨（付款进度），实时汇总全部结算单数据 -->
         <div class="biz-overview">
           <div class="ov-side">
             <div class="ov-side-head">
               <span class="ov-side-tag tag-receivable">应收</span>
-              <div class="ov-label">应收总额</div>
+              <div class="ov-label tone-green">应收总额</div>
             </div>
             <div class="ov-value" id="sReceivable">¥0</div>
             <div class="ov-rate-bar"><i id="ovRecvBar"></i></div>
@@ -52,7 +54,7 @@
           <div class="ov-side">
             <div class="ov-side-head">
               <span class="ov-side-tag tag-payable">应付</span>
-              <div class="ov-label">应付总额</div>
+              <div class="ov-label tone-orange">应付总额</div>
             </div>
             <div class="ov-value" id="sPayable">¥0</div>
             <div class="ov-rate-bar"><i id="ovPayBar"></i></div>
@@ -144,6 +146,7 @@
             </div>
           </div>
         </div>
+        </div><!-- /.main-scroll -->
       </section>
     </main>
   </div>

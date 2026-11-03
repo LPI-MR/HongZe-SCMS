@@ -9,7 +9,7 @@
   <!-- 业务流程模块样式：工作台 / 录入表单 / 步骤条 / 详情组件 -->
   <link rel="stylesheet" href="flow/flow.css" />
 </head>
-<body class="page-workbench page-overview">
+<body class="page-workbench page-overview lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -32,6 +32,8 @@
         <a class="btn-primary" href="flow/order-form.html">＋ 新建订单</a>
       </header>
 
+      <!-- 内容滚动区：页头固定，仅此区域上下滚动（R2 视口锁定规范） -->
+      <div class="main-scroll">
       <!-- 概览摘要：纯排版数字条（非卡片） -->
       <section class="ov-summary" id="ov-summary" aria-label="业务概览"></section>
 
@@ -52,6 +54,7 @@
         </div>
         <div class="ov-resume" id="ov-resume"></div>
       </section>
+      </div><!-- /.main-scroll -->
     </main>
   </div>
 

@@ -402,7 +402,7 @@
       ['合同编号', esc(o.contract_code || '—')],
       ['客户', esc(o.customer || '—')],
       ['货物名称', esc(o.cargo_name || '—')],
-      ['货量（万吨）', fmtQty(o.cargo_qty)],
+      ['货量（吨）', fmtQty(o.cargo_qty)],
       ['订单金额（元）', Number(o.amount || 0).toLocaleString('zh-CN', {
         minimumFractionDigits: 2, maximumFractionDigits: 2
       })],

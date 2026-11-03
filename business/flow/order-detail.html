@@ -9,7 +9,7 @@
   <!-- 业务流程模块样式：页签 / 状态条 / 概览卡 / 时间轴 / 凭证列表 -->
   <link rel="stylesheet" href="flow.css" />
 </head>
-<body>
+<body class="page-order-detail lock-view">
   <div class="layout">
     <!-- 左侧公共导航栏 -->
     <aside class="sidebar">
@@ -50,16 +50,30 @@
       <!-- 九态状态流转条（JS 生成） -->
       <div class="status-track" id="status-track" hidden></div>
 
-      <!-- 六页签切换 -->
+      <!-- 六页签切换（线性图标 + 固定展示） -->
       <div class="detail-tabs" id="tabs" hidden>
-        <button type="button" class="tab active" data-tab="basic">基本信息</button>
-        <button type="button" class="tab" data-tab="finance">财务状态</button>
-        <button type="button" class="tab" data-tab="shipping">发运状态</button>
-        <button type="button" class="tab" data-tab="warehouse">仓储堆存</button>
-        <button type="button" class="tab" data-tab="cargo">货物动态</button>
-        <button type="button" class="tab" data-tab="log">运输时间轴</button>
+        <button type="button" class="tab active" data-tab="basic">
+          <svg class="tab-ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="1.5" width="11" height="13" rx="2"/><path d="M5.5 5.2h5M5.5 8h5M5.5 10.8h3"/></svg>
+          基本信息</button>
+        <button type="button" class="tab" data-tab="finance">
+          <svg class="tab-ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M5.6 4.6 8 7.4l2.4-2.8M8 7.4v4.2M5.9 9.3h4.2M5.9 11.2h4.2"/></svg>
+          财务状态</button>
+        <button type="button" class="tab" data-tab="shipping">
+          <svg class="tab-ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.2 1.8 7.3 8.7M14.2 1.8 9.9 14.2 7.3 8.7 1.8 6.1z"/></svg>
+          发运状态</button>
+        <button type="button" class="tab" data-tab="warehouse">
+          <svg class="tab-ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.2 8 2l6 3.2v5.6L8 14l-6-3.2z"/><path d="M2 5.2 8 8.4l6-3.2M8 8.4V14"/></svg>
+          仓储堆存</button>
+        <button type="button" class="tab" data-tab="cargo">
+          <svg class="tab-ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8h2.7l1.8-4 2.9 8 1.7-4h2.9"/></svg>
+          货物动态</button>
+        <button type="button" class="tab" data-tab="log">
+          <svg class="tab-ico" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.3"/><path d="M8 4.6V8l2.4 1.5"/></svg>
+          运输时间轴</button>
       </div>
 
+      <!-- 内容滚动区：页头 / 状态条 / 页签固定，仅此区域上下滚动（R2 视口锁定规范） -->
+      <div class="main-scroll">
       <!-- ===== 基本信息 · 订单信息 ===== -->
       <section class="flow-panel" data-tab-panel="basic" hidden>
         <div class="panel-head">
@@ -428,6 +442,7 @@
           </table>
         </div>
       </section>
+      </div><!-- /.main-scroll -->
     </main>
   </div>
 
@@ -438,6 +453,8 @@
   <script src="/common/fetch.js"></script>
   <!-- 业务流程共享数据层 -->
   <script src="flow-data.js"></script>
+  <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
+  <script src="../business-data.js"></script>
   <!-- 订单详情脚本 -->
   <script src="order-detail.js"></script>
 </body>

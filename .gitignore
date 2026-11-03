@@ -14,3 +14,4 @@ node_modules/
 .vscode/
 *.tmp
 .trae-html-share-packages/
+.trae-html-share-packages.local-backup/
