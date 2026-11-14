@@ -474,6 +474,7 @@ body {
 }
 
 /* ===== 详情抽屉：毛玻璃遮罩 / iOS 式侧滑面板 ===== */
+/* hidden 显隐由 common.css 的全局 [hidden] 兜底规则处理 */
 .drawer-mask {
   background: rgba(22, 22, 23, 0.38);
   backdrop-filter: blur(6px);
@@ -846,4 +847,192 @@ body {
     transition: none;
     animation: none;
   }
+}
+
+/* ============================================================
+   新版客户模块（v2 三类客户模型）补充样式
+   依据《PRD-客户管理模块》：列表状态标签 / 类型标签 / 弹窗表单 /
+   资质凭证 / 操作记录 / 迁移归类面板
+   ============================================================ */
+
+/* ===== 客户状态标签 ===== */
+.c-st {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.c-st.s-normal   { background: rgba(52, 199, 89, 0.14); color: #1b7a3d; }
+.c-st.s-review   { background: rgba(255, 149, 0, 0.14); color: #a04d00; }
+.c-st.s-disabled { background: rgba(120, 120, 128, 0.10); color: #86868b; }
+.c-st.s-rejected { background: rgba(255, 59, 48, 0.12); color: #c22b23; }
+
+/* ===== 客户类型标签（BR-C10：类型 + 派生标签） ===== */
+.c-type {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.c-type.t-集采贸易商 { background: rgba(0, 113, 227, 0.10); color: #0066cc; }
+.c-type.t-现货贸易商 { background: rgba(255, 149, 0, 0.14); color: #a04d00; }
+.c-type.t-下游客户   { background: rgba(175, 82, 222, 0.12); color: #7a3aa0; }
+
+/* ===== 弹窗 Modal ===== */
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 2600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.34);
+  opacity: 0;
+  transition: opacity 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.modal-mask.show { opacity: 1; }
+.modal-mask[hidden] { display: none; }
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: 86vh;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  transform: translateY(12px) scale(0.98);
+  transition: transform 0.22s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+.modal-mask.show .modal { transform: none; }
+
+.modal-header { display: flex; align-items: center; flex-shrink: 0; padding: 20px 24px 0; }
+.modal-title { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: #1d1d1f; }
+.modal-close {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border: none;
+  border-radius: 50%;
+  background: rgba(120, 120, 128, 0.10);
+  color: #6e6e73;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+.modal-close:hover { background: rgba(120, 120, 128, 0.20); color: #1d1d1f; }
+.modal-close:active { transform: scale(0.92); }
+
+.modal-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; padding: 8px 24px 22px; }
+.modal-note { font-size: 12px; color: #86868b; line-height: 1.6; }
+
+.btn-danger { background: rgba(255, 59, 48, 0.92); color: #fff; }
+.btn-danger:hover { background: #e0342b; color: #fff; }
+
+/* ===== 类型选择胶囊（代注册 / 审核结论） ===== */
+.type-pills { display: flex; gap: 8px; }
+.type-pill {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 10px;
+  border: 1.5px solid #e5e5ea;
+  border-radius: 12px;
+  background: #fff;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, color 0.18s;
+}
+.type-pill:hover { border-color: rgba(0, 113, 227, 0.45); }
+.type-pill.active {
+  border-color: #0071e3;
+  background: rgba(0, 113, 227, 0.06);
+  color: #0071e3;
+}
+.type-pill .pill-sub { font-size: 12px; color: #86868b; font-weight: 400; }
+.type-pill.active .pill-sub { color: rgba(0, 113, 227, 0.75); }
+
+/* ===== 表单错误提示 ===== */
+.req-err { font-size: 12px; color: #c22b23; margin-top: 4px; min-height: 0; line-height: 1.5; }
+textarea.field-input { height: auto; padding: 8px 12px; resize: vertical; line-height: 1.6; }
+
+/* ===== 驳回原因提示块 ===== */
+.reject-box {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 59, 48, 0.08);
+  border-left: 3px solid rgba(255, 59, 48, 0.8);
+  color: #1d1d1f;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* ===== 操作记录（状态变更记录） ===== */
+.log-list { display: flex; flex-direction: column; gap: 10px; }
+.log-item {
+  padding: 10px 14px;
+  border-left: 2px solid #e5e5ea;
+  background: rgba(120, 120, 128, 0.04);
+  border-radius: 0 10px 10px 0;
+  font-size: 13px;
+}
+.log-item .log-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.log-item .log-head b { font-weight: 600; color: #1d1d1f; }
+.log-item .log-head span { font-size: 12px; color: #86868b; white-space: nowrap; }
+.log-item .log-detail { margin-top: 3px; color: #6e6e73; word-break: break-all; }
+
+/* ===== 迁移归类面板行 ===== */
+.mig-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.mig-row:last-child { border-bottom: none; }
+.mig-row .mig-main { flex: 1; min-width: 0; }
+.mig-row .mig-main b {
+  display: block;
+  font-weight: 600;
+  color: #1d1d1f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mig-row .mig-main .mig-sub { display: block; font-size: 12px; color: #86868b; margin-top: 2px; }
+.mig-row .filter-select { width: 190px; flex-shrink: 0; }
+
+/* ===== 弹窗焦点环 ===== */
+.type-pill:focus-visible,
+.modal-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.28);
+}
+
+/* ===== 响应式补充 ===== */
+@media (max-width: 640px) {
+  .modal-mask { padding: 12px; align-items: flex-end; }
+  .modal { width: 100%; max-height: 92vh; }
+  .type-pills { flex-direction: column; }
+  .mig-row { flex-wrap: wrap; }
+  .mig-row .filter-select { width: 100%; }
 }

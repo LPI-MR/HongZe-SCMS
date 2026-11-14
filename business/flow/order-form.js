@@ -1,11 +1,11 @@
-// ===== order-form 模块脚本（业务总览 · 订单录入页）=====
+// ===== order-form 模块脚本（订单管理 · 订单录入页）=====
 // 复刻 hongze_demo OrderFormPage：四折叠面板 + 校验 + 草稿自动保存 + 终端客户动态行
 // 依赖 flow-data.js 提供的共享数据层
 (function () {
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {

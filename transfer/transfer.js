@@ -456,7 +456,9 @@
     var nameInput = document.getElementById('searchName');
     var locInput = document.getElementById('searchLocation');
 
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       var keywords = (nameInput.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
       var loc = (locInput.value || '').trim().toLowerCase();
 
@@ -485,11 +487,11 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
     form.addEventListener('reset', function () {
-      requestAnimationFrame(function () { applyFilter(); });
+      requestAnimationFrame(function () { applyFilter(true); });
     });
   }
 
@@ -506,8 +508,9 @@
     if (curPage < 1) curPage = 1;
 
     var start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach(function (r, i) {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     $('#pagerTotal').textContent = total;
@@ -518,6 +521,18 @@
     $('#pgPrev').disabled = curPage <= 1;
     $('#pgNext').disabled = curPage >= pages;
     $('#pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定站点行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    var rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(function (r) { return !r.hidden; });
+    var idx = rows.findIndex(function (r) { return r.dataset.id === id; });
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -552,8 +567,9 @@
     openModal('新增站点', body, function () {
       var name = $('#f-new-name').value.trim();
       if (!name) { toast('站点名称不能为空'); return false; }
+      var newId = uid('st');
       stations.push({
-        id: uid('st'),
+        id: newId,
         name: name,
         subtitle: $('#f-new-sub').value.trim(),
         photo: '',
@@ -574,6 +590,7 @@
       });
       saveData();
       renderAll();
+      locateRowPage(newId); // 新增行可能落在其他页，跳转到位
       toast('已新增「' + name + '」，点击名称进入详情补充信息');
     });
   }

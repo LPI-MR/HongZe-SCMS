@@ -399,12 +399,14 @@
       const p = chip.getAttribute('data-port');
       portFilter = (p === '全部') ? '' : p;
       refreshPortChips();
-      if (applyFilter) applyFilter();
+      if (applyFilter) applyFilter(true); // 胶囊筛选后回到第 1 页
     });
   }
 
   // 筛选执行：按卸货港归一化精确匹配（tr.v-row 的 data-discharge）
-  applyFilter = function () {
+  // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+  applyFilter = function (resetPage) {
+    if (resetPage === true) curPage = 1;
     const kw = HZData.normalizePort(portFilter);
 
     let visible = 0;
@@ -434,10 +436,11 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach((r, i) => {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
-    syncDetailRows();
+    syncDetailRows(); // 详情行跟随父行显隐
 
     $('pagerTotal').textContent = total;
     $('pgPages').textContent = pages;
@@ -449,13 +452,25 @@
     $('pgLast').disabled = curPage >= pages;
   }
 
+  // 定位指定航次行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被筛选隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    const rows = Array.from(tbody.querySelectorAll('tr.v-row')).filter(r => !r.hidden);
+    const idx = rows.findIndex(r => r.dataset.id === id);
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
+  }
+
   // ===== 行展开状态（详情行跟随父行可见性 + 展开记忆） =====
   let expandedIds = new Set();
 
   function syncDetailRows() {
     tbody.querySelectorAll('tr.detail-row').forEach(d => {
       const parent = tbody.querySelector('tr.v-row[data-id="' + d.dataset.parent + '"]');
-      d.hidden = !parent || parent.hidden || !expandedIds.has(d.dataset.parent);
+      d.hidden = !parent || parent.hidden || parent.style.display === 'none' || !expandedIds.has(d.dataset.parent);
     });
   }
 
@@ -518,6 +533,7 @@
     updateStats();
     const emptyRow = tbody.querySelector('.empty-row');
     if (emptyRow) emptyRow.hidden = voyages.length > 0;
+    refreshPortChips(); // 胶囊筛选器跟随数据刷新（修复初始化不渲染导致筛选不可用）
     if (applyFilter) applyFilter();
   }
 
@@ -684,6 +700,7 @@
     const data = collectForm();
     if (!data) return;
 
+    let addedId = '';
     if (editingId) {
       const old = voyages.find(v => v.id === editingId);
       if (!old) { showTip('数据已被删除，请刷新页面'); return; }
@@ -696,14 +713,18 @@
       data.updated_at = Date.now();
       data.created_by = 'admin';
       voyages.push(data);
+      addedId = data.id;
     }
 
     if (!save()) return;
     closeEditor();
     renderAll();
+    locateRowPage(addedId); // 新增航次可能落在其他页，跳转到位
   }
 
   function initEditor() {
+    // 新增航次按钮（banner）：打开空表单抽屉（修复按钮未绑定导致新增功能不可用）
+    $('addVoyageBtn').addEventListener('click', () => openEditor(null));
     $('fMine').addEventListener('change', () => onMineChange(false));
     $('fQuantity').addEventListener('input', syncFreightTotal);
     $('fFreightRate').addEventListener('input', syncFreightTotal);

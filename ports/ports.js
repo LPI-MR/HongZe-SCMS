@@ -33,6 +33,8 @@
         { label: '集疏港铁路', value: '朔黄铁路、邯黄铁路、沧港铁路' },
         { label: '集疏港公路', value: '黄石高速、荣乌高速、秦滨高速' }
       ],
+      // 码头清单：新建订单页「码头」多选联动数据源（order-new-data.listWharfsForPort）
+      wharfs: ['综合码头', '矿石码头', '煤炭码头', '散货码头', '集装箱码头'],
       zones: [
         {
           name: '综合港区',
@@ -89,6 +91,8 @@
         { label: '集疏港铁路', value: '黄万铁路、朔黄铁路、西南环线、新港北铁路集装箱中心站' },
         { label: '集疏港公路', value: '滨保高速、京津高速、京津塘高速、津晋高速、京石高速、滨海大道、塘承高速、秦滨高速、长深高速' }
       ],
+      // 码头清单：新建订单页「码头」多选联动数据源（order-new-data.listWharfsForPort）
+      wharfs: ['集装箱码头', '矿石码头', '焦炭码头', '汇盛码头', '散货码头'],
       zones: [
         {
           name: '北疆港区',
@@ -219,6 +223,12 @@
         var parsed = JSON.parse(stored);
         if (parsed && Array.isArray(parsed.list) && parsed.__version === VERSION) {
           ports = parsed.list;
+          // 兼容旧数据：补齐码头清单字段（仅缺省合并种子值，不重置用户已改数据）
+          var merged = false;
+          ports.forEach(function (p) {
+            if (!Array.isArray(p.wharfs)) { p.wharfs = seedWharfsOf(p); merged = true; }
+          });
+          if (merged) { saveData(); }
           return;
         }
       } catch (e) { /* 解析失败则重新写入种子数据 */ }
@@ -226,6 +236,16 @@
     // 版本不匹配或无缓存：写入种子数据（副本，避免污染 SEED）
     ports = JSON.parse(JSON.stringify(SEED));
     saveData();
+  }
+
+  // 按 id / 名称从种子数据中取码头清单副本（旧数据缺省补齐用）
+  function seedWharfsOf(p) {
+    for (var i = 0; i < SEED.length; i++) {
+      if (SEED[i].id === p.id || SEED[i].name === p.name) {
+        return (SEED[i].wharfs || []).slice();
+      }
+    }
+    return [];
   }
 
   // ============================================================
@@ -1021,7 +1041,9 @@
     var nameInput = document.getElementById('searchName');
     var locInput = document.getElementById('searchLocation');
 
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       var keywords = (nameInput.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
       var loc = (locInput.value || '').trim().toLowerCase();
 
@@ -1050,11 +1072,11 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
     form.addEventListener('reset', function () {
-      requestAnimationFrame(function () { applyFilter(); });
+      requestAnimationFrame(function () { applyFilter(true); });
     });
   }
 
@@ -1071,8 +1093,9 @@
     if (curPage < 1) curPage = 1;
 
     var start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach(function (r, i) {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     $('#pagerTotal').textContent = total;
@@ -1083,6 +1106,18 @@
     $('#pgPrev').disabled = curPage <= 1;
     $('#pgNext').disabled = curPage >= pages;
     $('#pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定港口行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    var rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(function (r) { return !r.hidden; });
+    var idx = rows.findIndex(function (r) { return r.dataset.id === id; });
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -1117,8 +1152,9 @@
     openModal('新增港口', body, function () {
       var name = $('#f-new-name').value.trim();
       if (!name) { toast('港口名称不能为空'); return false; }
+      var newId = uid('port');
       ports.push({
-        id: uid('port'),
+        id: newId,
         name: name,
         subtitle: $('#f-new-sub').value.trim(),
         intro: $('#f-new-intro').value.trim(),
@@ -1135,10 +1171,12 @@
           { label: '主营业务货类', value: '' }
         ],
         capacity: [],
+        wharfs: [],
         zones: []
       });
       saveData();
       renderAll();
+      locateRowPage(newId); // 新增行可能落在其他页，跳转到位
       toast('已新增「' + name + '」，点击名称进入详情补充信息');
     });
   }

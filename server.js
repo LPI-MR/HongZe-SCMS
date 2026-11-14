@@ -135,6 +135,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 旧「业务总览」地址引导（PRD FR-07）：重定向至订单台账，旧书签不失效
+  if (urlPath === '/business/business.html' || urlPath === '/business/business') {
+    res.statusCode = 302;
+    res.setHeader('Location', '/business/orders.html');
+    res.end();
+    return;
+  }
+
   let urlPathDecoded;
   try {
     urlPathDecoded = decodeURIComponent(urlPath);
@@ -146,7 +154,12 @@ const server = http.createServer((req, res) => {
 
   // 依序尝试的候选路径
   const tries = [urlPathDecoded];
-  if (urlPathDecoded.endsWith('/')) {
+  if (urlPathDecoded === '/') {
+    // 订单管理默认首屏（PRD F1：登录即建单）：根路径直接展示新建订单页；
+    // 原首页保留于 /index.html（经导航「首页」进入）
+    tries.push('/business/flow/order-new.html');
+    tries.push('/index.html');
+  } else if (urlPathDecoded.endsWith('/')) {
     tries.push(urlPathDecoded + 'index.html');
   } else if (!path.extname(urlPathDecoded)) {
     tries.push(urlPathDecoded + '.html');

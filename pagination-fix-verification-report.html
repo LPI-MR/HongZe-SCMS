@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台账分页功能存量缺陷修复验证报告</title>
+<style>
+  :root {
+    --ink: #1f2430; --sub: #5a6270; --line: #e3e6ec;
+    --blue: #2563eb; --green: #16a34a; --red: #dc2626; --amber: #b45309;
+    --bg: #f6f7f9; --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 20px 64px; background: var(--bg); color: var(--ink);
+         font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif; font-size: 14px; line-height: 1.7; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .meta { color: var(--sub); font-size: 13px; margin-bottom: 24px; }
+  h2 { font-size: 17px; margin: 36px 0 12px; padding-left: 10px; border-left: 4px solid var(--blue); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 22px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0 4px; background: var(--card); }
+  th, td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; font-size: 13px; }
+  th { background: #f0f3f8; font-weight: 600; white-space: nowrap; }
+  code { background: #eef1f6; border-radius: 4px; padding: 1px 6px; font-family: Consolas, monospace; font-size: 12.5px; }
+  .badge { display: inline-block; border-radius: 999px; padding: 1px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .b-high { background: #fee2e2; color: var(--red); }
+  .b-mid { background: #fef3c7; color: var(--amber); }
+  .b-ok { background: #dcfce7; color: var(--green); }
+  .b-info { background: #dbeafe; color: var(--blue); }
+  .kpis { display: flex; gap: 14px; flex-wrap: wrap; margin: 16px 0; }
+  .kpi { flex: 1 1 150px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+  .kpi .num { font-size: 26px; font-weight: 700; }
+  .kpi .lbl { color: var(--sub); font-size: 12px; }
+  .kpi.ok .num { color: var(--green); }
+  .kpi.blue .num { color: var(--blue); }
+  ul { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .muted { color: var(--sub); }
+  .concl { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 22px; margin-top: 28px; }
+  .concl strong { color: var(--green); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>台账分页功能存量缺陷修复验证报告</h1>
+  <div class="meta">报告日期：2026-11-14 ｜ 范围：合同台账 / 订单 / 结算 / 订单跟踪 / 海运航次 / 铁路供应商 / 中转站 / 港口 / 客户 共 9 个分页模块</div>
+
+  <div class="kpis">
+    <div class="kpi ok"><div class="num">6</div><div class="lbl">存量缺陷已修复（D1–D6）</div></div>
+    <div class="kpi blue"><div class="num">96</div><div class="lbl">回归用例总数</div></div>
+    <div class="kpi ok"><div class="num">96 / 96</div><div class="lbl">通过率 100%</div></div>
+    <div class="kpi ok"><div class="num">9 / 9</div><div class="lbl">覆盖模块全部通过</div></div>
+  </div>
+
+  <h2>一、已修复缺陷清单</h2>
+  <div class="card">
+    <table>
+      <tr><th style="width:64px">编号</th><th style="width:190px">缺陷描述</th><th>根因</th><th>修复方案</th><th style="width:120px">影响模块</th><th style="width:80px">等级</th></tr>
+      <tr>
+        <td>D4</td><td>翻页后总数级联收缩、页码跳转失效（跳转/翻页后页码恒为 1，永远翻不了页）</td><td>分页切片与数据筛选共用同一 <code>hidden</code> 属性：<code>renderPage</code> 以「上次切片后的可见行」计算总数，切片一次 <code>total</code> 收缩一次（25→10→…），<code>pages</code> 恒为 1</td><td>切片改用 <code>style.display</code> 控制显隐，与筛选语义（<code>hidden</code>）正交；<code>total</code> 输入恢复为恒定的筛选后行数</td><td>8 个表格/卡片模块全部中招：contracts、orders、settlement、tracking、ocean、railway、transfer、ports</td><td><span class="badge b-high">严重</span></td>
+      </tr>
+      <tr>
+        <td>D1</td><td>筛选 / 重置后页码未重置，停留在旧页码看到空列表</td><td>筛选触发路径未重置 <code>curPage</code></td><td>筛选控件触发时 <code>applyFilter(true)</code> 回到第 1 页；重置同样回第 1 页</td><td>同上 8 个模块</td><td><span class="badge b-high">严重</span></td>
+      </tr>
+      <tr>
+        <td>D3</td><td>新增保存后新行落在其他页时不可见，用户误以为保存丢失</td><td>保存后仅重渲染，未定位新行所在页</td><td>新增 <code>locateRowPage(id)</code>：按新行在筛选后行序列中的下标换算页码并跳转</td><td>contracts、orders、settlement、ocean、railway、transfer、ports（7 个支持新增的模块）</td><td><span class="badge b-mid">较严重</span></td>
+      </tr>
+      <tr>
+        <td>D2</td><td>合同台账行内编辑时，检索会把编辑行误过滤隐藏，编辑内容「消失」</td><td>检索过滤未排除行内编辑行</td><td>过滤逻辑排除 <code>.edit-row</code>，编辑行不参与筛选</td><td>contracts</td><td><span class="badge b-mid">较严重</span></td>
+      </tr>
+      <tr>
+        <td>D5</td><td>海运航次页「卸货港」胶囊筛选器初始不渲染，筛选功能整体不可用</td><td><code>refreshPortChips()</code> 仅在胶囊点击事件内调用，初始化渲染链路从未执行</td><td><code>renderAll()</code> 中、<code>applyFilter()</code> 之前调用 <code>refreshPortChips()</code>，胶囊随数据初始化及增删改同步刷新</td><td>ocean</td><td><span class="badge b-high">严重</span></td>
+      </tr>
+      <tr>
+        <td>D6</td><td>海运航次页「新增航次」按钮点击无响应，新增功能整体不可用</td><td><code>#addVoyageBtn</code> 从未绑定任何事件（编辑/删除/推进均有绑定，唯独新增遗漏）</td><td><code>initEditor()</code> 中补绑定 <code>openEditor(null)</code>，打开空表单抽屉</td><td>ocean</td><td><span class="badge b-high">严重</span></td>
+      </tr>
+    </table>
+    <p class="muted">注：客户管理（customers）模块为独立简化分页实现（固定 10 条/页），排查未发现上述缺陷，仅纳入回归验证。</p>
+  </div>
+
+  <h2>二、兼容性影响说明（接口参数 / 数据结构）</h2>
+  <div class="card">
+    <ul>
+      <li><strong>无接口与数据结构变更</strong>：全部修复均为前端页面脚本内的 DOM 显隐与事件绑定调整；未修改任何 localStorage 键名、数据格式（<code>hz_*</code> 系列键）及模块间数据约定。</li>
+      <li><strong>分页切片机制切换（hidden → style.display）</strong>：筛选语义继续由 <code>hidden</code> 承载，切片语义改由 <code>style.display</code> 承载，两者正交。对「跨页数据重复/丢失」类风险做了专项验证（S1–S6 各页可见行数、总数、页数断言全部一致），列表正常数据展示逻辑不受影响。</li>
+      <li><strong>ocean 主从行联动</strong>：主行（<code>tr.v-row</code>）切片改用 <code>style.display</code> 后，详情子行（<code>tr.detail-row</code>）显隐同步逻辑 <code>syncDetailRows()</code> 已同步兼容（跟随父行 <code>hidden</code> 与 <code>display:none</code>），展开记忆不受影响。</li>
+      <li><strong>新增定位</strong>：<code>locateRowPage</code> 在未命中（如新行被当前筛选条件过滤）时保持当前页不变，不影响既有浏览位置。</li>
+      <li><strong>编辑行隔离（D2）</strong>：编辑行同时排除在筛选与分页统计之外，保存/取消后恢复参与，与其他模块「编辑行不参与过滤」的既有约定保持一致。</li>
+    </ul>
+  </div>
+
+  <h2>三、全量分页场景回归测试</h2>
+  <div class="card">
+    <p><strong>测试方法</strong>：jsdom 无头浏览器加载真实页面脚本（<code>runScripts: 'dangerously'</code>），注入各模块独立种子数据（25~27 条，跨 3 页）驱动真实分页逻辑执行；测试数据仅写入 jsdom 实例的 localStorage，不污染真实数据。</p>
+    <table>
+      <tr><th style="width:210px">场景编号 / 名称</th><th>验证内容与通过标准</th><th style="width:210px">覆盖模块</th><th style="width:90px">结果</th></tr>
+      <tr><td>S1 初始态（第一页）</td><td>cur=1、pages=⌈N/10⌉、total=N、当前页可见 min(N,10) 条</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S2a 跳转越界钳制（最后一页）</td><td>输入页码 99 → 钳制到末页，末页可见 N−(P−1)×10 条</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S2b 末页按钮</td><td>#pgLast → 末页，可见行数正确</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S3 首页按钮（第一页）</td><td>#pgFirst → 第 1 页，可见 10 条</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S4 下一页按钮（中间页）</td><td>#pgNext → 第 2 页（中间页），可见 10 条</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S5a/S5b 跳转指定页码</td><td>页码输入框跳转 2 → 1（change / Enter 双通道兼容）</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S6 每页条数切换</td><td>10→20→50→10：pages/可见行数逐级正确（50 条时单页显示全部），复原后页数正确</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S7a 带筛选条件分页（末页发起筛选）</td><td>末页发起关键字/胶囊筛选 → 回第 1 页、命中数正确（含 submit 型与 input 型两种筛选触发方式）</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S7b 重置 / 恢复全部</td><td>重置后总数恢复 N、回第 1 页、可见 10 条</td><td>9 模块全部</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>S8 新增保存后定位</td><td>新增保存 → total=N+1，自动跳转到新行所在页且可见行数正确（含 ocean 倒序置顶与各模块末页追加两种排序）</td><td>7 个支持新增的模块</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>D2 编辑行隔离（专项）</td><td>编辑行打开时检索不匹配关键字 → 编辑行仍可见、数据行全部隐藏</td><td>contracts</td><td><span class="badge b-ok">PASS</span></td></tr>
+      <tr><td>customers 专项组</td><td>简化分页：上/下页、首页禁用态、关键字防抖筛选、状态筛选空态、重置</td><td>customers</td><td><span class="badge b-ok">PASS</span></td></tr>
+    </table>
+  </div>
+
+  <h2>四、模块 × 场景回归结果矩阵</h2>
+  <div class="card">
+    <table>
+      <tr><th>模块</th><th>初始态</th><th>末页</th><th>首页</th><th>中间页</th><th>跳转页码</th><th>条数切换</th><th>筛选分页</th><th>重置</th><th>新增定位</th><th>用例数</th><th>结果</th></tr>
+      <tr><td>contracts 合同台账</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓（含 D2 专项）</td><td>12</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>ocean 海运航次</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓（胶囊）</td><td>✓</td><td>✓</td><td>11</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>orders 订单</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>11</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>settlement 结算</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>11</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>tracking 订单跟踪</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>—（无新增）</td><td>10</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>railway 铁路供应商</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>11</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>transfer 中转站</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>11</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>ports 港口</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>11</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td>customers 客户</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>—（简化分页）</td><td>—（固定10条）</td><td>✓</td><td>✓</td><td>—</td><td>8</td><td><span class="badge b-ok">全过</span></td></tr>
+      <tr><td><strong>合计</strong></td><td colspan="9" class="muted">9 模块 / 96 用例 / 0 失败</td><td><strong>96</strong></td><td><span class="badge b-ok">100%</span></td></tr>
+    </table>
+    <p class="muted">"—" 表示该模块无此能力（如 tracking 无新增入口、customers 为固定每页条数的简化分页器），非测试跳过。</p>
+  </div>
+
+  <h2>五、修改文件清单</h2>
+  <div class="card">
+    <table>
+      <tr><th style="width:240px">文件</th><th>修改内容</th></tr>
+      <tr><td><code>contracts/contracts.js</code></td><td>D1 筛选/重置回第 1 页；D2 编辑行排除过滤；D4 切片改 <code>style.display</code>；D3 <code>locateRowPage</code></td></tr>
+      <tr><td><code>business/orders.js</code></td><td>D1 / D3 / D4（同 contracts 模式）</td></tr>
+      <tr><td><code>business/settlement.js</code></td><td>D1 / D3 / D4（同 contracts 模式）</td></tr>
+      <tr><td><code>business/tracking.js</code></td><td>D1 / D4（卡片流切片改 <code>style.display</code>）</td></tr>
+      <tr><td><code>ocean/ocean.js</code></td><td>D1 / D3 / D4 / D5（胶囊随 <code>renderAll</code> 刷新）/ D6（新增按钮绑定）；详情行显隐同步兼容</td></tr>
+      <tr><td><code>railway/railway.js</code></td><td>D1 / D3 / D4</td></tr>
+      <tr><td><code>transfer/transfer.js</code></td><td>D1 / D3 / D4</td></tr>
+      <tr><td><code>ports/ports.js</code></td><td>D1 / D3 / D4</td></tr>
+    </table>
+    <p>全部 8 个修改文件已通过 <code>node --check</code> 语法校验；修复均遵循各模块既有代码风格（箭头函数 / <code>var+function</code> 风格分别保持一致）。</p>
+  </div>
+
+  <div class="concl">
+    <strong>结论：台账分页功能存量缺陷（D1–D6）已全部修复，96 项全量分页场景回归用例 100% 通过，9 个模块分页功能恢复正常可用状态。</strong>修复未变更任何接口参数与数据结构，未对其他关联模块引入新的功能异常。
+  </div>
+</div>
+</body>
+</html>

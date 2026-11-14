@@ -360,7 +360,7 @@
     return saveLogs(logs);
   }
 
-  // ===== 流程订单 → 订单台账自动同步（业务总览 → 订单台账链路） =====
+  // ===== 流程订单 → 订单台账自动同步（订单管理流程页 → 订单台账链路） =====
   // 状态映射唯一出处：流程九态 → 台账订单状态；录入中/待港口/待运力/待方案未达同步点，不进台账
   const FLOW_TO_LEDGER_STATUS = {
     draft: null, port: null, capacity: null, plan: null,

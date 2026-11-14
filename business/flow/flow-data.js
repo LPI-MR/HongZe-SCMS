@@ -1,4 +1,4 @@
-// ===== flow 模块共享数据层（业务总览 · 全流程业务操作）=====
+// ===== flow 模块共享数据层（订单管理 · 全流程业务操作）=====
 // 复刻自本地演示项目 hongze_demo 的业务流程数据模型：
 // 订单 → 港口信息 → 运力方案 → 运输方案 → 财务确认 → 发运/仓储 → 货物动态/时间轴。
 // 数据存储于 localStorage 独立键空间（hz_flow_*，9 张表），
@@ -488,6 +488,10 @@
     rec.sail_date = order.departure ? String(order.departure).slice(0, 10) : '';
     rec.freight_total = Math.round(wanTon * 10000 * (Number(rec.freight_rate) || 0));
     rec.updated_at = now;
+    // 船舶静态信息（订单管理 F5④）：随订单同步至航次记录（vessel_info 9 项一致，AC-O09）
+    if (order.vesselInfo && typeof order.vesselInfo === 'object') {
+      rec.vessel_info = Object.assign({}, order.vesselInfo);
+    }
 
     try {
       localStorage.setItem('hz_ocean_voyages', JSON.stringify(voyages));

@@ -108,6 +108,101 @@
     </div>
   </div>
 
+  <!-- 新增 / 编辑产品抽屉（产品详情板块：维护各矿山产品明细，写入 products_ext） -->
+  <div class="drawer-mask" id="prodEditorMask" hidden>
+    <aside class="drawer">
+      <div class="drawer-header">
+        <span class="drawer-title" id="prodEditorTitle">新增产品</span>
+        <button class="drawer-close" id="prodEditorClose" type="button" aria-label="关闭">&times;</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- 分组一：基础信息 -->
+        <div class="drawer-section">
+          <div class="section-title">基础信息</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="pfName">产品名称 <i class="required">*</i></label>
+              <input class="field-input" type="text" id="pfName" maxlength="50" placeholder="如：PB粉" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfCategory">业务大类</label>
+              <input class="field-input" type="text" id="pfCategory" list="pfCategoryList" placeholder="如：铁矿石" />
+              <datalist id="pfCategoryList">
+                <option value="铁矿石"></option>
+                <option value="煤炭"></option>
+                <option value="焦煤"></option>
+                <option value="喷吹煤"></option>
+                <option value="冶金煤"></option>
+                <option value="铝·锂"></option>
+                <option value="铜"></option>
+                <option value="镍"></option>
+                <option value="锰"></option>
+                <option value="钾盐"></option>
+                <option value="工业矿物"></option>
+              </datalist>
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfSpec">规格</label>
+              <input class="field-input" type="text" id="pfSpec" placeholder="如：TFe 61.5%" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfOutput">年产量</label>
+              <input class="field-input" type="number" min="0" step="0.1" id="pfOutput" placeholder="如：15500" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfUnit">产量单位</label>
+              <select class="field-input" id="pfUnit">
+                <option value="万吨/年" selected>万吨/年</option>
+                <option value="万吨LCE/年">万吨LCE/年</option>
+                <option value="万盎司/年">万盎司/年</option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfGrade">品位</label>
+              <input class="field-input" type="text" id="pfGrade" placeholder="如：TFe 61.5%" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 分组二：详细参数 -->
+        <div class="drawer-section">
+          <div class="section-title">详细参数</div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label" for="pfImpurity">主要杂质 / 成分</label>
+              <input class="field-input" type="text" id="pfImpurity" placeholder="如：Al₂O₃ 2.2% · SiO₂ 3.4%" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfSize">粒度 / 规格</label>
+              <input class="field-input" type="text" id="pfSize" placeholder="如：-9.5mm 为主" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfMoisture">水分</label>
+              <input class="field-input" type="text" id="pfMoisture" placeholder="如：≈ 8.5%" />
+            </div>
+            <div class="form-item">
+              <label class="field-label" for="pfApplication">适用工艺 / 应用</label>
+              <input class="field-input" type="text" id="pfApplication" placeholder="如：烧结" />
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="field-label" for="pfDesc">产品说明</label>
+            <textarea class="field-input remark-input" id="pfDesc" rows="3" placeholder="产品定位、配矿价值等说明"></textarea>
+          </div>
+        </div>
+
+        <!-- 表单错误提示 -->
+        <div class="form-tip" id="prodFormTip" hidden></div>
+
+        <div class="drawer-actions">
+          <button class="btn btn-primary" id="prodEditorSave" type="button">保存</button>
+          <button class="btn btn-ghost" id="prodEditorCancel" type="button">取消</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
   <!-- 新增 / 编辑矿山抽屉（基础信息 / 矿区位置 两组；产品与产能字段归产品详情板块维护） -->
   <div class="drawer-mask" id="editorMask" hidden>
     <aside class="drawer">
@@ -212,6 +307,8 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 矿山产品数据工具（新增/编辑产品校验，纯函数模块） -->
+  <script src="mine-product-data.js"></script>
   <!-- 模块脚本 -->
   <script src="mine.js"></script>
 </body>

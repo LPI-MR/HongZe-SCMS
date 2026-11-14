@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>客户入驻注册 - 泓泽宜通 HongZe-SCMS</title>
+  <style>
+    :root {
+      --primary: #0071e3;
+      --text: #1d1d1f;
+      --sub: #86868b;
+      --border: #e5e5ea;
+      --err: #c22b23;
+      --ok: #1b7a3d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #f5f5f7;
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 28px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .brand-name { font-size: 16px; font-weight: 700; letter-spacing: 0.02em; }
+    .brand-sub { font-size: 12px; color: var(--sub); }
+    .topbar a { margin-left: auto; font-size: 13px; color: var(--primary); text-decoration: none; }
+    .topbar a:hover { text-decoration: underline; }
+
+    .wrap { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 36px 20px 64px; }
+
+    .hero { text-align: center; margin-bottom: 26px; }
+    .hero h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+    .hero p { font-size: 13px; color: var(--sub); margin-top: 6px; }
+
+    .type-fixed {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(255, 149, 0, 0.10);
+      border: 1px solid rgba(255, 149, 0, 0.25);
+      font-size: 13px;
+      color: #a04d00;
+      margin-bottom: 20px;
+    }
+    .type-fixed b { font-weight: 600; }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      padding: 28px;
+    }
+    .form-item { margin-bottom: 18px; }
+    .field-label { display: block; font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .field-label .required { color: var(--err); margin-left: 2px; }
+    .field-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    textarea.field-input { height: auto; padding: 10px 12px; resize: vertical; }
+    .field-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18); }
+    .field-input.err { border-color: var(--err); }
+    .field-input:disabled { background: #f5f5f7; color: #aeaeb2; }
+    .hint { font-size: 12px; color: var(--sub); margin-top: 4px; }
+    .hint.err { color: var(--err); }
+    .hint.ok { color: var(--ok); }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+
+    .file-drop {
+      border: 1.5px dashed #c7c7cc;
+      border-radius: 12px;
+      padding: 18px 16px;
+      text-align: center;
+      color: var(--sub);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.18s, background 0.18s;
+    }
+    .file-drop:hover { border-color: var(--primary); background: rgba(0, 113, 227, 0.03); }
+    .file-drop.has-files { border-style: solid; border-color: rgba(52, 199, 89, 0.6); color: var(--ok); }
+    .file-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      background: #fbfbfd;
+    }
+    .file-item .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item .fsize { color: var(--sub); font-size: 12px; white-space: nowrap; }
+    .file-item .fdel {
+      border: none;
+      background: none;
+      color: var(--err);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 2px 4px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      height: 46px;
+      border: none;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.18s;
+      margin-top: 6px;
+    }
+    .submit-btn:hover { background: #0068d1; }
+    .submit-btn:active { transform: scale(0.985); }
+    .submit-btn:disabled { opacity: 0.5; cursor: default; }
+
+    .foot-note { text-align: center; font-size: 12px; color: var(--sub); margin-top: 18px; line-height: 1.7; }
+
+    /* 提交成功面板 */
+    .success-panel { text-align: center; padding: 26px 8px; }
+    .success-panel .ok-icon {
+      width: 54px; height: 54px; border-radius: 50%;
+      background: rgba(52, 199, 89, 0.14); color: var(--ok);
+      display: grid; place-items: center; font-size: 26px; margin: 0 auto 14px;
+    }
+    .success-panel h2 { font-size: 19px; font-weight: 700; margin-bottom: 8px; }
+    .success-panel p { font-size: 13px; color: var(--sub); margin-bottom: 18px; }
+
+    /* 进度查询面板 */
+    .q-card { margin-top: 22px; background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); padding: 22px 28px; }
+    .q-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .q-card .q-desc { font-size: 12px; color: var(--sub); margin-bottom: 14px; }
+    .q-result { margin-top: 14px; font-size: 13px; border-top: 1px solid #f2f2f7; padding-top: 14px; }
+    .status-pill {
+      display: inline-block; padding: 3px 10px; border-radius: 980px;
+      font-size: 12px; font-weight: 500;
+    }
+    .status-pill.pending  { background: rgba(255, 149, 0, 0.14); color: #a04d00; }
+    .status-pill.normal   { background: rgba(52, 199, 89, 0.14); color: #1b7a3d; }
+    .status-pill.rejected { background: rgba(255, 59, 48, 0.12); color: var(--err); }
+    .reject-box {
+      margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+      background: rgba(255, 59, 48, 0.08); border-left: 3px solid rgba(255, 59, 48, 0.8);
+      font-size: 13px; white-space: pre-wrap;
+    }
+    .resub-btn {
+      margin-top: 12px; height: 38px; padding: 0 18px;
+      border: 1px solid var(--primary); border-radius: 10px;
+      background: #fff; color: var(--primary); font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .resub-btn:hover { background: rgba(0, 113, 227, 0.05); }
+
+    @media (max-width: 560px) {
+      .grid2 { grid-template-columns: 1fr; }
+      .card { padding: 22px 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand-name">泓泽宜通</div>
+      <div class="brand-sub">HongZe-SCMS</div>
+    </div>
+    <a href="/" >返回平台首页</a>
+  </header>
+
+  <div class="wrap">
+    <div class="hero">
+      <h1>客户入驻注册</h1>
+      <p>现货贸易商自主注册入口 · 提交后由平台运营方审核，审核通过即入驻成功</p>
+    </div>
+
+    <div class="type-fixed">
+      <b>注册类型：现货贸易商</b>
+      <span>（临时采购、散单业务为主）</span>
+      <span style="margin-left:auto;font-size:12px;">集采贸易商 / 钢厂客户由平台运营方代为注册，无需自行申请</span>
+    </div>
+
+    <!-- 注册表单 -->
+    <div class="card" id="regCard">
+      <div class="form-item">
+        <label class="field-label">客户名称 <span class="required">*</span></label>
+        <input class="field-input" id="fName" type="text" placeholder="企业全称" maxlength="50" />
+        <div class="hint" id="hintName"></div>
+      </div>
+      <div class="form-item">
+        <label class="field-label">统一社会信用代码 <span class="required">*</span></label>
+        <input class="field-input" id="fCode" type="text" placeholder="18 位统一社会信用代码" maxlength="18" style="text-transform:uppercase;" />
+        <div class="hint" id="hintCode"></div>
+      </div>
+      <div class="grid2">
+        <div class="form-item">
+          <label class="field-label">联系人 <span class="required">*</span></label>
+          <input class="field-input" id="fContact" type="text" placeholder="联系人姓名" maxlength="20" />
+          <div class="hint" id="hintContact"></div>
+        </div>
+        <div class="form-item">
+          <label class="field-label">联系方式 <span class="required">*</span></label>
+          <input class="field-input" id="fPhone" type="text" placeholder="手机号或座机" maxlength="20" />
+          <div class="hint" id="hintPhone"></div>
+        </div>
+      </div>
+      <div class="form-item">
+        <label class="field-label">资质凭证 <span class="required">*</span></label>
+        <div class="file-drop" id="fileDrop" tabindex="0" role="button" aria-label="上传资质凭证">
+          点击选择或拖拽文件到此处<br />
+          <span style="font-size:12px;">营业执照、开户许可、授权委托书等（图片 / PDF，单份 ≤ 300KB 时在线预览）</span>
+        </div>
+        <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.pdf" hidden />
+        <div class="file-list" id="fileList"></div>
+        <div class="hint" id="hintFiles"></div>
+      </div>
+      <button class="submit-btn" id="btnSubmit" type="button">提交注册申请</button>
+      <div class="foot-note">
+        提交即表示同意平台对注册信息进行审核；审核结果可在下方「审核进度查询」中查看。<br />
+        已驳回的申请可修改信息后重新提交。
+      </div>
+    </div>
+
+    <!-- 提交成功 -->
+    <div class="card success-panel" id="okCard" hidden>
+      <div class="ok-icon">✓</div>
+      <h2>注册申请已提交</h2>
+      <p id="okDesc">平台运营方审核通过后，贵司即正式入驻；可通过下方「审核进度查询」跟踪审核状态。</p>
+      <button class="submit-btn" id="btnAgain" type="button" style="max-width: 260px;">继续注册其他企业</button>
+    </div>
+
+    <!-- 审核进度查询 -->
+    <div class="q-card" id="queryCard">
+      <h3>审核进度查询</h3>
+      <div class="q-desc">输入注册时的客户名称与统一社会信用代码，查询审核进度；已驳回可修改后重新提交</div>
+      <div class="grid2">
+        <div class="form-item">
+          <input class="field-input" id="qName" type="text" placeholder="客户名称" maxlength="50" />
+        </div>
+        <div class="form-item">
+          <input class="field-input" id="qCode" type="text" placeholder="统一社会信用代码" maxlength="18" style="text-transform:uppercase;" />
+        </div>
+      </div>
+      <button class="submit-btn" id="btnQuery" type="button" style="max-width: 200px;">查询进度</button>
+      <div class="q-result" id="qResult" hidden></div>
+    </div>
+  </div>
+
+  <script src="/customers/data.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var D = window.HZCustomerData;
+
+      function $(id) { return document.getElementById(id); }
+      function esc(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      /* ---------- 资质凭证（本地暂存：元数据 + 小文件内容预览） ---------- */
+      var MAX_INLINE = 300 * 1024; // ≤300KB 存内容预览
+      var files = [];
+
+      function renderFiles() {
+        $('fileDrop').classList.toggle('has-files', files.length > 0);
+        $('fileDrop').innerHTML = files.length
+          ? '已选择 ' + files.length + ' 份凭证，点击可继续添加'
+          : '点击选择或拖拽文件到此处<br /><span style="font-size:12px;">营业执照、开户许可、授权委托书等（图片 / PDF，单份 ≤ 300KB 时在线预览）</span>';
+        $('fileList').innerHTML = files.map(function (f, i) {
+          return '<div class="file-item"><span class="fname">' + esc(f.name) + '</span>'
+            + '<span class="fsize">' + esc(fmtSize(f.size)) + '</span>'
+            + '<button class="fdel" data-i="' + i + '" type="button">删除</button></div>';
+        }).join('');
+      }
+      function fmtSize(n) {
+        n = Number(n) || 0;
+        return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? (n / 1024).toFixed(0) + ' KB' : n + ' B';
+      }
+
+      $('fileDrop').addEventListener('click', function () { $('fileInput').click(); });
+      $('fileDrop').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') $('fileInput').click(); });
+      $('fileInput').addEventListener('change', function () {
+        Array.prototype.forEach.call(this.files || [], function (file) {
+          var item = { id: 'f' + Date.now() + Math.floor(Math.random() * 1e4), name: file.name, size: file.size, type: file.type, data: null };
+          var push = function () { files.push(item); renderFiles(); };
+          if (file.size <= MAX_INLINE && /^image\//.test(file.type)) {
+            var reader = new FileReader();
+            reader.onload = function () { item.data = reader.result; push(); };
+            reader.onerror = function () { push(); };
+            reader.readAsDataURL(file);
+          } else {
+            push();
+          }
+        });
+        this.value = '';
+      });
+      $('fileList').addEventListener('click', function (e) {
+        var del = e.target.closest('.fdel');
+        if (!del) return;
+        files.splice(Number(del.dataset.i), 1);
+        renderFiles();
+      });
+
+      /* ---------- 字段校验与查重 ---------- */
+      function setHint(id, msg, cls) {
+        var el = $(id);
+        el.textContent = msg || '';
+        el.className = 'hint' + (cls ? ' ' + cls : '');
+      }
+
+      function checkName(blur) {
+        var v = $('fName').value;
+        var msg = D.validateName(v);
+        if (!msg) {
+          var dup = D.findDuplicate(D.loadStore(), { name: v });
+          if (dup) { setHint('hintName', '该企业名称已注册，请直接登录或联系平台', 'err'); return false; }
+        }
+        setHint('hintName', msg, msg ? 'err' : 'ok');
+        return !msg;
+      }
+      function checkCode(blur) {
+        var v = $('fCode').value;
+        var msg = D.validateCreditCode(v);
+        if (!msg) {
+          var dup = D.findDuplicate(D.loadStore(), { name: '', credit_code: v });
+          if (dup) { setHint('hintCode', '该信用代码已注册（' + dup.customer.name + '），同一主体全平台仅允许一条记录', 'err'); return false; }
+        }
+        setHint('hintCode', msg, msg ? 'err' : 'ok');
+        return !msg;
+      }
+      function checkContact() { var m = D.validateContact($('fContact').value); setHint('hintContact', m, m ? 'err' : ''); return !m; }
+      function checkPhone() { var m = D.validatePhone($('fPhone').value); setHint('hintPhone', m, m ? 'err' : ''); return !m; }
+      function checkFiles() {
+        var ok = D.validateCredentials(files) === '';
+        setHint('hintFiles', ok ? '' : '请至少上传一份资质凭证', ok ? '' : 'err');
+        return ok;
+      }
+
+      $('fName').addEventListener('blur', function () { checkName(true); });
+      $('fCode').addEventListener('blur', function () { checkCode(true); });
+      $('fContact').addEventListener('blur', checkContact);
+      $('fPhone').addEventListener('blur', checkPhone);
+
+      /* ---------- 提交注册 ---------- */
+      $('btnSubmit').addEventListener('click', function () {
+        var btn = this;
+        var checks = [checkName(), checkCode(), checkContact(), checkPhone(), checkFiles()];
+        if (checks.some(function (v) { return !v; })) return;
+
+        btn.disabled = true;
+        btn.textContent = '提交中…';
+        try {
+          var res = D.createSelfRegistered(D.loadStore(), {
+            name: $('fName').value,
+            credit_code: $('fCode').value,
+            contact: $('fContact').value,
+            phone: $('fPhone').value,
+            credentials: files.slice()
+          });
+          if (!res.ok) {
+            if (res.code === 'DUP') {
+              setHint('hintName', res.error, 'err');
+              setHint('hintCode', res.error, 'err');
+            }
+            btn.disabled = false;
+            btn.textContent = '提交注册申请';
+            return;
+          }
+          D.saveStore(res.list);
+          $('okDesc').textContent = '「' + res.customer.name + '」注册申请已提交，状态：待审核。平台运营方审核通过后即正式入驻，可通过下方「审核进度查询」跟踪状态。';
+          $('regCard').hidden = true;
+          $('okCard').hidden = false;
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '提交注册申请';
+        }
+      });
+
+      $('btnAgain').addEventListener('click', function () {
+        ['fName', 'fCode', 'fContact', 'fPhone'].forEach(function (id) { $(id).value = ''; });
+        files = [];
+        renderFiles();
+        ['hintName', 'hintCode', 'hintContact', 'hintPhone', 'hintFiles'].forEach(function (id) { $(id).textContent = ''; $(id).className = 'hint'; });
+        $('okCard').hidden = true;
+        $('regCard').hidden = false;
+      });
+
+      /* ---------- 审核进度查询 + 已驳回重提（BR-C05） ---------- */
+      var qCtx = null;
+
+      function esc2(s) { return esc(s); }
+
+      $('btnQuery').addEventListener('click', function () {
+        var name = D.trimStr($('qName').value);
+        var code = D.trimStr($('qCode').value).toUpperCase();
+        var box = $('qResult');
+        box.hidden = false;
+        if (!name || !code) {
+          box.innerHTML = '<span style="color:var(--err);">请输入客户名称与统一社会信用代码</span>';
+          return;
+        }
+        var rec = D.loadStore().filter(function (c) {
+          return D.nameKeyOf(c.name) === D.nameKeyOf(name)
+            && D.trimStr(c.credit_code).toUpperCase() === code
+            && c.source === '自主注册';
+        })[0];
+        if (!rec) {
+          box.innerHTML = '<span style="color:var(--sub);">未查询到注册记录，请确认名称与信用代码与注册时一致</span>';
+          return;
+        }
+        qCtx = rec;
+        var pill = rec.status === '正常' ? '<span class="status-pill normal">审核通过 · 已入驻</span>'
+          : rec.status === '待审核' ? '<span class="status-pill pending">待平台审核</span>'
+          : rec.status === '停用' ? '<span class="status-pill normal">已入驻（账号已停用）</span>'
+          : '<span class="status-pill rejected">已驳回</span>';
+        var html = '<div>' + esc(rec.name) + ' &nbsp; ' + pill + '</div>';
+        if (rec.status === '已驳回' && rec.reject_reason) {
+          html += '<div class="reject-box">驳回原因：' + esc(rec.reject_reason) + '</div>'
+            + '<button class="resub-btn" id="btnResub" type="button">修改信息并重新提交</button><div id="resubForm"></div>';
+        }
+        box.innerHTML = html;
+        var rb = $('btnResub');
+        if (rb) rb.addEventListener('click', renderResubForm);
+      });
+
+      function renderResubForm() {
+        if (!qCtx) return;
+        $('resubForm').innerHTML = '<div class="grid2" style="margin-top:12px;">'
+          + '<div class="form-item"><label class="field-label">联系人 <span class="required">*</span></label>'
+          + '<input class="field-input" id="rContact" type="text" maxlength="20" value="' + esc(qCtx.contact) + '" /></div>'
+          + '<div class="form-item"><label class="field-label">联系方式 <span class="required">*</span></label>'
+          + '<input class="field-input" id="rPhone" type="text" maxlength="20" value="' + esc(qCtx.phone) + '" /></div>'
+          + '</div>'
+          + '<button class="submit-btn" id="btnResubSave" type="button" style="max-width:220px;">重新提交审核</button>';
+        $('btnResubSave').addEventListener('click', function () {
+          var res = D.resubmit(D.loadStore(), qCtx.id, { contact: $('rContact').value, phone: $('rPhone').value });
+          if (!res.ok) {
+            var msg = res.errors ? (res.errors.contact || res.errors.phone || '') : res.error;
+            $('qResult').innerHTML = '<span style="color:var(--err);">' + esc(msg || '重新提交失败') + '</span>';
+            return;
+          }
+          D.saveStore(res.list);
+          qCtx = res.customer;
+          $('qResult').innerHTML = '<span style="color:var(--ok);">已重新提交，状态：待平台审核</span>';
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

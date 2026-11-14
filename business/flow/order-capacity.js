@@ -1,4 +1,4 @@
-// ===== order-capacity 模块脚本（业务总览 · 运力方案页）=====
+// ===== order-capacity 模块脚本（订单管理 · 运力方案页）=====
 // 复刻 hongze_demo CapacityFormPage：铁路直达 / 公铁联运 / 公路直达三通道运力编辑
 // + 四态货物分配指标 + 运输组织方案 PDF 报告 + 完成方案浮层
 // 依赖 flow-data.js 提供的共享数据层
@@ -6,7 +6,7 @@
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {
@@ -65,9 +65,10 @@
     footer: $('footer'),
     btnPrev: $('btn-prev'),
     btnDetail: $('btn-detail'),
+    btnGotoDetail: $('btn-goto-detail'),
+    btnGotoPlan: $('btn-goto-plan'),
     doneMask: $('done-mask'),
     doneMono: $('done-mono'),
-    btnGotoDetail: $('btn-goto-detail'),
     rptSub: $('rpt-sub'),
     rptOrderKv: $('rpt-order-kv'),
     rptPortBlock: $('rpt-port-block'),
@@ -677,7 +678,9 @@
   els.stepBackPort.href = 'order-port.html?id=' + encodeURIComponent(id);
   els.stepBackForm.href = 'order-form.html?id=' + encodeURIComponent(id);
   els.btnDetail.href = 'order-detail.html?id=' + encodeURIComponent(id);
+  // 完成浮层入口：订单详情 / 第四环节运输方案（href 需带订单 id）
   els.btnGotoDetail.href = 'order-detail.html?id=' + encodeURIComponent(id);
+  els.btnGotoPlan.href = 'order-plan.html?id=' + encodeURIComponent(id);
 
   // 加载运力数据并渲染三通道列表 + 指标
   loadCapacities();

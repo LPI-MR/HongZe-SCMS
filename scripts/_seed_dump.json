@@ -1,0 +1,4584 @@
+{
+  "storage": {
+    "hz_mines": [
+      {
+        "id": "mmwemahb9",
+        "mine_code": "M-0001",
+        "contact_person": "",
+        "contact_phone": "",
+        "district": "",
+        "address": "Pilbara, Western Australia",
+        "longitude": 117.85,
+        "latitude": -22.66,
+        "created_at": 1794120611877,
+        "updated_at": 1794120611877,
+        "created_by": "系统预置",
+        "mine_name": "力拓",
+        "short_name": "力拓",
+        "mine_type": "iron",
+        "main_products": "PB粉,PB块,杨迪粉,罗布河粉,SP10",
+        "province": "西澳大利亚州",
+        "city": "皮尔巴拉地区",
+        "annual_capacity": 35000,
+        "reserve": 2600000,
+        "ore_grade": "TFe 61%-63%",
+        "operator": "Rio Tinto（力拓集团）",
+        "status": "active",
+        "remark": "即哈默斯利铁矿（皮尔巴拉）。全球主要铁矿供应商之一，装货港以丹皮尔港为主",
+        "commissioned_year": 1966,
+        "intro": "力拓集团的业务遍及全球六大洲的34个国家，我们的61,000余名员工正努力寻求以更好的方式，提供世界所需材料。",
+        "img_prompt": "aerial view of Pilbara open-pit iron ore mine, Western Australia, red ochre terraced benches, giant haul trucks, deep blue sky, realistic photography",
+        "tagline": "寻求以更好的方式，提供世界所需材料",
+        "hero_prompt": "dramatic high altitude satellite view of Pilbara iron ore mining region, Western Australia, vast red ochre earth with winding haul roads and terraced open pits, realistic satellite photography",
+        "story": [
+          {
+            "h": "关于力拓",
+            "p": "力拓集团的业务遍及全球六大洲的34个国家，我们的61,000余名员工正努力寻求以更好的方式，提供世界所需材料。\n\n我们的核心产品——铁矿石、铜、铝和锂——是构建更清洁、更智能未来的基石。\n\n为了满足日益增长的需求，我们致力于在保障员工安全的同时，运营并交付世界一流的业务和项目。\n\n我们承诺以负责任的方式开展业务——凭借深厚的专业知识、强劲的社会许可以及长期的合作伙伴关系，创造持久的积极影响。\n\n我们携手应对全球挑战，共创共享成功。"
+          },
+          {
+            "h": "我们的使命",
+            "p": "成为最具价值的金属矿业公司"
+          },
+          {
+            "h": "我们的愿景",
+            "p": "寻求以更好的方式，提供世界所需材料"
+          },
+          {
+            "h": "我们的战略",
+            "p": "以强劲的资产负债表和社会许可为支撑，在优质市场构建由世界级资产和项目组成的多元化投资组合"
+          },
+          {
+            "h": "我们的目标",
+            "p": "我们的目标是一切行动的指引，也是我们成为最具价值的金属矿业公司的基石。\n\n以人为本、安全至上：在基于价值的绩效文化中，杜绝死亡事故，保障员工安全，并助力其实现个人成长。\n\n卓越运营：充分释放资产的全部价值，精简业务并明确责任归属，同时保持财务纪律。\n\n卓越发展：优化资本配置，将增长机遇转化为长期价值。\n\n强劲的可持续发展与社会许可：推动碳减排进程，成为最具价值的合作伙伴，为商业表现设立防护机制以保障未来声誉，并赢得社区、合作伙伴及客户的信任。"
+          },
+          {
+            "h": "我们的价值观",
+            "p": "关爱：我们关注自身和身边人的安全，营造互信的环境，并重视我们对同事、社区和环境的影响。\n\n勇敢：我们勇于承认不足，敢于发声并挑战现状，并为自己的行动和结果负责，以此推动业绩提升。\n\n探索：我们满怀求知欲，在专业领域不断学习和成长，寻找通过日常创新解决问题的机会，并以开放包容的心态拥抱多元化观点。"
+          }
+        ],
+        "gallery": [
+          "giant open pit iron ore mine terraces at golden hour, haul trucks on winding red earth roads, Pilbara Western Australia, realistic photography",
+          "very long iron ore freight train crossing red desert outback, dramatic cloudscape, realistic photography"
+        ],
+        "img_url": "/mine/assets/rt-list.jpg",
+        "hero_url": "/mine/assets/rt-hero.jpg",
+        "gallery_urls": [
+          "/mine/assets/rt-g1.jpg",
+          "/mine/assets/rt-g2.jpg"
+        ],
+        "img_credit": "图片来源：Wikimedia Commons（Brockman 4 / Mount Tom Price）",
+        "products_ext": [
+          {
+            "name": "PB粉",
+            "category": "铁矿石",
+            "spec": "TFe 61.5%",
+            "output": 15500,
+            "unit": "万吨/年",
+            "grade": "TFe 61.5%",
+            "impurity": "Al₂O₃ 2.2% · SiO₂ 3.4% · P 0.08%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 8.5%",
+            "application": "烧结",
+            "desc": "皮尔巴拉混矿旗舰品种，约占产品组合 65%，亚洲钢厂烧结配矿的市场基准"
+          },
+          {
+            "name": "PB块",
+            "category": "铁矿石",
+            "spec": "TFe 62.5%",
+            "output": 8000,
+            "unit": "万吨/年",
+            "grade": "TFe 62.5%",
+            "impurity": "Al₂O₃ 1.8% · SiO₂ 2.5% · P 0.06%",
+            "size": "6.3-31.5mm",
+            "moisture": "≈ 4%",
+            "application": "高炉直接入炉",
+            "desc": "无需烧结直接入炉，可降低钢厂工序能耗与排放"
+          },
+          {
+            "name": "杨迪粉",
+            "category": "铁矿石",
+            "spec": "TFe 58%",
+            "output": 4000,
+            "unit": "万吨/年",
+            "grade": "TFe 58%",
+            "impurity": "Al₂O₃ 1.4% · SiO₂ 5.7% · P 0.05%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "Yandicoogina 低铝褐铁矿，烧损高、成球性好，高铝矿降铝配矿的经典原料"
+          },
+          {
+            "name": "罗布河粉",
+            "category": "铁矿石",
+            "spec": "TFe 57%",
+            "output": 3500,
+            "unit": "万吨/年",
+            "grade": "TFe 57%",
+            "impurity": "Al₂O₃ 2.5% · SiO₂ 5.8% · P 0.04%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "罗布河谷褐铁矿，低磷低铝，Mesa J 重产后重回主流供应"
+          },
+          {
+            "name": "罗布河块",
+            "category": "铁矿石",
+            "spec": "TFe 57.5%",
+            "output": 1000,
+            "unit": "万吨/年",
+            "grade": "TFe 57.5%",
+            "impurity": "Al₂O₃ 2.0% · SiO₂ 4.5% · P 0.04%",
+            "size": "6.3-31.5mm",
+            "moisture": "≈ 6.5%",
+            "application": "高炉直接入炉",
+            "desc": "中品位块矿，兼顾直接入炉经济性与杂质控制"
+          },
+          {
+            "name": "SP10（粉/块）",
+            "category": "铁矿石",
+            "spec": "TFe 58.5%",
+            "output": 3000,
+            "unit": "万吨/年",
+            "grade": "TFe 58.5%",
+            "impurity": "Al₂O₃ 2.5% · SiO₂ 5.0% · P 0.06%",
+            "size": "粉 -9.5mm / 块 6.3-31.5mm",
+            "moisture": "≈ 8%",
+            "application": "烧结 / 入炉",
+            "desc": "与 PB 同矿体的低成本品种，帮助钢厂优化配矿成本"
+          },
+          {
+            "name": "IOC 精矿/球团（加拿大）",
+            "category": "铁矿石",
+            "spec": "TFe 66%",
+            "output": 1700,
+            "unit": "万吨/年",
+            "grade": "TFe 66%",
+            "impurity": "Al₂O₃ 0.5% · SiO₂ 2.0%",
+            "size": "精粉 -0.15mm / 球团 9-16mm",
+            "moisture": "≤ 2%",
+            "application": "烧结 / 高炉",
+            "desc": "加拿大拉布拉多铁矿公司（IOC）低铝精矿与球团，北美与欧洲市场主力"
+          },
+          {
+            "name": "铝土矿（Weipa/Amrun）",
+            "category": "铝·锂",
+            "spec": "Al₂O₃ ≈50%",
+            "output": 6000,
+            "unit": "万吨/年",
+            "grade": "Al₂O₃ ≈50%",
+            "impurity": "SiO₂ ≈5% · 有机物低",
+            "size": "三水铝石型",
+            "moisture": "—",
+            "application": "氧化铝原料",
+            "desc": "昆士兰韦帕与 Amrun 矿区，全球品位最优的三水铝石铝土矿之一"
+          },
+          {
+            "name": "氧化铝（Yarwun 等）",
+            "category": "铝·锂",
+            "spec": "Al₂O₃ ≥99%",
+            "output": 700,
+            "unit": "万吨/年",
+            "grade": "Al₂O₃ ≥99%",
+            "impurity": "SiO₂ ≤0.02%",
+            "size": "砂状/粉状",
+            "moisture": "—",
+            "application": "电解铝原料",
+            "desc": "雅润炼厂氧化铝，供应太平洋地区自用电解厂与亚洲客户"
+          },
+          {
+            "name": "电解铝（加/澳/新）",
+            "category": "铝·锂",
+            "spec": "Al ≥99.7%",
+            "output": 320,
+            "unit": "万吨/年",
+            "grade": "Al ≥99.7%",
+            "impurity": "Fe ≤0.20% · Si ≤0.10%",
+            "size": "铝锭 / 原铝液",
+            "moisture": "—",
+            "application": "铝加工 / 铸造",
+            "desc": "依托清洁水电的加拿大与新西兰电解厂，低碳铝全球领先"
+          },
+          {
+            "name": "锂（碳酸锂当量）",
+            "category": "铝·锂",
+            "spec": "电池级 Li₂CO₃",
+            "output": 20,
+            "unit": "万吨LCE/年",
+            "grade": "电池级",
+            "impurity": "—",
+            "size": "碳酸锂 / 氢氧化锂",
+            "moisture": "—",
+            "application": "动力电池",
+            "desc": "收购 Arcadium 后跻身全球锂业龙头：阿根廷 Rincon、Sal de Vida、Fénix 在建，2028 年目标 20 万吨 LCE"
+          },
+          {
+            "name": "铜（Kennecott/奥尤陶勒盖）",
+            "category": "铜",
+            "spec": "Cu 25-30%（精矿）",
+            "output": 85,
+            "unit": "万吨/年",
+            "grade": "Cu 25-30%",
+            "impurity": "As 低 · Au/Ag 伴生",
+            "size": "铜精矿 / 阴极铜",
+            "moisture": "—",
+            "application": "电线电缆 / 新能源",
+            "desc": "美国肯尼科特一体化铜矿 + 蒙古奥尤陶勒盖（建成后全球第四大铜矿），含铜量口径"
+          },
+          {
+            "name": "副产金银钼碲（Kennecott）",
+            "category": "铜",
+            "spec": "金·银·钼·碲",
+            "output": 30,
+            "unit": "万盎司/年",
+            "grade": "Au 精矿含金",
+            "impurity": "—",
+            "size": "精矿 / 精炼金属",
+            "moisture": "—",
+            "application": "贵金属 / 特种合金",
+            "desc": "肯尼科特铜矿伴生资源：金约 30 万盎司/年，另有银、钼、碲（碲用于太阳能薄膜）"
+          },
+          {
+            "name": "硼酸盐（加州 Boron）",
+            "category": "工业矿物",
+            "spec": "B₂O₃ 46-47%",
+            "output": 50,
+            "unit": "万吨/年",
+            "grade": "B₂O₃ ≈47%",
+            "impurity": "—",
+            "size": "精矿 / 硼酸 / 硼砂",
+            "moisture": "—",
+            "application": "玻璃 / 陶瓷 / 农业",
+            "desc": "莫哈韦沙漠波隆矿区，全球硼酸盐领导者，满足全球约三成需求"
+          },
+          {
+            "name": "钛渣（RTIT 加/南非）",
+            "category": "工业矿物",
+            "spec": "TiO₂ ≈80%",
+            "output": 110,
+            "unit": "万吨/年",
+            "grade": "TiO₂ 80%+",
+            "impurity": "FeO ≈10%",
+            "size": "钛渣 / 高钛渣",
+            "moisture": "—",
+            "application": "钛白粉原料",
+            "desc": "加拿大 Lac Tio 钛铁矿与魁北克 Sorel-Tracy 冶金综合体，钛白粉颜料工业核心原料，副产氧化钪与铁粉"
+          },
+          {
+            "name": "盐（Dampier Salt）",
+            "category": "工业矿物",
+            "spec": "NaCl ≥99.5%",
+            "output": 500,
+            "unit": "万吨/年",
+            "grade": "NaCl ≥99.5%",
+            "impurity": "—",
+            "size": "日晒海盐",
+            "moisture": "—",
+            "application": "化工 / 食用盐",
+            "desc": "丹皮尔盐业：世界最大日晒盐场之一，位于西澳皮尔巴拉海岸"
+          }
+        ],
+        "price_refs": [
+          {
+            "name": "北矿指数 · 北矿所基准价（62%）",
+            "tag": "官方指数",
+            "product": "62% 品位粉矿 · 平台成交",
+            "value": "103.20",
+            "unit": "美元/干吨",
+            "delta": "+1.10",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（62% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格"
+          },
+          {
+            "name": "国际标准价 · 普氏 IODEX",
+            "tag": "国际标准",
+            "product": "62% Fe 铁矿石 · CFR 中国",
+            "value": "103.45",
+            "unit": "美元/干吨",
+            "delta": "+0.62",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "S&P Global 普氏能源资讯发布的 62% 品位铁矿石中国到岸（CFR）现货评估，美元计价，是 ICE 普氏 IODEX 期货及上海清算所人民币铁矿石掉期的结算基准"
+          },
+          {
+            "name": "国内现货价 · Mysteel 青岛港",
+            "tag": "国内现货",
+            "product": "61.5% PB粉 · 港口现货",
+            "value": "768.0",
+            "unit": "元/湿吨",
+            "delta": "+3.0",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平"
+          },
+          {
+            "name": "国内期货价 · 大商所铁矿石期货",
+            "tag": "国内期货",
+            "product": "主力合约 I · 结算价",
+            "value": "812.5",
+            "unit": "元/吨",
+            "delta": "-4.5",
+            "direction": "down",
+            "updated": "2026-10-30",
+            "source": "大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准"
+          },
+          {
+            "name": "新加坡掉期 · SGX TSI",
+            "tag": "场外掉期",
+            "product": "62% Fe 掉期 · CFR 中国",
+            "value": "102.85",
+            "unit": "美元/干吨",
+            "delta": "+0.95",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "新加坡交易所铁矿石掉期（SGX TSI 62% Fe CFR 中国），2009 年起以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场"
+          },
+          {
+            "name": "CIOPI 中国铁矿石价格指数",
+            "tag": "官方指数",
+            "product": "62% 进口铁矿石指数",
+            "value": "104.10",
+            "unit": "指数点",
+            "delta": "+1.30",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数"
+          }
+        ],
+        "partners": [
+          {
+            "name": "宝武集团",
+            "type": "steel",
+            "scale": "年采购 3,200 万吨",
+            "scale_value": 3200,
+            "period": "2021 至今 · 5 年",
+            "status": "strategic",
+            "remark": "与宝武原料采购中心签署战略合作，年度长协+季度调整，青岛港/日照港到岸"
+          },
+          {
+            "name": "鞍钢集团",
+            "type": "steel",
+            "scale": "年采购 1,500 万吨",
+            "scale_value": 1500,
+            "period": "2018 至今 · 7 年",
+            "status": "lt",
+            "remark": "年度长协，丹皮尔港发运，信用证结算"
+          },
+          {
+            "name": "中钢集团",
+            "type": "trader",
+            "scale": "年代理分销 900 万吨",
+            "scale_value": 900,
+            "period": "2015 至今 · 10 年",
+            "status": "lt",
+            "remark": "央企代理分销通道，覆盖华北钢厂二级市场，长协与现货混合结算"
+          },
+          {
+            "name": "托克（Trafigura）",
+            "type": "trader",
+            "scale": "年贸易 700 万吨",
+            "scale_value": 700,
+            "period": "2019 至今 · 6 年",
+            "status": "spot",
+            "remark": "国际贸易商，CFR 中国主要接货方，转口贸易与人民币现货并行"
+          }
+        ]
+      },
+      {
+        "id": "mmwemahba",
+        "mine_code": "M-0002",
+        "contact_person": "",
+        "contact_phone": "",
+        "district": "",
+        "address": "Mount Newman, Pilbara, Western Australia",
+        "longitude": 119.75,
+        "latitude": -23.36,
+        "created_at": 1794207011877,
+        "updated_at": 1794207011877,
+        "created_by": "系统预置",
+        "mine_name": "必和必拓",
+        "short_name": "必和必拓",
+        "mine_type": "iron",
+        "main_products": "纽曼粉,麦克粉,块矿",
+        "province": "西澳大利亚州",
+        "city": "纽曼镇",
+        "annual_capacity": 29000,
+        "reserve": 2100000,
+        "ore_grade": "TFe 61%-62%",
+        "operator": "BHP（必和必拓）",
+        "status": "active",
+        "remark": "即纽曼山铁矿（皮尔巴拉）。装货港以黑德兰港为主",
+        "commissioned_year": 1969,
+        "intro": "必和必拓是一家业务覆盖多个国家和地区的国际化资源公司，业务遍布全球90多个地点，产品销往世界各地。",
+        "img_prompt": "Mount Newman iron ore mine in Pilbara outback Australia, mining plant and long ore trains, golden sunlight, vast red desert, realistic photography",
+        "tagline": "融汇英才资源，共创美好未来",
+        "hero_prompt": "high altitude satellite view of Mount Newman iron ore mining complex in Pilbara outback, red desert terrain with open pits and railway lines radiating, realistic satellite photography",
+        "story": [
+          {
+            "h": "必和必拓概况",
+            "p": "必和必拓是一家业务覆盖多个国家和地区的国际化资源公司，业务遍布全球90多个地点，产品销往世界各地。\n\n我们将业务定位于支持塑造世界的宏观趋势。通过铁矿石和冶金煤支撑全球基建及能源转型所需的钢材生产；开发铜矿助力可再生能源发展；并正拓展钾肥业务以支持可持续农业发展。\n\n我们的资源组合既立足当下，又着眼未来。"
+          },
+          {
+            "h": "我们的业务",
+            "p": "我们是一家国际化资源公司，业务涵盖铁矿石、铜和炼钢煤，并正拓展钾肥业务。依托多元化的资源资产组合，我们致力于持续为客户、合作伙伴和所在社区创造长期价值。"
+          },
+          {
+            "h": "我们的战略",
+            "p": "我们将负责任地管理最具韧性的长期资产组合，专注于极具吸引力的大宗商品，并通过卓越运营、资源勘探与开发、优质资产收购和高效资本配置，实现价值增长。\n\n同时，我们以独特方式创造社会价值，为所有利益相关方带来收益，成为值得信赖的合作伙伴。"
+          },
+          {
+            "h": "铁矿石",
+            "p": "西澳铁矿（WAIO）是全球生产成本最低的主要大型铁矿石生产商。"
+          },
+          {
+            "h": "铜",
+            "p": "我们拥有多元化的铜矿资源组合，其中包括位于智利的全球重要的在产铜矿之一埃斯康迪达（Escondida）铜矿。"
+          },
+          {
+            "h": "钾肥",
+            "p": "我们正在开发全球最大的钾盐矿场之一。詹森项目（Jansen）一期预计于2026年底投产，后续将进入两年产能爬坡期。"
+          },
+          {
+            "h": "我们的价值观",
+            "p": "做正确的事：可持续的未来始于安全和诚信，通过构建与利益相关方的信任实现。\n\n寻求更佳途径：倾听学习、鼓励挑战，是我们推动进步的方式。\n\n做出积极改变：每日践行行动责任、创造价值并产生积极影响，是每位成员的责任担当。"
+          }
+        ],
+        "gallery": [
+          "open pit iron ore mine aerial view at dusk, massive haul trucks on red terraces, Pilbara Australia, realistic photography",
+          "iron ore shiploading berths at night under floodlights, bulk carriers along the jetty, realistic photography"
+        ],
+        "img_url": "/mine/assets/bhp-list.jpg",
+        "hero_url": "/mine/assets/bhp-hero.jpg",
+        "gallery_urls": [
+          "/mine/assets/bhp-g1.jpg",
+          "/mine/assets/bhp-g2.jpg"
+        ],
+        "img_credit": "图片来源：NASA Earth Observatory / Wikimedia Commons（Mount Whaleback）",
+        "products_ext": [
+          {
+            "name": "纽曼粉",
+            "category": "铁矿石",
+            "spec": "TFe 62%",
+            "output": 12000,
+            "unit": "万吨/年",
+            "grade": "TFe 62%",
+            "impurity": "Al₂O₃ 2.3% · SiO₂ 4.4% · P 0.08%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 8%",
+            "application": "烧结",
+            "desc": "纽曼山主流中高品位粉矿，烧结基础配矿品种之一"
+          },
+          {
+            "name": "麦克粉",
+            "category": "铁矿石",
+            "spec": "TFe 62%",
+            "output": 9000,
+            "unit": "万吨/年",
+            "grade": "TFe 62%",
+            "impurity": "Al₂O₃ 2.1% · SiO₂ 3.4% · P 0.06%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 8%",
+            "application": "烧结",
+            "desc": "Mining Area C 低硅高品位粉矿，与纽曼粉形成互补的烧结搭配"
+          },
+          {
+            "name": "块矿",
+            "category": "铁矿石",
+            "spec": "TFe 64%",
+            "output": 8000,
+            "unit": "万吨/年",
+            "grade": "TFe 64%",
+            "impurity": "Al₂O₃ 1.4% · SiO₂ 3.0% · P 0.08%",
+            "size": "6.3-31.5mm",
+            "moisture": "≈ 3%",
+            "application": "高炉直接入炉",
+            "desc": "南坡（South Flank）与纽曼高品位直入炉块矿，可替代部分烧结矿降低工序能耗"
+          },
+          {
+            "name": "铜精矿（Escondida 智利）",
+            "category": "铜",
+            "spec": "Cu 25-35%",
+            "output": 130,
+            "unit": "万吨/年",
+            "grade": "Cu 25-35%",
+            "impurity": "Mo · Au 伴生",
+            "size": "铜精矿",
+            "moisture": "≈ 8%",
+            "application": "铜冶炼",
+            "desc": "智利埃斯康迪达——全球最大铜矿，BHP 持股 57.5%，含铜量口径"
+          },
+          {
+            "name": "阴极铜/精矿（南澳 Copper SA）",
+            "category": "铜",
+            "spec": "Cu 99.99%",
+            "output": 40,
+            "unit": "万吨/年",
+            "grade": "Cu 99.99%",
+            "impurity": "—",
+            "size": "阴极铜 / 铜精矿",
+            "moisture": "—",
+            "application": "电线电缆 / 新能源",
+            "desc": "南澳奥林匹克坝、Prominent Hill 与 Carrapateena 一体化铜铀金矿群"
+          },
+          {
+            "name": "副产金银铀（南澳/智利）",
+            "category": "铜",
+            "spec": "金·银·铀",
+            "output": 74,
+            "unit": "万盎司/年",
+            "grade": "Au 精矿含金",
+            "impurity": "—",
+            "size": "精矿 / 精炼金属",
+            "moisture": "—",
+            "application": "贵金属 / 核燃料",
+            "desc": "FY25 金产量约 74 万盎司、银约 3,000 万盎司，另有铀（奥林匹克坝）与钼副产"
+          },
+          {
+            "name": "硬焦煤（BMA 昆士兰）",
+            "category": "冶金煤",
+            "spec": "CSR 65+",
+            "output": 5000,
+            "unit": "万吨/年",
+            "grade": "CSR 65+",
+            "impurity": "灰分 ≈9% · S ≈0.6%",
+            "size": "洗精煤",
+            "moisture": "≈ 9%",
+            "application": "焦炉炼焦",
+            "desc": "鲍恩盆地 BMA 合资：世界最大冶金煤出口商之一，供应亚洲与欧洲钢厂"
+          },
+          {
+            "name": "喷吹煤（PCI）",
+            "category": "冶金煤",
+            "spec": "灰分 ≤10%",
+            "output": 2000,
+            "unit": "万吨/年",
+            "grade": "灰分 ≤10%",
+            "impurity": "S ≤0.5%",
+            "size": "粉煤",
+            "moisture": "≈ 10%",
+            "application": "高炉喷吹",
+            "desc": "高炉喷吹用煤，替代部分焦炭降低炼铁成本与排放"
+          },
+          {
+            "name": "钾盐（Jansen，建设中）",
+            "category": "钾盐",
+            "spec": "KCl ≥95%",
+            "output": 435,
+            "unit": "万吨/年",
+            "grade": "KCl ≥95%",
+            "impurity": "—",
+            "size": "标准钾肥 / 颗粒钾肥",
+            "moisture": "—",
+            "application": "农业肥料",
+            "desc": "加拿大萨斯喀彻温 Jansen 项目：一期 2027 年中投产、设计产能 435 万吨/年，加拿大最大钾盐项目"
+          },
+          {
+            "name": "镍（西澳镍业）",
+            "category": "镍",
+            "spec": "镍锍 / 镍精矿",
+            "output": null,
+            "unit": "万吨/年",
+            "grade": "Ni 75%+（镍锍）",
+            "impurity": "—",
+            "size": "镍锍",
+            "moisture": "—",
+            "application": "不锈钢 / 电池",
+            "desc": "西澳镍业（Nickel West / West Musgrave）自 2024 年 12 月起临时停产，2027 年 2 月前复审复产决策"
+          }
+        ],
+        "price_refs": [
+          {
+            "name": "北矿指数 · 北矿所基准价（62%）",
+            "tag": "官方指数",
+            "product": "62% 品位粉矿 · 平台成交",
+            "value": "103.20",
+            "unit": "美元/干吨",
+            "delta": "+1.10",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（62% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格"
+          },
+          {
+            "name": "国际标准价 · 普氏 IODEX",
+            "tag": "国际标准",
+            "product": "62% Fe 铁矿石 · CFR 中国",
+            "value": "103.45",
+            "unit": "美元/干吨",
+            "delta": "+0.62",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "S&P Global 普氏能源资讯发布的 62% 品位铁矿石中国到岸（CFR）现货评估，美元计价，是 ICE 普氏 IODEX 期货及上海清算所人民币铁矿石掉期的结算基准"
+          },
+          {
+            "name": "国内现货价 · Mysteel 青岛港",
+            "tag": "国内现货",
+            "product": "62% 纽曼粉 · 港口现货",
+            "value": "772.5",
+            "unit": "元/湿吨",
+            "delta": "+3.5",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平"
+          },
+          {
+            "name": "国内期货价 · 大商所铁矿石期货",
+            "tag": "国内期货",
+            "product": "主力合约 I · 结算价",
+            "value": "812.5",
+            "unit": "元/吨",
+            "delta": "-4.5",
+            "direction": "down",
+            "updated": "2026-10-30",
+            "source": "大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准"
+          },
+          {
+            "name": "新加坡掉期 · SGX TSI",
+            "tag": "场外掉期",
+            "product": "62% Fe 掉期 · CFR 中国",
+            "value": "102.85",
+            "unit": "美元/干吨",
+            "delta": "+0.95",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "新加坡交易所铁矿石掉期（SGX TSI 62% Fe CFR 中国），2009 年起以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场"
+          },
+          {
+            "name": "CIOPI 中国铁矿石价格指数",
+            "tag": "官方指数",
+            "product": "62% 进口铁矿石指数",
+            "value": "104.10",
+            "unit": "指数点",
+            "delta": "+1.30",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数"
+          }
+        ],
+        "partners": [
+          {
+            "name": "宝武集团",
+            "type": "steel",
+            "scale": "年采购 2,800 万吨",
+            "scale_value": 2800,
+            "period": "2016 至今 · 9 年",
+            "status": "strategic",
+            "remark": "宝武与 BHP 战略合作框架，黑德兰港发运，含人民币计价结算试点"
+          },
+          {
+            "name": "河钢集团",
+            "type": "steel",
+            "scale": "年采购 1,300 万吨",
+            "scale_value": 1300,
+            "period": "2012 至今 · 13 年",
+            "status": "lt",
+            "remark": "河钢国际物流统一采购，年度长协+季度浮动定价"
+          },
+          {
+            "name": "厦门建发股份",
+            "type": "trader",
+            "scale": "年贸易 800 万吨",
+            "scale_value": 800,
+            "period": "2017 至今 · 8 年",
+            "status": "spot",
+            "remark": "建发物流港口现货分销，覆盖东南沿海钢厂"
+          },
+          {
+            "name": "厦门国贸集团",
+            "type": "trader",
+            "scale": "年贸易 650 万吨",
+            "scale_value": 650,
+            "period": "2018 至今 · 7 年",
+            "status": "spot",
+            "remark": "进口代理+现货分销，人民币现货交易活跃"
+          }
+        ]
+      },
+      {
+        "id": "mmwemahbb",
+        "mine_code": "M-0003",
+        "contact_person": "",
+        "contact_phone": "",
+        "district": "",
+        "address": "Carajás, Pará, Brazil",
+        "longitude": -50.03,
+        "latitude": -6.07,
+        "created_at": 1794293411877,
+        "updated_at": 1794293411877,
+        "created_by": "系统预置",
+        "mine_name": "淡水河谷",
+        "short_name": "淡水河谷",
+        "mine_type": "iron",
+        "main_products": "卡拉加斯粉,卡拉加斯块,BRBF,球团矿",
+        "province": "帕拉州",
+        "city": "卡拉加斯矿区",
+        "annual_capacity": 20000,
+        "reserve": 7200000,
+        "ore_grade": "TFe 65%-67%",
+        "operator": "Vale（淡水河谷）",
+        "status": "active",
+        "remark": "即卡拉加斯铁矿。全球品位最高的铁矿之一，装货港以图巴朗港为主",
+        "commissioned_year": 1985,
+        "intro": "淡水河谷成立于1942年，总部位于巴西，是一家以齐心协力改善生活、改变未来为己任的全球性矿业公司。",
+        "img_prompt": "Carajas iron ore mine, Amazon highlands Brazil, red plateau terraces surrounded by green rainforest, aerial view, realistic photography",
+        "tagline": "齐心协力改善生活、改变未来",
+        "hero_prompt": "aerial satellite view of Carajas iron ore mine in Amazon highlands Brazil, red mining terraces surrounded by dense green rainforest, realistic satellite photography",
+        "story": [
+          {
+            "h": "关于淡水河谷",
+            "p": "淡水河谷成立于1942年，总部位于巴西，是一家以齐心协力改善生活、改变未来为己任的全球性矿业公司。淡水河谷是全球领先的铁矿石、铜和镍的生产商之一，公司还生产铁矿石球团和压块、铂族金属、金、银和钴，并运营着与采矿作业无缝衔接的物流系统，包括铁路、海运码头和港口。淡水河谷立志成为备受社会认可的安全标杆、世界一流的可靠矿业运营商、人才驱动型组织、可持续开采的领导者以及创造并分享价值的典范。"
+          },
+          {
+            "h": "淡水河谷与中国",
+            "p": "淡水河谷是中国值得信赖的长期合作伙伴，自1973年向中国交付第一船铁矿石起，公司已向中国累计供应了逾30亿吨优质铁矿石，以及铜、镍等优质基本金属。淡水河谷将继续致力于向中国持续供应各种优质矿产品和创新低碳解决方案，支持中国钢铁行业加快发展新质生产力，实现绿色转型，努力为人与自然和谐共生的中国式现代化贡献更多力量。"
+          },
+          {
+            "h": "Our purpose",
+            "p": "We exist to improve life and transform the future. Together.\n\n【中文对照】我们的存在，是为了改善生活、改变未来。携手同行。"
+          },
+          {
+            "h": "The history of Vale",
+            "p": "Vale was founded on June 1, 1942, in Itabira, Minas Gerais, under the name Companhia Vale do Rio Doce. Over more than eight decades, we have evolved, simplified our name to Vale, and built a journey marked by transformation.\n\nAlong the way, we became a global mining company with operations in 18 countries. At every stage, we have faced challenges and continuously learned from them.\n\nWe have come a long way since the first ore was extracted in Itabira. Since then, we have expanded our operations into integrated logistics, encompassing mines, railways, vessels, and ports, while also strengthening our presence in the energy sector.\n\nToday, we are one of the world's largest mining companies and the global leader in iron ore production.\n\n【中文对照】1942年6月1日，淡水河谷在米纳斯吉拉斯州伊塔比拉成立，最初名为\"多西河谷公司\"。八十余年来，我们不断演进，将名称简化为 Vale，走过了一条以变革为印记的旅程。\n\n在这一过程中，我们成长为一家业务遍及18个国家的全球化矿业公司。在每个阶段，我们都直面挑战，并不断从中学习。\n\n自伊塔比拉采出第一块矿石以来，我们已经走了很远。此后，我们将业务拓展至涵盖矿山、铁路、船舶和港口的一体化物流体系，同时不断加强在能源领域的布局。\n\n今天，我们已成为全球最大的矿业公司之一，也是全球铁矿石产量的领导者。"
+          }
+        ],
+        "gallery": [
+          "Carajas open pit iron ore mine aerial view, red terraces against endless green Amazon rainforest, Brazil, realistic photography",
+          "giant bulk carrier loading iron ore at a marine terminal on the Atlantic coast of Brazil, realistic photography"
+        ],
+        "img_url": "/mine/assets/vale-list.jpg",
+        "hero_url": "/mine/assets/vale-hero.jpg",
+        "gallery_urls": [
+          "/mine/assets/vale-g1.jpg",
+          "/mine/assets/vale-g2.jpg"
+        ],
+        "img_credit": "图片来源：NASA Earth Observatory / Wikimedia Commons（Carajás / Serra Sul）",
+        "products_ext": [
+          {
+            "name": "卡拉加斯粉（IOCJ）",
+            "category": "铁矿石",
+            "spec": "TFe 65%",
+            "output": 9000,
+            "unit": "万吨/年",
+            "grade": "TFe 65%",
+            "impurity": "Al₂O₃ 2.2% · SiO₂ 2.8% · P 0.075%",
+            "size": "≤12.7mm 为主",
+            "moisture": "≈ 8%",
+            "application": "烧结",
+            "desc": "全球品位标杆性粉矿，低铝低硅，北部系统（卡拉加斯/S11D）旗舰产品"
+          },
+          {
+            "name": "卡拉加斯块",
+            "category": "铁矿石",
+            "spec": "TFe 66%",
+            "output": 2000,
+            "unit": "万吨/年",
+            "grade": "TFe 66%",
+            "impurity": "Al₂O₃ 1.8% · SiO₂ 2.0% · P 0.06%",
+            "size": "6.3-31.5mm",
+            "moisture": "≈ 4%",
+            "application": "高炉直接入炉",
+            "desc": "全球最高品位块矿之一，直接入炉降低烧结工序依赖"
+          },
+          {
+            "name": "巴西混合粉（BRBF）",
+            "category": "铁矿石",
+            "spec": "TFe 62%",
+            "output": 6000,
+            "unit": "万吨/年",
+            "grade": "TFe 62%",
+            "impurity": "Al₂O₃ 1.5% · SiO₂ 6.0% · P 0.07%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 8.5%",
+            "application": "烧结",
+            "desc": "北部与东南系统混配的旗舰粉矿，品质稳定、均衡性好"
+          },
+          {
+            "name": "IOCJ 精粉",
+            "category": "铁矿石",
+            "spec": "TFe 65%",
+            "output": 1000,
+            "unit": "万吨/年",
+            "grade": "TFe 65%",
+            "impurity": "Al₂O₃ 0.8% · SiO₂ 1.5% · P 0.04%",
+            "size": "精粉，-0.15mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "低铝优质精粉，铝硅极低，用于提质降杂的高品位配矿"
+          },
+          {
+            "name": "球团矿（图巴朗/阿曼）",
+            "category": "铁矿石",
+            "spec": "TFe 65%",
+            "output": 3000,
+            "unit": "万吨/年",
+            "grade": "TFe 65%",
+            "impurity": "Al₂O₃ 1.0% · SiO₂ 2.5%",
+            "size": "8-16mm",
+            "moisture": "≤ 2%",
+            "application": "高炉 / 直接还原",
+            "desc": "图巴朗与阿曼球团厂氧化球团，还原性好、强度高，2025 年产量约 3,200 万吨"
+          },
+          {
+            "name": "绿色压块（Tubarão）",
+            "category": "铁矿石",
+            "spec": "TFe 66%+",
+            "output": 600,
+            "unit": "万吨/年",
+            "grade": "TFe 66%+",
+            "impurity": "低硅低铝",
+            "size": "压块",
+            "moisture": "≤ 3%",
+            "application": "直接还原 / 高炉",
+            "desc": "革命性低碳产品：以压块替代球团，显著降低炼铁排放；图巴朗 2×600 万吨产线陆续投产"
+          },
+          {
+            "name": "GF88 超细粉（舟山枢纽）",
+            "category": "铁矿石",
+            "spec": "-88μm",
+            "output": 300,
+            "unit": "万吨/年",
+            "grade": "TFe 66%+",
+            "impurity": "—",
+            "size": "超细磨矿粉",
+            "moisture": "≈ 10%",
+            "application": "球团 / 精细烧结",
+            "desc": "与中国宁波舟山港合建的首个磨矿枢纽产品，靠近终端市场的增值加工"
+          },
+          {
+            "name": "镍（Onça Puma/Voisey's Bay 等）",
+            "category": "镍",
+            "spec": "镍锍 Ni ≥75%",
+            "output": 16,
+            "unit": "万吨/年",
+            "grade": "Ni ≥75%",
+            "impurity": "Co · Cu 伴生",
+            "size": "镍锍 / 镍精矿",
+            "moisture": "—",
+            "application": "不锈钢 / 电池",
+            "desc": "巴西 Onça Puma、加拿大 Voisey's Bay 与印尼索罗瓦科，2025 年产量约 16 万吨"
+          },
+          {
+            "name": "铜精矿（Salobo/Sossego）",
+            "category": "铜",
+            "spec": "Cu 25-30%",
+            "output": 35,
+            "unit": "万吨/年",
+            "grade": "Cu 25-30%",
+            "impurity": "Au · Ag 伴生",
+            "size": "铜精矿 / 阴极铜",
+            "moisture": "≈ 8%",
+            "application": "铜冶炼",
+            "desc": "卡拉加斯 Salobo 创历史产量纪录，与 Sossego 合计 2025 年约 34-40 万吨"
+          },
+          {
+            "name": "锰矿石（Azul）",
+            "category": "锰",
+            "spec": "Mn 40%+",
+            "output": 250,
+            "unit": "万吨/年",
+            "grade": "Mn 40%+",
+            "impurity": "Fe · SiO₂ 适中",
+            "size": "块矿 / 粉矿",
+            "moisture": "≈ 8%",
+            "application": "铁合金",
+            "desc": "卡拉加斯配套 Azul 锰矿——全球最大锰矿之一，供应铁合金与电池级锰原料"
+          }
+        ],
+        "price_refs": [
+          {
+            "name": "北矿指数 · 北矿所基准价（65%）",
+            "tag": "官方指数",
+            "product": "65% 品位粉矿 · 平台成交",
+            "value": "117.30",
+            "unit": "美元/干吨",
+            "delta": "+1.40",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（65% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格"
+          },
+          {
+            "name": "国际标准价 · 普氏 IODEX",
+            "tag": "国际标准",
+            "product": "65% Fe 铁矿石 · CFR 中国",
+            "value": "118.60",
+            "unit": "美元/干吨",
+            "delta": "+0.80",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "S&P Global 普氏能源资讯发布的高品位铁矿石中国到岸（CFR）现货评估，美元计价，为国际市场高品位矿定价参考基准"
+          },
+          {
+            "name": "国内现货价 · Mysteel 青岛港",
+            "tag": "国内现货",
+            "product": "65% 卡拉加斯粉 · 港口现货",
+            "value": "856.0",
+            "unit": "元/湿吨",
+            "delta": "+4.0",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平"
+          },
+          {
+            "name": "国内期货价 · 大商所铁矿石期货",
+            "tag": "国内期货",
+            "product": "主力合约 I · 结算价",
+            "value": "812.5",
+            "unit": "元/吨",
+            "delta": "-4.5",
+            "direction": "down",
+            "updated": "2026-10-30",
+            "source": "大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准"
+          },
+          {
+            "name": "新加坡掉期 · SGX TSI",
+            "tag": "场外掉期",
+            "product": "65% Fe 掉期 · CFR 中国",
+            "value": "117.90",
+            "unit": "美元/干吨",
+            "delta": "+1.10",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "新加坡交易所高品位铁矿石掉期（SGX TSI 65% Fe CFR 中国），以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场"
+          },
+          {
+            "name": "CIOPI 中国铁矿石价格指数",
+            "tag": "官方指数",
+            "product": "62% 进口铁矿石指数",
+            "value": "104.10",
+            "unit": "指数点",
+            "delta": "+1.30",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数"
+          }
+        ],
+        "partners": [
+          {
+            "name": "宝武集团",
+            "type": "steel",
+            "scale": "年采购 3,500 万吨",
+            "scale_value": 3500,
+            "period": "2002 至今 · 23 年",
+            "status": "strategic",
+            "remark": "宝武与 Vale 长期战略合作，图巴朗港发运，含绿色压块采购试点"
+          },
+          {
+            "name": "山钢集团",
+            "type": "steel",
+            "scale": "年采购 900 万吨",
+            "scale_value": 900,
+            "period": "2014 至今 · 11 年",
+            "status": "lt",
+            "remark": "年度长协，青岛港到岸分销，卡拉加斯粉为主"
+          },
+          {
+            "name": "浙江物产中大",
+            "type": "trader",
+            "scale": "年贸易 750 万吨",
+            "scale_value": 750,
+            "period": "2016 至今 · 9 年",
+            "status": "spot",
+            "remark": "物产中大集团港口现货分销，覆盖长三角钢厂"
+          },
+          {
+            "name": "华菱钢铁",
+            "type": "steel",
+            "scale": "年采购 600 万吨",
+            "scale_value": 600,
+            "period": "2019 至今 · 6 年",
+            "status": "lt",
+            "remark": "湘钢/涟钢配矿需求，BRBF 长协占比高"
+          }
+        ]
+      },
+      {
+        "id": "mmwemahbc",
+        "mine_code": "M-0004",
+        "contact_person": "",
+        "contact_phone": "",
+        "district": "",
+        "address": "Solomon Hub, Chichester Ranges, Western Australia",
+        "longitude": 118,
+        "latitude": -22.3,
+        "created_at": 1794379811877,
+        "updated_at": 1794379811877,
+        "created_by": "系统预置",
+        "mine_name": "福斯特库",
+        "short_name": "福斯特库",
+        "mine_type": "iron",
+        "main_products": "超特粉,混合粉,西皮粉,Iron Bridge精矿",
+        "province": "西澳大利亚州",
+        "city": "黑德兰港",
+        "annual_capacity": 19000,
+        "reserve": 1600000,
+        "ore_grade": "TFe 56%-59%",
+        "operator": "Fortescue（福斯特库）",
+        "status": "active",
+        "remark": "即所罗门铁矿（奇切斯特岭）。装货港以黑德兰港为主",
+        "commissioned_year": 2013,
+        "intro": "Fortescue is a global metals, energy and technology business providing green solutions to the world.（中文对照：福斯特库是一家面向全球提供绿色解决方案的金属、能源与技术企业。）",
+        "img_prompt": "Solomon Hub iron ore mine, Chichester Ranges Western Australia, open pit terraces, mining machinery at dusk, realistic photography",
+        "tagline": "We're not waiting for the future.（我们不等待未来）",
+        "hero_prompt": "aerial satellite view of Solomon Hub iron ore mine in Chichester Ranges Western Australia, red ochre pit terraces in arid mountain ranges, realistic satellite photography",
+        "story": [
+          {
+            "h": "Who we are",
+            "p": "Fortescue is a global metals, energy and technology business providing green solutions to the world.\n\nWe're combining operational scale with innovation to build the systems, tech and infrastructure needed to accelerating the decarbonisation of heavy industry, rapidly, profitably and at global scale.\n\n【中文对照】福斯特库是一家面向全球提供绿色解决方案的金属、能源与技术企业。\n\n我们将运营规模与创新相结合，构建重工业脱碳所需的系统、技术与基础设施——以快速、盈利且覆盖全球规模的方式推进。"
+          },
+          {
+            "h": "What we do",
+            "p": "We operate at industrial scale while building the systems needed to move beyond fossil fuels. From mining and infrastructure to zero-emissions systems and technology, we're redefining heavy industry.\n\n【中文对照】我们在工业规模上运营，同时构建超越化石燃料所需的系统。从采矿和基础设施到零排放系统与技术，我们正在重新定义重工业。"
+          },
+          {
+            "h": "Metals",
+            "p": "A leading global iron ore producer, building on our Pilbara foundations to create the pathway to green iron and green steel.\n\n【中文对照】作为全球领先的铁矿石生产商，我们依托皮尔巴拉的业务根基，开辟通往绿色铁矿与绿色钢铁的道路。"
+          },
+          {
+            "h": "Fortescue in Figures",
+            "p": "For more than 20 years, we've pushed boundaries and built technologies others thought impossible. Today, we're applying that capability to eliminate emissions, reshape heavy industry and unlock what comes next.\n\nA$27.2 billion — Total global economic contribution (FY26)\n\n2.5 billion tonnes — Iron ore shipped since 2008\n\nReal Zero by 2030 — Emissions target (scope 1&2 terrestrial)\n\n【中文对照】二十多年来，我们不断突破边界，打造出别人认为不可能的技术。今天，我们正把这种能力用于消除排放、重塑重工业并开启下一个时代。\n\n272 亿澳元 —— 全球经济贡献总额（2026 财年）\n\n25 亿吨 —— 自 2008 年以来发运的铁矿石\n\n2030 年 Real Zero（真正的零排放）—— 排放目标（范围 1&2 陆地排放）"
+          }
+        ],
+        "gallery": [
+          "iron ore mining machinery working at dusk inside open pit, Chichester Ranges Western Australia, realistic photography",
+          "bulk carrier being loaded with iron ore at Port Hedland at dusk, Western Australia, realistic photography"
+        ],
+        "img_url": "/mine/assets/fmg-list.jpg",
+        "hero_url": "/mine/assets/fmg-hero.jpg",
+        "gallery_urls": [
+          "/mine/assets/fmg-g1.jpg"
+        ],
+        "img_credit": "图片来源：Wikimedia Commons（Cloudbreak / FMG 铁矿列车）",
+        "products_ext": [
+          {
+            "name": "超特粉",
+            "category": "铁矿石",
+            "spec": "TFe 56.5%",
+            "output": 7600,
+            "unit": "万吨/年",
+            "grade": "TFe 56.5%",
+            "impurity": "Al₂O₃ 2.7% · SiO₂ 5.8% · P 0.05% · Mn 1.1%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "Chichester 枢纽旗舰产品，占发运约四成，高锰低磷的低成本大产量品种"
+          },
+          {
+            "name": "混合粉",
+            "category": "铁矿石",
+            "spec": "TFe 58.2%",
+            "output": 6600,
+            "unit": "万吨/年",
+            "grade": "TFe 58.2%",
+            "impurity": "Al₂O₃ 2.2% · SiO₂ 4.3% · P 0.05%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "Fortescue Blend：Christmas Creek 与 Firetail 混配，性价比路线的代表品种"
+          },
+          {
+            "name": "西皮粉（WPF）",
+            "category": "铁矿石",
+            "spec": "TFe 60.1%",
+            "output": 2300,
+            "unit": "万吨/年",
+            "grade": "TFe 60.1%",
+            "impurity": "Al₂O₃ 2.0% · SiO₂ 5.5% · P 0.06%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "西皮尔巴拉粉（West Pilbara Fines），FMG 品位升级战略的主力中品粉矿"
+          },
+          {
+            "name": "King 粉（CID）",
+            "category": "铁矿石",
+            "spec": "TFe 55%",
+            "output": 500,
+            "unit": "万吨/年",
+            "grade": "TFe 55%",
+            "impurity": "Al₂O₃ 2.5% · SiO₂ 5.5% · P 0.05%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 9%",
+            "application": "烧结",
+            "desc": "Kings 通道铁矿（CID）独立产品，补充低成本配矿选项"
+          },
+          {
+            "name": "Iron Bridge 磁铁矿精矿",
+            "category": "铁矿石",
+            "spec": "TFe 67%",
+            "output": 2000,
+            "unit": "万吨/年",
+            "grade": "TFe 67%",
+            "impurity": "Al₂O₃ 0.3% · SiO₂ 2.5%",
+            "size": "磁铁矿精矿，-0.5mm",
+            "moisture": "≈ 9%",
+            "application": "球团 / 高品位配矿",
+            "desc": "世界级高品位磁铁矿项目：满产 2,200 万吨/年，对 65% 品位指数溢价定价"
+          }
+        ],
+        "price_refs": [
+          {
+            "name": "北矿指数 · 北矿所基准价（62%）",
+            "tag": "官方指数",
+            "product": "62% 品位粉矿 · 平台成交",
+            "value": "103.20",
+            "unit": "美元/干吨",
+            "delta": "+1.10",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（62% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格"
+          },
+          {
+            "name": "国际标准价 · 普氏 IODEX",
+            "tag": "国际标准",
+            "product": "62% Fe 铁矿石 · CFR 中国",
+            "value": "103.45",
+            "unit": "美元/干吨",
+            "delta": "+0.62",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "S&P Global 普氏能源资讯发布的 62% 品位铁矿石中国到岸（CFR）现货评估，美元计价，是 ICE 普氏 IODEX 期货及上海清算所人民币铁矿石掉期的结算基准"
+          },
+          {
+            "name": "国内现货价 · Mysteel 青岛港",
+            "tag": "国内现货",
+            "product": "58.2% 混合粉 · 港口现货",
+            "value": "692.0",
+            "unit": "元/湿吨",
+            "delta": "+2.5",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平"
+          },
+          {
+            "name": "国内期货价 · 大商所铁矿石期货",
+            "tag": "国内期货",
+            "product": "主力合约 I · 结算价",
+            "value": "812.5",
+            "unit": "元/吨",
+            "delta": "-4.5",
+            "direction": "down",
+            "updated": "2026-10-30",
+            "source": "大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准"
+          },
+          {
+            "name": "新加坡掉期 · SGX TSI",
+            "tag": "场外掉期",
+            "product": "62% Fe 掉期 · CFR 中国",
+            "value": "102.85",
+            "unit": "美元/干吨",
+            "delta": "+0.95",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "新加坡交易所铁矿石掉期（SGX TSI 62% Fe CFR 中国），2009 年起以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场"
+          },
+          {
+            "name": "CIOPI 中国铁矿石价格指数",
+            "tag": "官方指数",
+            "product": "62% 进口铁矿石指数",
+            "value": "104.10",
+            "unit": "指数点",
+            "delta": "+1.30",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数"
+          }
+        ],
+        "partners": [
+          {
+            "name": "沙钢集团",
+            "type": "steel",
+            "scale": "年采购 1,600 万吨",
+            "scale_value": 1600,
+            "period": "2014 至今 · 11 年",
+            "status": "lt",
+            "remark": "沙钢为超特粉最大用户之一，黑德兰港发运，性价比配矿核心供应"
+          },
+          {
+            "name": "日照钢铁",
+            "type": "steel",
+            "scale": "年采购 950 万吨",
+            "scale_value": 950,
+            "period": "2015 至今 · 10 年",
+            "status": "spot",
+            "remark": "以现货招标为主，港口现货与长协结合"
+          },
+          {
+            "name": "华菱钢铁",
+            "type": "steel",
+            "scale": "年采购 700 万吨",
+            "scale_value": 700,
+            "period": "2017 至今 · 8 年",
+            "status": "lt",
+            "remark": "混合粉/超特粉配比使用，年度长协框架"
+          },
+          {
+            "name": "厦门国贸集团",
+            "type": "trader",
+            "scale": "年贸易 600 万吨",
+            "scale_value": 600,
+            "period": "2019 至今 · 6 年",
+            "status": "spot",
+            "remark": "现货分销与代理进口结合，覆盖华南市场"
+          }
+        ]
+      },
+      {
+        "id": "mmwemahbd",
+        "mine_code": "M-0005",
+        "contact_person": "",
+        "contact_phone": "",
+        "district": "",
+        "address": "Simandou, Nzérékoré Region, Guinea",
+        "longitude": -9,
+        "latitude": 8.5,
+        "created_at": 1794466211877,
+        "updated_at": 1794466211877,
+        "created_by": "系统预置",
+        "mine_name": "西芒杜",
+        "short_name": "西芒杜",
+        "mine_type": "iron",
+        "main_products": "西芒杜高品位粉,块矿",
+        "province": "几内亚",
+        "city": "恩泽雷科雷大区",
+        "annual_capacity": 6000,
+        "reserve": 2400000,
+        "ore_grade": "TFe 65%-67%",
+        "operator": "Rio Tinto（力拓集团）SimFer联合体",
+        "status": "active",
+        "remark": "即西芒杜铁矿（Simandou）。全球最大未开发高品位铁矿之一，装货港为几内亚莫雷巴亚港（Morebaya）",
+        "commissioned_year": 2025,
+        "intro": "Africa's largest mining and related infrastructure project（中文对照：非洲最大的矿业及相关基础设施项目）",
+        "img_prompt": "Simandou iron ore project, Guinea West Africa, green mountain range with early mining infrastructure, clear sky, realistic photography",
+        "tagline": "Africa's largest mining and related infrastructure project（非洲最大的矿业及相关基础设施项目）",
+        "hero_prompt": "aerial satellite view of Simandou mountain range in Guinea West Africa, lush green ridges with early mining infrastructure and red earth roads, realistic satellite photography",
+        "story": [
+          {
+            "h": "Africa's largest mining and related infrastructure project",
+            "p": "The Simandou mountain range lies in the south-east of the Republic of Guinea. The area has subsoils which contain a world class Ore Reserve of high-grade iron ore. Developing a project of Simandou's scale is a unique opportunity.\n\nSimandou is divided into 4 blocks. We hold rights to blocks 3 and 4 through Rio Tinto SimFer – a joint venture with the Government of Guinea and Chalco Iron Ore Holdings (CIOH). These blocks contain ore reserves estimated at around 1.5 billion tonnes. Rio Tinto is the majority shareholder and managing partner of Rio Tinto SimFer.\n\nWe are also working with the Government of Guinea and Winning Consortium Simandou (WCS), developers of Simandou blocks 1 and 2, to co-develop the infrastructure needed to export mined iron ore from the far south-east of the country to Guinea's maritime borders and beyond.\n\nThese include 600km of rail infrastructure – spanning the length of the country – as well as port infrastructure on the coast of the Forécariah prefecture in Guinea.\n\n【中文对照】西芒杜山脉位于几内亚共和国东南部。该地区的地下蕴藏着世界级的高品位铁矿石储量。开发西芒杜这样规模的项目，是一个独一无二的机遇。\n\n西芒杜分为4个区块。我们通过力拓 SimFer（与几内亚政府及中国铝业铁矿控股公司 CIOH 的合资企业）持有第3、4区块的开采权。这些区块的矿石储量估计约15亿吨。力拓是力拓 SimFer 的控股股东和管理合伙方。\n\n我们还与几内亚政府以及西芒杜第1、2区块的开发商赢联盟（WCS）合作，共同开发所需的基础设施，以便将开采的铁矿石从该国最东南部出口至几内亚的海域边界及更远的市场。\n\n这包括600公里的铁路基础设施——纵贯该国全境——以及位于几内亚弗雷卡里亚省沿海的港口基础设施。"
+          },
+          {
+            "h": "Iron ore",
+            "p": "Iron ore is the primary raw material used to make steel. Steel is strong, long-lasting and cost-efficient – making it perfect for everything from cars and fridges to wind turbines and skyscrapers.\n\nThe premium grade of Simandou iron ore broadens our global portfolio of iron ore products, complementing our existing, long-term iron ore production in Australia's Pilbara region and in Canada.\n\n【中文对照】铁矿石是制造钢铁的主要原材料。钢铁坚固、耐用且具有成本效益——从汽车、冰箱到风力发电机和摩天大楼，它无处不在。\n\n西芒杜优质品位的铁矿石拓展了我们全球铁矿石产品组合，与我们位于澳大利亚皮尔巴拉地区和加拿大的既有长期铁矿石生产形成互补。"
+          },
+          {
+            "h": "Next steps",
+            "p": "Work on the mines and infrastructure is well underway and in December 2025, the first shipment from Simandou left Guinea. Ore is being railed from the SimFer mine to the main rail line via the SimFer rail spur and initially shipped through the WCS port while construction of the SimFer port is finalised.\n\nOnce commissioning of the common rail to port infrastructure is complete, we expect a 30 month ramp up to full capacity of 60 Mtpa production at the SimFer mine.\n\n【中文对照】矿山和基础设施的建设正在全面推进，2025年12月，西芒杜的首批货物已运离几内亚。目前，矿石经 SimFer 铁路支线从 SimFer 矿区运往主线，并在 SimFer 港口建设收尾期间暂经 WCS 港口装船发运。\n\n一旦铁路至港口共享基础设施的调试完成，我们预计将用30个月逐步爬坡，使 SimFer 矿区达到6000万吨/年的满产产能。"
+          },
+          {
+            "h": "Our commitment for Simandou",
+            "p": "Simandou is a complex, uniquely transformative project. From the associated infrastructure corridor to the thousands of jobs the project will create, the project will positively impact the Guinean economy, creating opportunities and development potential which will benefit the people of Guinea for generations to come.\n\nAs with any significant development project, challenges will need to be carefully managed, including minimising adverse social, health, safety and environmental impacts while simultaneously fostering positive and tangible change for local communities and other key stakeholders.\n\nThroughout the history of our involvement in the Simandou project, we have maintained regular community consultation designed to maintain dialogue with local communities by addressing questions, concerns and additional opportunities to provide support.\n\nWe are committed to developing the Simandou project in line with internationally recognised environmental, social and governance standards. This includes transparently reporting on impacts of our mining operations, and continuing to work alongside local stakeholders on ways of mitigating these impacts. We recognise the responsibility we are entrusted with and see ourselves as long-term stewards of natural resources. We will continue to work alongside communities to ensure the Simandou project is developed with environmental stewardship and social wellbeing at its core.\n\n【中文对照】西芒杜是一个复杂且具有独特变革意义的项目。从配套的基础设施走廊到该项目将创造的数千个就业岗位，它将对几内亚经济产生积极影响，创造惠及几内亚人民世世代代的机遇与发展潜力。\n\n与任何重大开发项目一样，各种挑战都需要审慎管理，包括最大限度地减少对社会、健康、安全和环境的不利影响，同时为当地社区和其他主要利益相关方带来积极而切实的改变。\n\n在我们参与西芒杜项目的整个历程中，我们始终坚持定期开展社区磋商，通过回应疑问与关切、提供更多支持，与当地社区保持对话。\n\n我们承诺按照国际公认的环境、社会和治理标准开发西芒杜项目，包括透明地报告采矿作业的影响，并继续与当地利益相关方合作寻求缓解这些影响的方法。我们深知肩负的责任，并将自己视为自然资源的长期守护者。我们将继续与社区携手，确保西芒杜项目始终以环境管护和社会福祉为核心。"
+          }
+        ],
+        "gallery": [
+          "Simandou mountain range in Guinea, green forested ridges with mining terraces under construction, realistic photography",
+          "newly built railway cutting through tropical green landscape in West Africa, freight train, realistic photography"
+        ],
+        "img_url": "/mine/assets/sim-list.jpg",
+        "hero_url": "/mine/assets/sim-hero.png",
+        "gallery_urls": [
+          "/mine/assets/sim-list.jpg"
+        ],
+        "img_credit": "图片来源：Wikimedia Commons（Simandou 项目 / 几内亚高地地形图）",
+        "products_ext": [
+          {
+            "name": "西芒杜高品位粉",
+            "category": "铁矿石",
+            "spec": "TFe 65%",
+            "output": 3500,
+            "unit": "万吨/年",
+            "grade": "TFe 65%",
+            "impurity": "Al₂O₃ ≈1.0% · SiO₂ ≈2.0%",
+            "size": "-9.5mm 为主",
+            "moisture": "≈ 8%",
+            "application": "烧结",
+            "desc": "新投产的高品位粉矿，低铝低硅，有望成为高品位配矿新基准；JORC 资源品位 66-67.1%"
+          },
+          {
+            "name": "西芒杜块矿",
+            "category": "铁矿石",
+            "spec": "TFe 66%",
+            "output": 2500,
+            "unit": "万吨/年",
+            "grade": "TFe 66%",
+            "impurity": "Al₂O₃ ≈1.0% · SiO₂ ≈2.0%",
+            "size": "6.3-31.5mm",
+            "moisture": "≈ 3%",
+            "application": "高炉直接入炉",
+            "desc": "全球最高品位块矿之一，直接入炉比例提升的关键资源；项目远期产能 1.2 亿吨/年（四大区块）"
+          }
+        ],
+        "price_refs": [
+          {
+            "name": "北矿指数 · 北矿所基准价（65%）",
+            "tag": "官方指数",
+            "product": "65% 品位粉矿 · 平台成交",
+            "value": "117.30",
+            "unit": "美元/干吨",
+            "delta": "+1.40",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "北京国际矿业权交易所（北铁中心 COREX）发布的铁矿石现货交易基准价（65% 品位），基于平台成交价、申报价与线下成交价加权平均生成，已纳入上海清算所铁矿石掉期结算价格"
+          },
+          {
+            "name": "国际标准价 · 普氏 IODEX",
+            "tag": "国际标准",
+            "product": "65% Fe 铁矿石 · CFR 中国",
+            "value": "118.60",
+            "unit": "美元/干吨",
+            "delta": "+0.80",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "S&P Global 普氏能源资讯发布的高品位铁矿石中国到岸（CFR）现货评估，美元计价，为国际市场高品位矿定价参考基准"
+          },
+          {
+            "name": "国内现货价 · Mysteel 青岛港",
+            "tag": "国内现货",
+            "product": "65% 高品位粉 · 港口现货（新货种）",
+            "value": "862.0",
+            "unit": "元/湿吨",
+            "delta": "+4.5",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "我的钢铁网（Mysteel）铁矿石港口现货价格指数，以青岛港为标准交割地，反映进口矿港口人民币现货水平"
+          },
+          {
+            "name": "国内期货价 · 大商所铁矿石期货",
+            "tag": "国内期货",
+            "product": "主力合约 I · 结算价",
+            "value": "812.5",
+            "unit": "元/吨",
+            "delta": "-4.5",
+            "direction": "down",
+            "updated": "2026-10-30",
+            "source": "大连商品交易所铁矿石期货主力合约结算价（合约代码 I），实物交割（交割质量标准 F/DCE I004-2021），国内铁矿石现货贸易的期货定价基准"
+          },
+          {
+            "name": "新加坡掉期 · SGX TSI",
+            "tag": "场外掉期",
+            "product": "65% Fe 掉期 · CFR 中国",
+            "value": "117.90",
+            "unit": "美元/干吨",
+            "delta": "+1.10",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "新加坡交易所高品位铁矿石掉期（SGX TSI 65% Fe CFR 中国），以 TSI 指数为结算与清算基础，全球铁矿石衍生品主要场外市场"
+          },
+          {
+            "name": "CIOPI 中国铁矿石价格指数",
+            "tag": "官方指数",
+            "product": "62% 进口铁矿石指数",
+            "value": "104.10",
+            "unit": "指数点",
+            "delta": "+1.30",
+            "direction": "up",
+            "updated": "2026-10-30",
+            "source": "中国钢铁工业协会、中国五矿化工进出口商会、中国冶金矿山企业协会联合发布，含进口矿与国产矿两类指数"
+          }
+        ],
+        "partners": [
+          {
+            "name": "宝武集团",
+            "type": "steel",
+            "scale": "规划年采购 1,600 万吨",
+            "scale_value": 1600,
+            "period": "2025 年 12 月起 · 首船已发运",
+            "status": "strategic",
+            "remark": "宝武为西芒杜项目中方股东之一，投产初期承接包销与战略采购"
+          },
+          {
+            "name": "中钢集团",
+            "type": "trader",
+            "scale": "年包销 800 万吨",
+            "scale_value": 800,
+            "period": "2025 年起 · 5 年包销",
+            "status": "lt",
+            "remark": "中钢集团首批包销协议，经莫雷巴亚港发运"
+          },
+          {
+            "name": "厦门建发股份",
+            "type": "trader",
+            "scale": "年贸易 500 万吨",
+            "scale_value": 500,
+            "period": "2026 年起",
+            "status": "spot",
+            "remark": "高品位新货种现货试单，青岛港接货分销"
+          }
+        ]
+      }
+    ],
+    "hz_mines_seed_ver": "v11",
+    "hz_ports_data": {
+      "__version": "v17",
+      "list": [
+        {
+          "id": "port-huanghua",
+          "name": "黄骅港",
+          "subtitle": "河北省沧州市·渤海沿岸",
+          "photo": "/ports/assets/huanghua-port.png",
+          "intro": "津冀沿海港口群的重要组成部分，我国西煤东运、北煤南运重要枢纽港口，国家能源运输大通道的关键节点",
+          "metrics": [
+            {
+              "label": "年吞吐量",
+              "value": "3.66亿 / 119万标箱",
+              "unit": "",
+              "note": "数据时间：2025年"
+            },
+            {
+              "label": "年设计通过能力",
+              "value": "2.89亿 / 95万标箱",
+              "unit": "",
+              "note": "数据时间：2025年"
+            },
+            {
+              "label": "泊位数量",
+              "value": "47",
+              "unit": "个",
+              "note": "数据时间：2025年"
+            },
+            {
+              "label": "最大泊位吨级",
+              "value": "20",
+              "unit": "万吨"
+            }
+          ],
+          "basicInfo": [
+            {
+              "label": "港口名称",
+              "value": "黄骅港"
+            },
+            {
+              "label": "所属地区",
+              "value": "河北省沧州市黄骅市"
+            },
+            {
+              "label": "始建时间",
+              "value": "1984年"
+            },
+            {
+              "label": "行政管理部门",
+              "value": "沧州市海洋和港航管理局"
+            },
+            {
+              "label": "主营业务货类",
+              "value": "煤炭、矿石、集装箱、液体化工等"
+            }
+          ],
+          "capacity": [
+            {
+              "label": "集疏港铁路",
+              "value": "朔黄铁路、邯黄铁路、沧港铁路"
+            },
+            {
+              "label": "集疏港公路",
+              "value": "黄石高速、荣乌高速、秦滨高速"
+            }
+          ],
+          "zones": [
+            {
+              "name": "综合港区",
+              "location": "黄骅港最北端",
+              "positioning": "以集装箱、粮食、滚装、成品油、液体化工品及其他散杂货运输为主，承担临港工业及腹地物资中转运输、综合物流服务等功能，是黄骅港的大型综合性港区。",
+              "facilities": "建有集装箱码头、滚装码头、通用散杂货码头、粮食码头及液体化工品码头等。"
+            },
+            {
+              "name": "散货港区",
+              "location": "综合港区以南、煤炭港区以北",
+              "positioning": "以铁矿石、原油等大宗散货物资运输为主，兼顾煤炭、成品油、液化天然气等其他散货运输，主要建设大型专业化散货码头，满足临港工业和腹地散货运输需求。",
+              "facilities": "建有大型专业化矿石码头（如20万吨级、25万吨级矿石泊位）、煤炭码头、原油码头及通用散货码头等。"
+            },
+            {
+              "name": "煤炭港区",
+              "location": "散货港区以南、河口港区以北",
+              "positioning": "黄骅港的核心能源港区，主要承担煤炭下水（北煤南运）功能，是黄骅港煤炭运输的保供核心，为国家级能源运输大通道的关键节点。",
+              "facilities": "建有大型煤炭专业化泊位（如5万吨级、10万吨级煤炭泊位）及相应的煤炭堆场、翻车机房等后方配套设施。"
+            },
+            {
+              "name": "河口港区",
+              "location": "黄骅港最南端（宣惠河口）",
+              "positioning": "为补充性港区，主要承担煤炭、建材及部分散杂货运输，因受泥沙淤积影响，船舶靠泊受限，发展空间相对有限。",
+              "facilities": "建有煤炭泊位、建材泊位及部分通用散杂货泊位等。"
+            }
+          ],
+          "channels": [
+            {
+              "channel": "黄骅港铁路直达",
+              "route": "黄骅港经邯黄铁路、沧港铁路、京沪、京广铁路到达武安保税",
+              "via": "—",
+              "cost": "91.6 元/吨"
+            },
+            {
+              "channel": "黄骅港公铁联运",
+              "route": "黄骅港经邯黄铁路到达曹庄镇站后经汽运运输至武安保税",
+              "via": "曹庄镇站",
+              "cost": "87 元/吨"
+            },
+            {
+              "channel": "黄骅港公铁联运",
+              "route": "黄骅港经邯黄铁路到达邢台南站后经汽运运输至武安保税",
+              "via": "邢台南站",
+              "cost": "93 元/吨"
+            },
+            {
+              "channel": "黄骅港汽运直达",
+              "route": "黄骅港汽运运输至武安保税",
+              "via": "—",
+              "cost": "81 元/吨"
+            }
+          ]
+        },
+        {
+          "id": "port-tianjin",
+          "name": "天津港",
+          "subtitle": "天津市滨海新区·渤海沿岸",
+          "photo": "/ports/assets/tianjin-port.png",
+          "intro": "京津冀的海上门户，是中蒙俄经济走廊东部起点、新亚欧大陆桥重要节点、21世纪海上丝绸之路战略支点",
+          "metrics": [
+            {
+              "label": "年吞吐量",
+              "value": "5.95亿 / 2403万标箱",
+              "unit": "",
+              "note": "数据时间：2025年"
+            },
+            {
+              "label": "年设计通过能力",
+              "value": "—",
+              "unit": "",
+              "note": "数据时间：2025年"
+            },
+            {
+              "label": "泊位数量",
+              "value": "213",
+              "unit": "个",
+              "note": "数据时间：2025年"
+            },
+            {
+              "label": "最大泊位吨级",
+              "value": "30",
+              "unit": "万吨"
+            }
+          ],
+          "basicInfo": [
+            {
+              "label": "港口名称",
+              "value": "天津港"
+            },
+            {
+              "label": "所属地区",
+              "value": "天津市滨海新区"
+            },
+            {
+              "label": "始建时间",
+              "value": "1951年"
+            },
+            {
+              "label": "行政管理部门",
+              "value": "天津港股份有限公司"
+            },
+            {
+              "label": "主营业务货类",
+              "value": "集装箱、铁矿石、石油及制品、钢材、煤炭等"
+            }
+          ],
+          "capacity": [
+            {
+              "label": "集疏港铁路",
+              "value": "黄万铁路、朔黄铁路、西南环线、新港北铁路集装箱中心站"
+            },
+            {
+              "label": "集疏港公路",
+              "value": "滨保高速、京津高速、京津塘高速、津晋高速、京石高速、滨海大道、塘承高速、秦滨高速、长深高速"
+            }
+          ],
+          "zones": [
+            {
+              "name": "北疆港区",
+              "location": "天津港主航道以北，北至永定新河口，西至海防路，东至东疆港区。",
+              "positioning": "天津港综合性主港区、核心主力集装箱港区，兼顾商品汽车、件杂货，是华北集装箱进出口最主要作业区。",
+              "facilities": "天津港集装箱码头、国际联盟码头、欧亚国际码头、C段智能化集装箱码头（全球首个智慧零碳码头）及北疆集装箱物流中心。"
+            },
+            {
+              "name": "东疆港区",
+              "location": "北疆港区以东，天津港主航道以东区域。",
+              "positioning": "集装箱+邮轮母港，天津航运服务业高地，天津自贸区核心板块，重点发展航运金融、融资租赁、跨境电商等高端航运服务。",
+              "facilities": "太平洋集装箱码头、天津国际邮轮母港、东疆保税港区、大冷链物流园区。"
+            },
+            {
+              "name": "南疆港区",
+              "location": "天津港主航道以南，北至海河口，为东西长、南北窄的条状人工岛。",
+              "positioning": "国家能源、大宗原材料中转港区（散货能源港），以煤炭、铁矿石、原油、LNG等能源类货物中转为主，以铁路、管道集疏运为主。",
+              "facilities": "天津港焦炭码头、天津港远航矿石码头、天津港散货物流中心。"
+            },
+            {
+              "name": "大沽口港区",
+              "location": "海河入海口南侧，大沽口区域。",
+              "positioning": "临港工业配套港区（工业港），服务临港经济区，以钢铁、粮食、矿建、液体化工品、重大件等运输为主，兼顾部分中转运输。",
+              "facilities": "临港工业区配套码头、天津港汇盛码头等。"
+            },
+            {
+              "name": "高沙岭港区",
+              "location": "天津港北部，滨海新区南部。",
+              "positioning": "远期集装箱拓展区，承接北疆外迁的杂货、散货，服务后方临港制造业，远期预留集装箱发展空间。",
+              "facilities": "产业配套码头、预留集装箱码头空间。"
+            },
+            {
+              "name": "大港港区（南港片区）",
+              "location": "天津港南部，南港工业区配套区域。",
+              "positioning": "化工专用港区，服务南港石化新材料产业园，以油品、LNG、液体化工品、部分干散货运输为主。",
+              "facilities": "南港化工配套码头、LNG接收站、油品及液体化工品专用码头。"
+            },
+            {
+              "name": "北塘港区（含中心渔港）",
+              "location": "天津港北部，北塘区域。",
+              "positioning": "城市配套型港区，货运逐步收缩，北区以冷链物流运输（国家骨干冷链基地）为主，南区以滨海旅游客运、休闲文旅为主。",
+              "facilities": "冷链物流园区、旅游客运码头。"
+            },
+            {
+              "name": "海河港区",
+              "location": "海河下游，海河二道闸以下河段（海河两岸）。",
+              "positioning": "城市内河港区，货运逐步退出，未来主要发展内河观光旅游客运，兼顾城市短途工业物料、小型临港码头。",
+              "facilities": "小型临港码头、旅游客运码头。"
+            }
+          ]
+        }
+      ]
+    },
+    "hz_railway_suppliers": {
+      "__version": "v14",
+      "list": [
+        {
+          "id": "rs-canggang",
+          "name": "沧州沧港铁路有限公司",
+          "shortName": "沧港铁路",
+          "site": "https://www.czcgtl.com",
+          "facts": [
+            {
+              "label": "统一社会信用代码",
+              "value": "91130983695867945E",
+              "mono": true
+            },
+            {
+              "label": "法定代表人",
+              "value": "刘永亮"
+            },
+            {
+              "label": "注册资本",
+              "value": "34788.47万元"
+            },
+            {
+              "label": "成立日期",
+              "value": "2009-10-22"
+            },
+            {
+              "label": "经营状态",
+              "value": "存续",
+              "ok": true
+            },
+            {
+              "label": "企业类型",
+              "value": "有限责任公司（台港澳与境内合资）"
+            },
+            {
+              "label": "注册地址",
+              "value": "河北省沧州市黄骅市羊二庄镇杨庄火车站"
+            },
+            {
+              "label": "国标行业",
+              "value": "装卸搬运"
+            },
+            {
+              "label": "企业规模",
+              "value": "大型"
+            },
+            {
+              "label": "主营业务",
+              "value": "铁路货运"
+            },
+            {
+              "label": "辅助业务",
+              "value": "装卸；道路货运；建设、保养及维修等"
+            }
+          ],
+          "intro": [
+            "国内首家地方铁路上市公司。以河北省为基地，核心运营沧港铁路货运系统，连接京沪铁路与黄骅港，承担\"西煤东运\"重要任务。2026年，开通黄骅港至冀中南铁矿石运输新通道，依托沧港铁路成熟既有路网资源，成功构建起黄骅港进口铁矿石经京沪铁路直达冀中南地区的海铁联运新链路。"
+          ],
+          "fees": {
+            "items": [
+              "1、铁路运输包干服务费用包括以下内容：",
+              "（1）邯黄运输综合服务费 13 元/吨（含 9% 的税）。",
+              "（2）沧港运输综合服务费 13.75 元/吨（其中铁路运费 11.65 元/吨，含 9% 的税；取送车费 2.1 元/吨，含 6% 的税）。",
+              "（3）沧州站经国铁到乙方指定到站运费如下（含 9% 的税）："
+            ],
+            "tables": [
+              {
+                "headers": [
+                  "车型",
+                  "发站",
+                  "到站",
+                  "固定单价（元/箱）"
+                ],
+                "rows": [
+                  [
+                    "70吨级",
+                    "沧州",
+                    "武安",
+                    "1675.84"
+                  ],
+                  [
+                    "70吨级",
+                    "沧州",
+                    "康城",
+                    "1657.28"
+                  ],
+                  [
+                    "70吨级",
+                    "沧州",
+                    "磁山",
+                    "1717.44"
+                  ],
+                  [
+                    "60吨级",
+                    "沧州",
+                    "武安",
+                    "1416.42"
+                  ],
+                  [
+                    "60吨级",
+                    "沧州",
+                    "康城",
+                    "1401.03"
+                  ],
+                  [
+                    "60吨级",
+                    "沧州",
+                    "磁山",
+                    "1451.79"
+                  ]
+                ]
+              }
+            ]
+          },
+          "persons": [
+            {
+              "name": "苏轶州",
+              "role": "",
+              "tel": "18032717609"
+            }
+          ]
+        },
+        {
+          "id": "rs-jiandou",
+          "name": "河北建投交通多式联运有限责任公司",
+          "shortName": "建投多式联运",
+          "site": "",
+          "facts": [
+            {
+              "label": "统一社会信用代码",
+              "value": "91130104MAK95D1R1W",
+              "mono": true
+            },
+            {
+              "label": "法定代表人",
+              "value": "杨晓乐"
+            },
+            {
+              "label": "注册资本",
+              "value": "5000万元"
+            },
+            {
+              "label": "成立日期",
+              "value": "2026-03-23"
+            },
+            {
+              "label": "经营状态",
+              "value": "存续",
+              "ok": true
+            },
+            {
+              "label": "企业类型",
+              "value": "有限责任公司（非自然人投资或控股的法人独资）"
+            },
+            {
+              "label": "注册地址",
+              "value": "河北省石家庄市桥西区"
+            },
+            {
+              "label": "国标行业",
+              "value": "集装箱道路运输"
+            },
+            {
+              "label": "企业规模",
+              "value": "中型"
+            },
+            {
+              "label": "主营业务",
+              "value": "多式联运、国际班列运输、数字化与供应链物流"
+            },
+            {
+              "label": "辅助业务",
+              "value": "仓储与集散；物流园与货场运营；综合物流服务"
+            }
+          ],
+          "intro": [
+            "由河北建投交通投资有限责任公司100%控股。依托邯黄铁路、和邢铁路、建投铁路为核心资源，着力构建\"通道+枢纽+平台\"现代化物流体系。",
+            "以公铁、铁海联运为核心任务，开展中欧、中亚国际班列运输业务，打通货源揽收、干线运输、仓储集散、末端配送一体化物流体系。"
+          ],
+          "fees": {
+            "items": [
+              "运费实行包干价结算，包括从渤海西站至曹庄镇站铁路运输的各项费用（不含港杂），具体费用如下："
+            ],
+            "tables": [
+              {
+                "headers": [
+                  "费用项目",
+                  "单价（元/吨）",
+                  "税率"
+                ],
+                "rows": [
+                  [
+                    "铁路运输包干价（渤海西站至曹庄镇站，不含港杂）",
+                    "44",
+                    "9%"
+                  ],
+                  [
+                    "到站装卸及服务费",
+                    "6.6",
+                    "6%"
+                  ]
+                ]
+              }
+            ]
+          },
+          "persons": [
+            {
+              "name": "杨婉莹",
+              "role": "市场开发部",
+              "tel": "19930587087"
+            }
+          ]
+        }
+      ]
+    },
+    "hz_transfer_stations": {
+      "__version": "v19",
+      "list": [
+        {
+          "id": "st-caozhuangzhen",
+          "name": "曹庄镇站",
+          "subtitle": "河北省邯郸市鸡泽县曹庄镇·邯黄铁路沿线",
+          "photo": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=railway%20freight%20station%20in%20north%20china%20plain%2C%20container%20yard%20with%20stacked%20shipping%20containers%2C%20blue%20gantry%20crane%2C%20electrified%20tracks%20with%20freight%20wagons%2C%20clear%20daylight%2C%20realistic%20photography&image_size=landscape_16_9",
+          "intro": "邯黄铁路沿线重要中转节点，承担大宗货物装卸、仓储集散与公铁换装功能，衔接黄骅港方向铁海联运班列",
+          "metrics": [
+            {
+              "label": "设计年装卸能力",
+              "value": "200",
+              "unit": "万吨"
+            },
+            {
+              "label": "货场面积",
+              "value": "20",
+              "unit": "万㎡"
+            },
+            {
+              "label": "货物线",
+              "value": "2",
+              "unit": "条"
+            }
+          ],
+          "basicInfo": [
+            {
+              "label": "站点名称",
+              "value": "曹庄镇站"
+            },
+            {
+              "label": "所属线路",
+              "value": "邯黄铁路"
+            },
+            {
+              "label": "所属地区",
+              "value": "河北省邯郸市鸡泽县曹庄镇"
+            },
+            {
+              "label": "站点性质",
+              "value": "货运站、中间站"
+            },
+            {
+              "label": "运行时间",
+              "value": "2025年"
+            },
+            {
+              "label": "隶属铁路局",
+              "value": "中国铁路北京局集团有限公司"
+            },
+            {
+              "label": "车站等级",
+              "value": "四级"
+            }
+          ],
+          "stationIntro": "2025年，启动铁路线延长工程，曹庄镇站轨道由450米延长至1050米，装卸能力预计560万吨/年。具备20、40英尺集装箱及整车发到作业能力，可满足整列火车直接进出装卸。现已实现东盟班列常态化运行，成为京津冀地区唯一常态化运行的\"中国—东盟\"陆地运输通道。",
+          "scale": "货场1处，横列式布置，货物线2条，有效长度450米，装卸作业时需对整列解编为半列列车推送进入。"
+        },
+        {
+          "id": "st-xingtainan",
+          "name": "邢台南站",
+          "subtitle": "",
+          "photo": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=modern%20railway%20freight%20logistics%20yard%2C%20gantry%20cranes%20over%20rail%20sidings%2C%20container%20handling%20area%20and%20warehouses%2C%20sunny%20day%2C%20realistic%20photography&image_size=landscape_16_9",
+          "intro": "邯黄铁路（邢台至黄骅港铁路）上的重要中间站，主要承担煤炭、玻璃、粮食、农产品、钢材等大宗货物的运输任务，通过邯黄铁路与沿海港口实现海铁联运，是冀中南地区重要的物流节点。",
+          "metrics": [
+            {
+              "label": "实际货运量",
+              "value": "667.2",
+              "unit": "万吨",
+              "note": "数据时间2024年"
+            },
+            {
+              "label": "货场面积",
+              "value": "25.5",
+              "unit": "万㎡"
+            },
+            {
+              "label": "铁路线路总数",
+              "value": "4",
+              "unit": "条"
+            }
+          ],
+          "basicInfo": [
+            {
+              "label": "站点名称",
+              "value": "邢台南站"
+            },
+            {
+              "label": "所属线路",
+              "value": "邯黄铁路"
+            },
+            {
+              "label": "所属地区",
+              "value": "河北省邢台市"
+            },
+            {
+              "label": "站点性质",
+              "value": "货运站、中间站"
+            },
+            {
+              "label": "运行时间",
+              "value": "2013年"
+            },
+            {
+              "label": "隶属铁路局",
+              "value": "中国铁路北京局集团有限公司"
+            },
+            {
+              "label": "车站等级",
+              "value": "-"
+            }
+          ],
+          "stationIntro": "邢台南站主要承担煤炭、玻璃、粮食、农产品、钢材等大宗货物的运输任务。车站通过邯黄铁路与天津港、黄骅港、唐山港等沿海港口实现海铁联运，是冀中南地区重要的物流节点。2024年，该站全年累计完成货物运输量667.2万吨，同比增长23.2%",
+          "scale": "一台四线（含正线1条），侧式站台。货场面积25.5万平方米，占地386亩，日吞吐量达5000吨。"
+        },
+        {
+          "id": "st-kangcheng",
+          "name": "康城站",
+          "subtitle": "",
+          "photo": "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bulk%20cargo%20railway%20freight%20terminal%2C%20raw%20material%20stockpile%20yard%20with%20loader%20machine%2C%20hopper%20freight%20wagons%20on%20tracks%2C%20industrial%20scenery%2C%20realistic%20photography&image_size=landscape_16_9",
+          "intro": "邯长铁路沿线车站，2024年6月，邯长线康城站改造工程正式开通运营，进一步提升了该站的货运功能，强化了与铁路运输的衔接，有效缓解了公路运输压力，促进了区域经济发展",
+          "metrics": [
+            {
+              "label": "实际货运量",
+              "value": "-"
+            },
+            {
+              "label": "货场面积",
+              "value": "-"
+            },
+            {
+              "label": "装卸线数量",
+              "value": "8",
+              "unit": "条"
+            }
+          ],
+          "basicInfo": [
+            {
+              "label": "站点名称",
+              "value": "康城站"
+            },
+            {
+              "label": "所属线路",
+              "value": "邯长铁路"
+            },
+            {
+              "label": "所属地区",
+              "value": "河北省武安市"
+            },
+            {
+              "label": "站点性质",
+              "value": "客货运站、中间站"
+            },
+            {
+              "label": "运行时间",
+              "value": "1943年"
+            },
+            {
+              "label": "隶属铁路局",
+              "value": "中国铁路北京局集团有限公司"
+            },
+            {
+              "label": "车站等级",
+              "value": "三级"
+            }
+          ],
+          "stationIntro": "康城站是邯郸站与武安站之间的一个重要中间站，连接着京广铁路与沙午铁路方向。距离邯郸站23公里。其上下行区间均已实现电气化",
+          "scale": "车站设有到发线8条（含正线2条），有效长度为871m~1044m。"
+        }
+      ]
+    },
+    "hz_warehouse_suppliers_v1": {
+      "list": [
+        {
+          "id": "sup-001",
+          "name": "河北陆港保税物流有限公司",
+          "type": "保税物流",
+          "contact": "",
+          "phone": "",
+          "address": "河北省邯郸市武安市（武安保税物流中心）",
+          "throughput": "设计年货物处理量3000万吨",
+          "storage": "",
+          "area": "规划占地1600亩",
+          "intro": "河北港口集团旗下核心物流载体，运营河北省首家B型保税物流中心——武安保税物流中心，业务涵盖保税物流、铁路运输、钢材交易、再生钢铁、混矿加工、供应链金融、跨境电商、仓储交割八大板块。\"河北陆港—天津等港口\"铁水联运线路入选国家级典型案例，2024年完成联运量21.6万标箱，2021—2024年累计74.97万标箱，货源以武安地区钢厂原料等大宗货物为主。",
+          "facilities": "中心依托万利丰铁路专用线建设，设海关监管区、内贸物流区、综合服务区、行政商业区四大功能区，具备保税存储、出口退税、国际贸易与转口贸易等功能；铁水联运通道连通天津港、曹妃甸港、山东港口，提供集装箱短驳进站、装箱调偏、报关清关、预约提箱、跨境电商通关等配套服务。",
+          "remark": "",
+          "createdAt": 1794552611909,
+          "stacks": [
+            {
+              "name": "1号垛",
+              "ore": "PB粉",
+              "tonnage": "2.5万吨",
+              "note": ""
+            },
+            {
+              "name": "2号垛",
+              "ore": "纽曼粉",
+              "tonnage": "1.8万吨",
+              "note": ""
+            },
+            {
+              "name": "3号垛",
+              "ore": "巴西混合粉",
+              "tonnage": "1.5万吨",
+              "note": ""
+            },
+            {
+              "name": "4号垛",
+              "ore": "PB块",
+              "tonnage": "1.2万吨",
+              "note": ""
+            },
+            {
+              "name": "5号垛",
+              "ore": "超特粉",
+              "tonnage": "1.0万吨",
+              "note": ""
+            },
+            {
+              "name": "6号垛",
+              "ore": "金布巴粉",
+              "tonnage": "0.8万吨",
+              "note": ""
+            }
+          ],
+          "scale": "50000㎡"
+        },
+        {
+          "id": "sup-002",
+          "name": "河北南洋移山物流有限公司",
+          "type": "运输接驳",
+          "contact": "李勇旺",
+          "phone": "0310-6287117",
+          "address": "河北省邯郸市武安市南环东路1001号",
+          "throughput": "300万吨级智慧物流园（规划）",
+          "storage": "",
+          "area": "约146亩（仓储用地）",
+          "intro": "成立于2011年6月，注册资本5250万元，注册地位于邯郸武安市南环东路1001号。主营道路货物运输（普通、罐车、冷藏、大件、集装箱）、货运站场经营、铁路货物运输服务与汽车维修等，投资建设南洋（移山）智慧物流园，旗下全资持有武安市南洋石油销售有限公司。",
+          "facilities": "仓储地块位于武安东环路东侧、邯武快速路南侧（仓储用地约146亩）；运营南洋物流园，承担武安市区邮政快件分拨（15公里直封直投），园区配套货运站场、汽车维修及成品油补给等服务。",
+          "remark": "",
+          "createdAt": 1794552611909,
+          "stacks": [
+            {
+              "name": "1号垛",
+              "ore": "PB粉",
+              "tonnage": "0.6万吨",
+              "note": ""
+            },
+            {
+              "name": "2号垛",
+              "ore": "混合粉",
+              "tonnage": "0.4万吨",
+              "note": ""
+            },
+            {
+              "name": "3号垛",
+              "ore": "磁铁精粉",
+              "tonnage": "0.3万吨",
+              "note": "邯邢本地矿"
+            },
+            {
+              "name": "4号垛",
+              "ore": "巴西混合粉",
+              "tonnage": "0.3万吨",
+              "note": ""
+            },
+            {
+              "name": "5号垛",
+              "ore": "FMG混合粉",
+              "tonnage": "0.2万吨",
+              "note": ""
+            },
+            {
+              "name": "6号垛",
+              "ore": "罗布河混合粉",
+              "tonnage": "0.2万吨",
+              "note": ""
+            }
+          ],
+          "scale": "5000㎡"
+        }
+      ]
+    },
+    "hz_warehouse_stack_patch_v1": 1,
+    "hz_warehouse_ores_v1": {
+      "list": [
+        "PB粉",
+        "PB块",
+        "纽曼粉",
+        "纽曼块",
+        "麦克粉",
+        "巴西混合粉",
+        "FMG混合粉",
+        "罗布河混合粉",
+        "超特粉",
+        "金布巴粉",
+        "混合粉",
+        "磁铁精粉",
+        "罗布河粉",
+        "扬迪粉"
+      ]
+    },
+    "hzwl_fleets_v2": [
+      {
+        "id": "fleet-001",
+        "name": "河北中惠供应链管理有限公司",
+        "type": "合作车队",
+        "contact": "",
+        "phone": "",
+        "address": "",
+        "capacity": "",
+        "fleetSize": "",
+        "minGuarantee": "",
+        "maxCapacity": "",
+        "remark": "",
+        "createdAt": 1794552611918
+      },
+      {
+        "id": "fleet-002",
+        "name": "渤海新合运输车队",
+        "type": "外协车队",
+        "contact": "",
+        "phone": "",
+        "address": "",
+        "capacity": "",
+        "fleetSize": "",
+        "minGuarantee": "",
+        "maxCapacity": "",
+        "remark": "",
+        "createdAt": 1794552611918
+      }
+    ],
+    "hzwl_steels_v2": [
+      {
+        "id": "steel-001",
+        "name": "河北普阳钢铁有限公司",
+        "type": "长期合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸武安市阳邑镇东500米",
+        "capacity": "600万吨/年（铁、钢、材配套）",
+        "oreDemand": "约950万吨/年（按产能估算）：进口矿以澳矿PB粉/块、FMG混合粉为主，配加邯邢本地磁铁精粉及巴西矿、块矿球团",
+        "nature": "中外合资",
+        "founded": "1992年",
+        "regTime": "1992-10-05",
+        "regCapital": "4.56亿美元（45600万美元）",
+        "regAddress": "河北省邯郸武安市阳邑镇",
+        "products": "中厚板（高强钢、耐磨钢、容器钢、管线钢、船板·八国船级社认证、风塔钢、桥梁钢、模具钢）、热轧卷板（硅钢基料、马口铁基料、汽车大梁钢、车轮钢）、冷轧带钢（无取向硅钢、镀锌铝镁、彩涂）",
+        "intro": "始建于1992年，位于邯郸太行山东麓、革命老区武安市阳邑镇，毗邻青兰高速与309国道，具有年产铁、钢、材各600万吨的生产能力，是河北省知名的中厚板生产基地——拥有5条中厚板生产线，可生产6—120mm厚度钢板，产量约占全国中厚板总产量的10%；2024年完成粗钢485万吨、铁水336万吨，总资产980亿元，环保绩效A级企业，自2005年连年上榜中国企业500强，并与东北大学国家重点实验室合作研发高附加值品种钢。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-002",
+        "name": "邯郸钢铁集团有限责任公司（河钢邯钢）",
+        "type": "稳定合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸市复兴区（邯钢新区位于涉县）",
+        "capacity": "优质钢产能1105万吨/年",
+        "oreDemand": "约1750万吨/年（估算）：以力拓、淡水河谷、必和必拓、FMG四大矿山长协进口矿为主，配加河钢矿业自产铁精粉（资源掌控量39亿吨）",
+        "nature": "国有企业（河钢集团核心企业）",
+        "founded": "1958年",
+        "regTime": "1995-12-28",
+        "regCapital": "25亿元（250000万元）",
+        "regAddress": "邯郸市复兴路232号",
+        "products": "超低碳家电板（黑色家电深冲件）、汽车用钢、管线钢、优特钢、重轨、优质中板（品种钢为主）",
+        "intro": "河钢集团核心企业，1958年建厂，现有职工1.8万人，优质钢产能1105万吨/年，是国家重要的精品板材和优特钢生产基地，培育了汽车用钢、家电用钢、优特钢、重轨、优质中板、管线钢、特种气体等系列品牌产品；原复兴区老厂（炼铁产能707万吨/年、炼钢产能595万吨/年）已于2022年12月退城关停，产能整体转移至涉县邯钢新区。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-003",
+        "name": "新兴铸管股份有限公司",
+        "type": "稳定合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省武安市上洛阳村北（2672厂区）",
+        "capacity": "武安本部产品总产能约300万吨/年",
+        "oreDemand": "2024年实际采购铁矿石约1332万吨：进口矿约75%自用，其余经进口代理对外分销；配加国产精粉",
+        "nature": "央企控股上市公司（新兴际华集团）",
+        "founded": "20世纪70年代",
+        "regTime": "1997-05-24",
+        "regCapital": "约39.63亿元（396318.23万元）",
+        "regAddress": "河北省武安市上洛阳村北（二六七二厂区）",
+        "products": "球墨铸铁管、管铸件、钢格板（产量居世界首位、国内市占30%以上）、优特钢（斗齿钢国内市占前3、外贸高强合金）、热轧带肋钢筋",
+        "intro": "深交所上市央企（股票代码000778），国务院国资委监管的新兴际华集团核心企业，是全球球墨铸铁管及管铸件研发制造商和竞争力较强的钢铁产品研发制造商。武安本部拥有1280m³钢铁高炉等3座高炉、2座80吨转炉及3条轧钢生产线，配套80万吨铸管生产线，产品总产能约300万吨；截至2024年末铸管年产能300万吨、管铸件年产能20万吨，生产基地遍布河北、安徽、湖北等区域。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-004",
+        "name": "武安市裕华钢铁有限公司",
+        "type": "稳定合作",
+        "contact": "",
+        "phone": "0310-5752935",
+        "address": "河北省邯郸武安市上团城乡崇义四街村北",
+        "capacity": "",
+        "oreDemand": "自有矿山配套（集团矿业板块），外购以进口澳矿PB粉、巴西混矿为主，配加邯邢本地磁铁精粉",
+        "nature": "民营企业",
+        "founded": "2003年",
+        "regTime": "2003-03-28",
+        "regCapital": "10亿元（100000万元）",
+        "regAddress": "河北省邯郸武安市上团城乡崇义四街村北",
+        "products": "钢坯、热轧带肋钢筋（HRB400/HRB400E/HRB500）、热轧优质线材、热轧卷板",
+        "intro": "成立于2003年3月，占地约3800余亩，现有固定资产650亿元、员工3万余人（集团口径），旗下设有钢铁冶炼、矿山资源、金融投资、国际贸易、循环经济、生态旅游、环保科技、铁路物流等多个板块；系河北省重点钢铁企业、省钢铁协会副会长单位、中国钢铁工业协会会员单位，国家工信部第一批\"钢铁规范管理\"认定企业。",
+        "remark": "电话为公司公开登记电话，采购专线待补充",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-005",
+        "name": "河北文安钢铁集团有限公司",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸武安市",
+        "capacity": "年轧材约300万吨",
+        "oreDemand": "自有邯邢文辉矿业（西石门、玉石洼铁矿）供应磁铁精粉，不足部分外购进口粉矿",
+        "nature": "民营企业",
+        "founded": "1993年",
+        "regTime": "2003-12-26",
+        "regCapital": "约65.36亿元（653635万元）",
+        "regAddress": "河北省邯郸武安市",
+        "products": "热轧带钢（110万吨/年）、热轧光圆钢筋、热轧圆盘条、高速线材（80万吨/年）",
+        "intro": "始建于1993年，现有职工5000余人，已形成集矿山开采、烧结、炼铁、炼钢、轧钢于一体的钢铁联合企业；拥有200㎡烧结机1台、108㎡烧结机2台，510m³高炉2座、1080m³高炉1座、50吨转炉2座，以及年产80万吨高速线材生产线1条、110万吨热轧带钢生产线2条；正在实施产能减量置换升级改造优特钢项目（总投资69.7亿元，建设1430m³高炉、120吨转炉及1450热轧生产线）。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-006",
+        "name": "河北永洋特钢集团有限公司",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸市永年区永年特钢工业园区",
+        "capacity": "年产量400多万吨（2021年粗钢102万吨）",
+        "oreDemand": "约160万吨/年（按粗钢产量估算）：进口粉矿为主，配加邯邢本地磁铁精粉",
+        "nature": "民营企业",
+        "founded": "1993年",
+        "regTime": "1993-06-15",
+        "regCapital": "4.17亿元（41700万元）",
+        "regAddress": "河北省邯郸市永年区",
+        "products": "轻轨、重轨、起重机钢轨、矿用支护型钢、H型钢、弹簧扁钢",
+        "intro": "成立于1993年，位于邯郸市永年区永年特钢工业园区，占地500多公顷（6000余亩），员工4000余人，年产量400多万吨，是全国规模最大、品种最多、规格最全的轻轨、重轨、矿山专用钢材生产基地，钢轨、起重机轨、矿工钢行业国家标准制定企业；累计投资13亿元引进活性焦脱硫脱硝干法一体化治理等环保工艺，达到钢铁行业超低排放标准；2021年实现销售收入79.43亿元。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-007",
+        "name": "天津铁厂有限公司（天铁）",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸市涉县更乐镇（冀·津循环经济示范区天铁工业区）",
+        "capacity": "炼铁304万吨、炼钢125万吨（升级改造后）",
+        "oreDemand": "约480万吨/年（按炼铁产能估算）：以进口矿为主（经天津港/曹妃甸港到港短倒），配加国产精粉",
+        "nature": "国有企业（天津市属法人独资）",
+        "founded": "1990年",
+        "regTime": "1990-03-05",
+        "regCapital": "约70.1亿元（701039.48万元，实缴）",
+        "regAddress": "河北省邯郸市涉县更乐镇",
+        "products": "生铁、钢锭、钢坯、特钢商品卷",
+        "intro": "注册于邯郸涉县的天津市属大型钢铁联合企业，地处冀·津（涉县·天铁）循环经济产业示范区，员工6800余人；正在实施装备升级改造项目，一期建设1780m³高炉、110吨转炉、110吨LF精炼炉及方坯连铸机，项目完成后炼铁产能304万吨、炼钢产能125万吨；特钢板材品种拓宽项目形成年产特钢商品卷150万吨能力，另建有投资12亿元、年产氧气5.37亿立方米的制氧中心。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-008",
+        "name": "河北太行钢铁集团有限公司",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "13785088578",
+        "address": "河北省邯郸武安市徘徊镇顺义庄村南（南洺河工业园）",
+        "capacity": "炼铁268万吨、炼钢280万吨（设计产能）",
+        "oreDemand": "约430万吨/年（按炼铁产能估算）：进口澳矿为主，配套球团链篦机回转窑使用进口精粉制球团",
+        "nature": "民营企业",
+        "founded": "2013年",
+        "regTime": "2013-09-02",
+        "regCapital": "21.8亿元（218000万元）",
+        "regAddress": "河北省邯郸武安市徘徊镇顺义庄村南",
+        "products": "ESP无头轧制薄带钢（以热代冷，最薄约0.7mm）、热轧板卷",
+        "intro": "位于武安市工业园区南洺河工业园，总资产200亿元、在职员工7000余人，高新技术企业、制造业单项冠军、绿色工厂。新厂区一期总投资约130亿元，2019年7月动工、2021年7月全线投产，占地4700亩，主要装备包括300㎡带式烧结机2台、球团链篦机回转窑1座等；尤其从欧洲引进的ESP生产线实现薄板\"以热代冷\"，工艺、设备、环保全部按世界一流技术水平装备；达产后年设计产能炼铁268万吨、炼钢280万吨，可实现营业收入149亿元、利税33亿元。",
+        "remark": "电话为公司公开登记电话，采购专线待补充",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-009",
+        "name": "冀南钢铁集团有限公司",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸武安市上团城镇兴凯街东侧",
+        "capacity": "炼钢产能315万吨（二期置换升级中）",
+        "oreDemand": "约430万吨/年（按置换后产能估算）：集团自有矿山配套，外购以进口澳矿、巴西矿为主，配加邯邢本地精粉",
+        "nature": "民营企业（以裕华钢铁为骨干组建）",
+        "founded": "2005年（集团2014年正式组建）",
+        "regTime": "2005-09-09",
+        "regCapital": "13亿元（130000万元）",
+        "regAddress": "河北省邯郸武安市上团城镇兴凯街东侧",
+        "products": "中厚板、热轧带钢、热轧卷板、高速线材、冷轧薄板、不锈钢板、H型钢、螺纹钢、铸造用生铁（26个系列2000余个规格；\"冀南、裕冠、兴华、港陆\"牌省名牌产品）",
+        "intro": "坐落于\"中国冶炼之乡\"武安市，是以裕华钢铁为骨干组建的中国特大型民营钢铁集团，实质性兼并重组峰峰华信特钢、文丰钢铁、兴华钢铁、唐山港陆钢铁、唐山新宝泰、唐山国堂钢铁、山西裕福焦化、山西宝山矿业等公司；高新技术企业、制造业单项冠军企业，是业内少数具备全流程合规运营能力的钢铁企业之一；正在实施二期钢铁产能减量置换升级改造项目，炼钢产能315万吨（置换比例1.25:1）。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-010",
+        "name": "金鼎钢铁集团有限公司",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸武安工业园区青龙山工业园区",
+        "capacity": "钢铁产能800万吨（集团口径）",
+        "oreDemand": "约1280万吨/年（按集团钢铁产能估算）：进口矿为主，集团自有矿山及焦化板块配套",
+        "nature": "民营企业（方同舟控股旗下）",
+        "founded": "1995年（注册主体2002年）",
+        "regTime": "2002-07-19",
+        "regCapital": "1.2亿元（12000万元）",
+        "regAddress": "河北省邯郸市武安工业园区青龙山工业园区",
+        "products": "装配式建筑用钢、热轧卷板（超短流程轧制，最薄0.7mm、精品钢20余种）；焦化板块：焦炭、甲醇、LNG及焦油、粗苯、氢气等化工产品",
+        "intro": "始建于1995年，隶属于方同舟控股有限公司，是一家集钢铁、焦化、矿山资源、装备制造、国际贸易、地产开发于一体的跨行业、跨区域综合性大型民营钢铁企业集团；集团现拥有钢铁产能800万吨、焦化产能1000万吨，年产值近1000亿元；成员企业金鼎重工有限公司位于武安市青龙山工业园，占地2600余亩。",
+        "remark": "",
+        "createdAt": 1794552611920
+      },
+      {
+        "id": "steel-011",
+        "name": "河北新金钢铁有限公司",
+        "type": "潜在合作",
+        "contact": "",
+        "phone": "",
+        "address": "河北省邯郸武安市骈山村东",
+        "capacity": "",
+        "oreDemand": "外购进口粉矿为主（澳矿、巴西矿），配加邯邢本地磁铁精粉",
+        "nature": "民营企业",
+        "founded": "1999年（集团始建1993年）",
+        "regTime": "1999-06-18",
+        "regCapital": "7.88亿元（78800万元）",
+        "regAddress": "河北省邯郸武安市骈山村东",
+        "products": "冷轧板、镀锌板、热轧板、高速线材、光伏发电用高强韧结构钢、家电板（3D打印定制化服务）",
+        "intro": "新金集团骨干企业，集团始建于1993年，经30年转型升级形成以钢铁为主导产业，集科技、金融、投资、外贸、旅游、焦化、铸造、新能源等多项战略新兴产业协同发展的格局；多次跻身中国企业500强、中国制造业500强、河北省百强企业，先后荣获国家\"首都蓝天行动科技示范工程\"等百余项荣誉；正与河北永洋特钢、邯郸紫山特钢实施整合重组升级改造项目（产能减量置换）。",
+        "remark": "",
+        "createdAt": 1794552611920
+      }
+    ],
+    "hz_ocean_voyages": [
+      {
+        "id": "vmwemahcj",
+        "voyage_code": "S-001",
+        "vessel_name": "Pacific Glory",
+        "mine_id": "mmwemahb9",
+        "mine_name": "力拓",
+        "load_port": "丹皮尔港",
+        "load_country": "澳大利亚",
+        "discharge_port": "青岛港",
+        "discharge_country": "中国",
+        "cargo_type": "PB粉",
+        "quantity": 17,
+        "freight_rate": 21.5,
+        "freight_total": 3655000,
+        "sail_date": "2026-11-07",
+        "eta_date": "2026-11-18",
+        "status": "sailing",
+        "remark": "",
+        "created_at": 1794034211923,
+        "updated_at": 1794552611923,
+        "created_by": "系统预置"
+      },
+      {
+        "id": "vmwemahck",
+        "voyage_code": "S-002",
+        "vessel_name": "Bulk Venture",
+        "mine_id": "mmwemahba",
+        "mine_name": "必和必拓",
+        "load_port": "黑德兰港",
+        "load_country": "澳大利亚",
+        "discharge_port": "曹妃甸港",
+        "discharge_country": "中国",
+        "cargo_type": "纽曼粉",
+        "quantity": 18,
+        "freight_rate": 20.8,
+        "freight_total": 3744000,
+        "sail_date": "2026-11-09",
+        "eta_date": "2026-11-09",
+        "status": "pending",
+        "remark": "",
+        "created_at": 1794207011923,
+        "updated_at": 1794552611923,
+        "created_by": "系统预置"
+      },
+      {
+        "id": "vmwemahcl",
+        "voyage_code": "S-003",
+        "vessel_name": "Vale Rio Doce",
+        "mine_id": "mmwemahbb",
+        "mine_name": "淡水河谷",
+        "load_port": "图巴朗港",
+        "load_country": "巴西",
+        "discharge_port": "青岛港",
+        "discharge_country": "中国",
+        "cargo_type": "卡拉加斯粉",
+        "quantity": 30,
+        "freight_rate": 32.5,
+        "freight_total": 9750000,
+        "sail_date": "2026-11-01",
+        "eta_date": "2026-12-11",
+        "status": "sailing",
+        "remark": "",
+        "created_at": 1793515811923,
+        "updated_at": 1794552611923,
+        "created_by": "系统预置"
+      },
+      {
+        "id": "vmwemahcm",
+        "voyage_code": "S-004",
+        "vessel_name": "Iron Chieftain",
+        "mine_id": "mmwemahbc",
+        "mine_name": "福斯特库",
+        "load_port": "黑德兰港",
+        "load_country": "澳大利亚",
+        "discharge_port": "日照港",
+        "discharge_country": "中国",
+        "cargo_type": "超特粉",
+        "quantity": 17.5,
+        "freight_rate": 19.2,
+        "freight_total": 3360000,
+        "sail_date": "2026-10-24",
+        "eta_date": "2026-11-03",
+        "status": "arrived",
+        "remark": "",
+        "created_at": 1792824611923,
+        "updated_at": 1794552611923,
+        "created_by": "系统预置"
+      },
+      {
+        "id": "vmwemahcn",
+        "voyage_code": "S-005",
+        "vessel_name": "Pilbara Spirit",
+        "mine_id": "mmwemahb9",
+        "mine_name": "力拓",
+        "load_port": "丹皮尔港",
+        "load_country": "澳大利亚",
+        "discharge_port": "舟山港",
+        "discharge_country": "中国",
+        "cargo_type": "杨迪粉",
+        "quantity": 16.8,
+        "freight_rate": 22,
+        "freight_total": 3696000,
+        "sail_date": "2026-09-29",
+        "eta_date": "2026-10-11",
+        "status": "done",
+        "remark": "",
+        "created_at": 1790664611923,
+        "updated_at": 1794552611923,
+        "created_by": "系统预置"
+      },
+      {
+        "id": "vmwemahco",
+        "voyage_code": "S-006",
+        "vessel_name": "Minas Gerais",
+        "mine_id": "mmwemahbb",
+        "mine_name": "淡水河谷",
+        "load_port": "图巴朗港",
+        "load_country": "巴西",
+        "discharge_port": "湛江港",
+        "discharge_country": "中国",
+        "cargo_type": "IOCJ",
+        "quantity": 28,
+        "freight_rate": 31.8,
+        "freight_total": 8904000,
+        "sail_date": "2026-11-11",
+        "eta_date": "2026-11-11",
+        "status": "loading",
+        "remark": "",
+        "created_at": 1794379811923,
+        "updated_at": 1794552611923,
+        "created_by": "系统预置"
+      }
+    ],
+    "hz_ocean_coas": [
+      {
+        "id": "coamwemahcj",
+        "voyage_id": "",
+        "certificate_no": "810190245",
+        "issue_date": "2026-08-18",
+        "country_of_origin": "Australia（澳大利亚）",
+        "bl_date": "2026-08-18",
+        "shipment_no": "416919",
+        "vessel_name": "G.P. ZAFIRAKIS",
+        "port_of_loading": "DAMPIER, WESTERN AUSTRALIA（丹皮尔港）",
+        "port_of_discharge": "MAIN PORT(S) CHINA（中国主要港口）",
+        "goods": "PILBARA BLEND FINES（PB粉）",
+        "wet_tons": 175795,
+        "dry_tons": 160806.312,
+        "moisture": 8.64,
+        "physical_63mm": 12.689,
+        "fe": 61.12,
+        "p": 0.106,
+        "s": 0.018,
+        "sio2": 4.15,
+        "al2o3": 2.36,
+        "loi": 5.23,
+        "remark": "签发方：Rio Tinto Commercial Pte. Ltd.（新加坡）",
+        "created_at": 1794552611923,
+        "updated_at": 1794552611923
+      }
+    ],
+    "hz_ocean_spots": {
+      "__version": "v1",
+      "list": [
+        {
+          "id": "spot-001",
+          "no": 1,
+          "port": "京唐港",
+          "variety": "卡拉拉精粉",
+          "fe": "62.33",
+          "sio2": "12.06",
+          "al2o3": "0.12",
+          "p": "0.032",
+          "s": "0.067",
+          "mn": null,
+          "moisture": "8.5",
+          "vessel": "SM SAMCHEONPO（三千浦）",
+          "berth": "一公司",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "京唐",
+          "vessel_clean": "SAMCHEONPO"
+        },
+        {
+          "id": "spot-002",
+          "no": 2,
+          "port": "黄骅港",
+          "variety": "米纳斯精粉",
+          "fe": "66.92",
+          "sio2": "2.8",
+          "al2o3": "0.53",
+          "p": "0.025",
+          "s": null,
+          "mn": "0.03",
+          "moisture": "8.7",
+          "vessel": "SHANDONG DREAM（山东梦想）",
+          "berth": "矿石2场940-990米、矿石700-740米，矿石11场",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "黄骅",
+          "vessel_clean": "SHANDONG DREAM"
+        },
+        {
+          "id": "spot-003",
+          "no": 3,
+          "port": "黄骅港",
+          "variety": "卡拉拉精粉",
+          "fe": "62.1",
+          "sio2": "12.38",
+          "al2o3": "0.2",
+          "p": "0.03",
+          "s": "0.036",
+          "mn": null,
+          "moisture": "8.69",
+          "vessel": "JIN WEN FENG（锦文峰）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "黄骅",
+          "vessel_clean": "JIN WEN FENG"
+        },
+        {
+          "id": "spot-004",
+          "no": 4,
+          "port": "青岛港",
+          "variety": "KBH南非铁精粉",
+          "fe": "62.45",
+          "sio2": "2.16",
+          "al2o3": "0.46",
+          "p": "0.19",
+          "s": "0.041",
+          "mn": null,
+          "moisture": "6.54",
+          "vessel": "ANASTASIA（安纳斯塔西娅）",
+          "berth": "重象口",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "青岛",
+          "vessel_clean": "ANASTASIA"
+        },
+        {
+          "id": "spot-005",
+          "no": 5,
+          "port": "青岛港",
+          "variety": "SFGB",
+          "fe": "54.94",
+          "sio2": "14.54",
+          "al2o3": "2.11",
+          "p": "0.068",
+          "s": null,
+          "mn": "0.287",
+          "moisture": "8.3",
+          "vessel": "ORE ZHOUSHAN（矿石舟山）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "青岛",
+          "vessel_clean": "ORE ZHOUSHAN"
+        },
+        {
+          "id": "spot-006",
+          "no": 6,
+          "port": "青岛港",
+          "variety": "塞拉利昂烧结精粉",
+          "fe": "61.22",
+          "sio2": "6.27",
+          "al2o3": "3.38",
+          "p": "0.041",
+          "s": "0.005",
+          "mn": null,
+          "moisture": "10.62",
+          "vessel": "SEABREEZE（海洋清风）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "青岛",
+          "vessel_clean": "SEABREEZE"
+        },
+        {
+          "id": "spot-007",
+          "no": 7,
+          "port": "日照港",
+          "variety": "KMG块",
+          "fe": "51.66",
+          "sio2": "22.51",
+          "al2o3": "1.31",
+          "p": "0.01",
+          "s": "0.018",
+          "mn": null,
+          "moisture": "2.07",
+          "vessel": "DEE4 OAK（橡树）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "日照",
+          "vessel_clean": "DEE4 OAK"
+        },
+        {
+          "id": "spot-008",
+          "no": 8,
+          "port": "日照港",
+          "variety": "YGBZ块",
+          "fe": "62.11",
+          "sio2": "8.95",
+          "al2o3": "0.86",
+          "p": "0.03",
+          "s": "0.01",
+          "mn": null,
+          "moisture": "1.31",
+          "vessel": "MALINDI（马林迪）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "日照",
+          "vessel_clean": "MALINDI"
+        },
+        {
+          "id": "spot-009",
+          "no": 9,
+          "port": "日照港",
+          "variety": "塞拉利昂DSO粉",
+          "fe": "55.21",
+          "sio2": "3.07",
+          "al2o3": "6.55",
+          "p": "0.068",
+          "s": "0.004",
+          "mn": null,
+          "moisture": "12.64",
+          "vessel": "SAMC TRANSPORTER（海瀛撮运）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "日照",
+          "vessel_clean": "SAMC TRANSPORTER"
+        },
+        {
+          "id": "spot-010",
+          "no": 10,
+          "port": "岚山港",
+          "variety": "罗伊山NEXUS粉",
+          "fe": "57.218",
+          "sio2": "7.378",
+          "al2o3": "3.175",
+          "p": "0.047",
+          "s": "0.035",
+          "mn": null,
+          "moisture": "9.89",
+          "vessel": "MV HUI ZHEN HAI（惠珍海）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "岚山",
+          "vessel_clean": "HUI ZHEN HAI"
+        },
+        {
+          "id": "spot-011",
+          "no": 11,
+          "port": "岚山港",
+          "variety": "LONS块",
+          "fe": "49.5",
+          "sio2": "18.46",
+          "al2o3": "1.53",
+          "p": "0.05",
+          "s": null,
+          "mn": "0.162",
+          "moisture": "4.5",
+          "vessel": "SHINE ON（照耀）",
+          "berth": "装港指标",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "岚山",
+          "vessel_clean": "SHINE ON"
+        },
+        {
+          "id": "spot-012",
+          "no": 11,
+          "port": "岚山港",
+          "variety": "LONS筛后块",
+          "fe": "49.72",
+          "sio2": "17.652",
+          "al2o3": "1.62",
+          "p": "0.0466",
+          "s": null,
+          "mn": "0.148",
+          "moisture": "2.71",
+          "vessel": "SHINE ON（照耀）",
+          "berth": "卸港CCIC",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "岚山",
+          "vessel_clean": "SHINE ON"
+        },
+        {
+          "id": "spot-013",
+          "no": 11,
+          "port": "岚山港",
+          "variety": "LONS筛后粉",
+          "fe": "51.56",
+          "sio2": "16.576",
+          "al2o3": "2.211",
+          "p": "0.0562",
+          "s": null,
+          "mn": "0.254",
+          "moisture": "8.39",
+          "vessel": "SHINE ON（照耀）",
+          "berth": "卸港CCIC",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "岚山",
+          "vessel_clean": "SHINE ON"
+        },
+        {
+          "id": "spot-014",
+          "no": 12,
+          "port": "岚山港",
+          "variety": "LONS块",
+          "fe": "53.75",
+          "sio2": "14.23",
+          "al2o3": "1.97",
+          "p": "0.059",
+          "s": null,
+          "mn": "0.215",
+          "moisture": "4.8",
+          "vessel": "PAN DREAM（潘梦）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "岚山",
+          "vessel_clean": "PAN DREAM"
+        },
+        {
+          "id": "spot-015",
+          "no": 13,
+          "port": "岚山港",
+          "variety": "KMG粉",
+          "fe": "47.95",
+          "sio2": "24.92",
+          "al2o3": "2.63",
+          "p": "0.01",
+          "s": "0.012",
+          "mn": null,
+          "moisture": "4.07",
+          "vessel": "GREAT LINK（大联）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "岚山",
+          "vessel_clean": "GREAT LINK"
+        },
+        {
+          "id": "spot-016",
+          "no": 14,
+          "port": "连云港",
+          "variety": "卡拉拉精粉",
+          "fe": "62.16",
+          "sio2": "12.27",
+          "al2o3": "0.1",
+          "p": "0.028",
+          "s": "0.034",
+          "mn": null,
+          "moisture": "8.08",
+          "vessel": "SIFNOS I（锡弗诺斯）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "连云",
+          "vessel_clean": "SIFNOS I"
+        },
+        {
+          "id": "spot-017",
+          "no": 15,
+          "port": "连云港",
+          "variety": "LONS筛后块",
+          "fe": "49.89",
+          "sio2": "17.78",
+          "al2o3": "1.95",
+          "p": "0.066",
+          "s": null,
+          "mn": "0.015",
+          "moisture": "0.54",
+          "vessel": "ALONA（阿罗那）",
+          "berth": "卸港CCIC",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "连云",
+          "vessel_clean": "ALONA"
+        },
+        {
+          "id": "spot-018",
+          "no": 15,
+          "port": "连云港",
+          "variety": "LONS筛后粉",
+          "fe": "54.17",
+          "sio2": "15.18",
+          "al2o3": "2.29",
+          "p": "0.08",
+          "s": null,
+          "mn": "0.015",
+          "moisture": "5.01",
+          "vessel": "ALONA（阿罗那）",
+          "berth": "卸港CCIC",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "连云",
+          "vessel_clean": "ALONA"
+        },
+        {
+          "id": "spot-019",
+          "no": 16,
+          "port": "镇江港",
+          "variety": "罗伊山NEXUS粉",
+          "fe": "57.218",
+          "sio2": "7.378",
+          "al2o3": "3.175",
+          "p": "0.047",
+          "s": "0.035",
+          "mn": null,
+          "moisture": "9.89",
+          "vessel": "MV HUI ZHEN HAI（惠珍海）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "镇江",
+          "vessel_clean": "HUI ZHEN HAI"
+        },
+        {
+          "id": "spot-020",
+          "no": 17,
+          "port": "湛江港",
+          "variety": "SFGB",
+          "fe": "54.64",
+          "sio2": "15.29",
+          "al2o3": "2.18",
+          "p": "0.065",
+          "s": null,
+          "mn": "0.293",
+          "moisture": "8.6",
+          "vessel": "GRAND WISDOM（裕智）",
+          "berth": "",
+          "source": "中国矿产·中矿国链港口现货",
+          "data_date": "2026-05-25",
+          "normalized_port": "湛江",
+          "vessel_clean": "GRAND WISDOM"
+        }
+      ]
+    },
+    "hz_truck_price_index": {
+      "__version": "v4",
+      "places": {
+        "hot": [
+          "黄骅港",
+          "武安"
+        ],
+        "ports": [
+          "曹妃甸港",
+          "天津港",
+          "黄骅港",
+          "日照港",
+          "董家口港",
+          "岚山港",
+          "岚桥港",
+          "前港"
+        ],
+        "factories": [
+          "武安",
+          "涉县"
+        ]
+      },
+      "goods": {
+        "hot": [
+          "铁矿石"
+        ],
+        "all": [
+          "铁矿石",
+          "钢铁"
+        ]
+      },
+      "records": [
+        {
+          "id": "pr-mtji3mce-v16wl",
+          "dataDate": "2026-06-15",
+          "goods": "钢铁",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 74.41,
+          "remark": "",
+          "evidences": [
+            "assets/seed/pr-mtji3mce-v16wl-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 10:52"
+        },
+        {
+          "id": "pr-mtkz3j0y-2287x",
+          "dataDate": "2026-07-08",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 77.68,
+          "remark": "万合报价",
+          "evidences": [
+            "assets/seed/pr-mtkz3j0y-2287x-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 11:36"
+        },
+        {
+          "id": "pr-mtjj8ara-efc3m",
+          "dataDate": "2026-08-17",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260817普阳报价（罗伊山MB粉）",
+          "evidences": [
+            "assets/seed/pr-mtjj8ara-efc3m-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:24"
+        },
+        {
+          "id": "pr-seed-3",
+          "dataDate": "2026-08-20",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 72.48,
+          "remark": "",
+          "evidences": [
+            "assets/seed/pr-seed-3.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-08-30 15:46"
+        },
+        {
+          "id": "pr-mtkz5llw-ks9c0",
+          "dataDate": "2026-08-20",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 72.48,
+          "remark": "黄骅港系统价格（澳粉-麦克粉）",
+          "evidences": [
+            "assets/seed/pr-mtkz5llw-ks9c0-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 11:37"
+        },
+        {
+          "id": "pr-mtjjb92l-yjl5p",
+          "dataDate": "2026-08-21",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260821普阳报价（PMI粉）",
+          "evidences": [
+            "assets/seed/pr-mtjjb92l-yjl5p-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:26"
+        },
+        {
+          "id": "pr-mtjjc5ei-aschq",
+          "dataDate": "2026-08-21",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260821普阳报价（罗伊山MB粉）",
+          "evidences": [
+            "assets/seed/pr-mtjjc5ei-aschq-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:27"
+        },
+        {
+          "id": "pr-mtjjdaul-rw563",
+          "dataDate": "2026-08-21",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260821普阳报价（印度粉）",
+          "evidences": [
+            "assets/seed/pr-mtjjdaul-rw563-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:28"
+        },
+        {
+          "id": "pr-mtkza02o-36o7l",
+          "dataDate": "2026-08-22",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.92,
+          "remark": "金布巴粉（黄骅港系统2026135-11）",
+          "evidences": [
+            "assets/seed/pr-mtkza02o-36o7l-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 11:41"
+        },
+        {
+          "id": "pr-mtkzaxst-5ujhl",
+          "dataDate": "2026-08-22",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.92,
+          "remark": "金布巴粉（黄骅港系统2025190-80）",
+          "evidences": [
+            "assets/seed/pr-mtkzaxst-5ujhl-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 11:41"
+        },
+        {
+          "id": "pr-mtkzc5it-6zxgq",
+          "dataDate": "2026-08-22",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.92,
+          "remark": "金布巴粉（黄骅港系统2026080-59）",
+          "evidences": [
+            "assets/seed/pr-mtkzc5it-6zxgq-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 11:42"
+        },
+        {
+          "id": "pr-mtjjff5r-xuzxo",
+          "dataDate": "2026-08-24",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260824普阳报价（罗伊山MB粉）",
+          "evidences": [
+            "assets/seed/pr-mtjjff5r-xuzxo-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:29"
+        },
+        {
+          "id": "pr-seed-4",
+          "dataDate": "2026-08-27",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "",
+          "evidences": [
+            "assets/seed/pr-seed-4.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-08-30 15:48"
+        },
+        {
+          "id": "pr-mtjjkhcu-te8wy",
+          "dataDate": "2026-08-29",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260829普阳报价（混合粉）",
+          "evidences": [
+            "assets/seed/pr-mtjjkhcu-te8wy-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:33"
+        },
+        {
+          "id": "pr-mtl8lu9w-8v34s",
+          "dataDate": "2026-08-29",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价（南非粉）",
+          "evidences": [
+            "assets/seed/pr-mtl8lu9w-8v34s-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 16:02"
+        },
+        {
+          "id": "pr-mtl8orca-1w0as",
+          "dataDate": "2026-08-29",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港报价（澳粉-麦克粉）",
+          "evidences": [
+            "assets/seed/pr-mtl8orca-1w0as-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 16:04"
+        },
+        {
+          "id": "pr-mtl8q7i5-if9bs",
+          "dataDate": "2026-08-29",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价（澳粉-麦克粉）",
+          "evidences": [
+            "assets/seed/pr-mtl8q7i5-if9bs-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 16:05"
+        },
+        {
+          "id": "pr-mtl6a6kf-8wn3d",
+          "dataDate": "2026-08-30",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "普阳报价（卡拉拉精粉）",
+          "evidences": [
+            "assets/seed/pr-mtl6a6kf-8wn3d-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 14:57"
+        },
+        {
+          "id": "pr-mtjjtide-fcogt",
+          "dataDate": "2026-09-01",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73,
+          "remark": "20260901普阳报价（铁矿粉）",
+          "evidences": [
+            "assets/seed/pr-mtjjtide-fcogt-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-02 11:40"
+        },
+        {
+          "id": "pr-mtl8s774-qx2r1",
+          "dataDate": "2026-09-02",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港报价（南非粉）",
+          "evidences": [
+            "assets/seed/pr-mtl8s774-qx2r1-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-03 16:07"
+        },
+        {
+          "id": "pr-mtsc9ezt-0y4v4",
+          "dataDate": "2026-09-06",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价",
+          "evidences": [
+            "assets/seed/pr-mtsc9ezt-0y4v4-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-08 15:19"
+        },
+        {
+          "id": "pr-mtsceh1v-93sv1",
+          "dataDate": "2026-09-06",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-澳粉（麦克粉）",
+          "evidences": [
+            "assets/seed/pr-mtsceh1v-93sv1-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-08 15:23"
+        },
+        {
+          "id": "pr-mtscf2oq-6ca7z",
+          "dataDate": "2026-09-07",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-南非粉",
+          "evidences": [
+            "assets/seed/pr-mtscf2oq-6ca7z-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-08 15:23"
+        },
+        {
+          "id": "pr-mu0xdfp4-1hik8",
+          "dataDate": "2026-09-11",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-南非粉",
+          "evidences": [
+            "assets/seed/pr-mu0xdfp4-1hik8-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-14 15:32"
+        },
+        {
+          "id": "pr-mu0xdxdo-8t9j2",
+          "dataDate": "2026-09-13",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-澳粉",
+          "evidences": [
+            "assets/seed/pr-mu0xdxdo-8t9j2-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-14 15:32"
+        },
+        {
+          "id": "pr-mu0xeewy-0ln1b",
+          "dataDate": "2026-09-13",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-澳粉",
+          "evidences": [
+            "assets/seed/pr-mu0xeewy-0ln1b-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-14 15:33"
+        },
+        {
+          "id": "pr-mu0xeumx-srntv",
+          "dataDate": "2026-09-14",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-南非粉",
+          "evidences": [
+            "assets/seed/pr-mu0xeumx-srntv-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-14 15:33"
+        },
+        {
+          "id": "pr-muapcowh-oshca",
+          "dataDate": "2026-09-16",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-南非粉",
+          "evidences": [
+            "assets/seed/pr-muapcowh-oshca-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-21 11:45"
+        },
+        {
+          "id": "pr-muapdeld-kq0ji",
+          "dataDate": "2026-09-17",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-澳粉（麦克粉）",
+          "evidences": [
+            "assets/seed/pr-muapdeld-kq0ji-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-21 11:45"
+        },
+        {
+          "id": "pr-muapdy58-5n1b6",
+          "dataDate": "2026-09-17",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-南非粉",
+          "evidences": [
+            "assets/seed/pr-muapdy58-5n1b6-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-21 11:46"
+        },
+        {
+          "id": "pr-muapehxk-sf9jn",
+          "dataDate": "2026-09-18",
+          "goods": "铁矿石",
+          "from": "黄骅港",
+          "to": "武安",
+          "price": 73.91,
+          "remark": "黄骅港系统报价-南非粉",
+          "evidences": [
+            "assets/seed/pr-muapehxk-sf9jn-1.png"
+          ],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-09-21 11:46"
+        }
+      ]
+    },
+    "hz_rail_price_index": {
+      "__version": "v4",
+      "stations": {
+        "hot": [
+          "黄骅港站",
+          "武安"
+        ],
+        "ports": [
+          "黄骅港站",
+          "天津港站",
+          "曹妃甸港站"
+        ],
+        "dests": [
+          "武安",
+          "邢台南站",
+          "曹庄镇站",
+          "康城站",
+          "涉县"
+        ]
+      },
+      "goods": {
+        "hot": [
+          "铁矿石"
+        ],
+        "all": [
+          "铁矿石",
+          "钢坯",
+          "焦炭"
+        ]
+      },
+      "records": [
+        {
+          "id": "rl-demo-01",
+          "dataDate": "2026-10-13",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "武安",
+          "price": 51.8,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-13 15:05"
+        },
+        {
+          "id": "rl-demo-02",
+          "dataDate": "2026-10-14",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "邢台南站",
+          "price": 45,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-14 15:12"
+        },
+        {
+          "id": "rl-demo-03",
+          "dataDate": "2026-10-15",
+          "goods": "钢坯",
+          "from": "天津港站",
+          "to": "武安",
+          "price": 60.5,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-15 15:08"
+        },
+        {
+          "id": "rl-demo-04",
+          "dataDate": "2026-10-16",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "武安",
+          "price": 51.8,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-16 15:03"
+        },
+        {
+          "id": "rl-demo-05",
+          "dataDate": "2026-10-18",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "邢台南站",
+          "price": 45.2,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-18 15:16"
+        },
+        {
+          "id": "rl-demo-06",
+          "dataDate": "2026-10-20",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "武安",
+          "price": 52.1,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-20 15:09"
+        },
+        {
+          "id": "rl-demo-07",
+          "dataDate": "2026-10-21",
+          "goods": "钢坯",
+          "from": "天津港站",
+          "to": "武安",
+          "price": 60,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-21 15:14"
+        },
+        {
+          "id": "rl-demo-08",
+          "dataDate": "2026-10-23",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "邢台南站",
+          "price": 45,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-23 15:07"
+        },
+        {
+          "id": "rl-demo-09",
+          "dataDate": "2026-10-24",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "武安",
+          "price": 52.35,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-24 15:11"
+        },
+        {
+          "id": "rl-demo-10",
+          "dataDate": "2026-10-25",
+          "goods": "钢坯",
+          "from": "天津港站",
+          "to": "武安",
+          "price": 60.4,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-25 15:06"
+        },
+        {
+          "id": "rl-demo-11",
+          "dataDate": "2026-10-14",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "曹庄镇站",
+          "price": 47.6,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-14 15:10"
+        },
+        {
+          "id": "rl-demo-12",
+          "dataDate": "2026-10-16",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "曹庄镇站",
+          "price": 47.6,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-16 15:04"
+        },
+        {
+          "id": "rl-demo-13",
+          "dataDate": "2026-10-18",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "曹庄镇站",
+          "price": 47.8,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-18 15:13"
+        },
+        {
+          "id": "rl-demo-14",
+          "dataDate": "2026-10-20",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "曹庄镇站",
+          "price": 47.8,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-20 15:07"
+        },
+        {
+          "id": "rl-demo-15",
+          "dataDate": "2026-10-22",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "曹庄镇站",
+          "price": 47.95,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-22 15:12"
+        },
+        {
+          "id": "rl-demo-16",
+          "dataDate": "2026-10-25",
+          "goods": "铁矿石",
+          "from": "黄骅港站",
+          "to": "曹庄镇站",
+          "price": 47.95,
+          "remark": "",
+          "evidences": [],
+          "uploader": "系统管理员",
+          "uploadedAt": "2026-10-25 15:09"
+        }
+      ]
+    },
+    "hz_orders": {
+      "__version": "v3",
+      "list": [
+        {
+          "id": "o-seed-001",
+          "order_code": "HZ202608150001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "mine_id": "mmwemahbc",
+          "mine_name": "福斯特库",
+          "voyage_id": "vmwemahcm",
+          "trip_ids": [],
+          "customer": "武安市鑫源矿业有限公司",
+          "cargo_name": "超特粉",
+          "cargo_qty": 175000,
+          "amount": 10850000,
+          "sign_date": "2026-08-15",
+          "plan_end_date": "2026-11-08",
+          "status": "已完成",
+          "remark": "已交付完毕，客户验收通过",
+          "created_by": "系统预置",
+          "created_at": 1786776611942,
+          "updated_at": 1794379811942
+        },
+        {
+          "id": "o-seed-002",
+          "order_code": "HZ202608300001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "mine_id": "mmwemahb9",
+          "mine_name": "力拓",
+          "voyage_id": "vmwemahcj",
+          "trip_ids": [
+            "YS1013-004",
+            "YS1012-018"
+          ],
+          "customer": "武安市鑫源矿业有限公司",
+          "cargo_name": "PB粉",
+          "cargo_qty": 170000,
+          "amount": 10540000,
+          "sign_date": "2026-08-30",
+          "plan_end_date": "2026-12-13",
+          "status": "已发运",
+          "remark": "澳矿进口，港口直发武安",
+          "created_by": "系统预置",
+          "created_at": 1788072611942,
+          "updated_at": 1788072611942
+        },
+        {
+          "id": "o-seed-003",
+          "order_code": "HZ202609140001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "mine_id": "mmwemahba",
+          "mine_name": "必和必拓",
+          "voyage_id": "vmwemahck",
+          "trip_ids": [],
+          "customer": "武安市鑫源矿业有限公司",
+          "cargo_name": "纽曼粉",
+          "cargo_qty": 180000,
+          "amount": 11160000,
+          "sign_date": "2026-09-14",
+          "plan_end_date": "2026-12-28",
+          "status": "执行中",
+          "remark": "待装船，疏港计划已排定",
+          "created_by": "系统预置",
+          "created_at": 1789368611942,
+          "updated_at": 1789368611942
+        },
+        {
+          "id": "o-seed-004",
+          "order_code": "HZ202609140002",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "mine_id": "mmwemahbb",
+          "mine_name": "淡水河谷",
+          "voyage_id": "vmwemahcl",
+          "trip_ids": [
+            "YS1013-006"
+          ],
+          "customer": "武安市鑫源矿业有限公司",
+          "cargo_name": "卡拉加斯粉",
+          "cargo_qty": 300000,
+          "amount": 19500000,
+          "sign_date": "2026-09-14",
+          "plan_end_date": "2027-01-02",
+          "status": "执行中",
+          "remark": "巴西矿进口，青岛港卸货",
+          "created_by": "系统预置",
+          "created_at": 1789368611942,
+          "updated_at": 1789368611942
+        },
+        {
+          "id": "o-seed-005",
+          "order_code": "HZ202610140001",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "mine_id": "",
+          "mine_name": "",
+          "voyage_id": "",
+          "trip_ids": [
+            "YS1013-008",
+            "YS1013-009"
+          ],
+          "customer": "河北新金钢铁有限公司",
+          "cargo_name": "钢坯",
+          "cargo_qty": 35000,
+          "amount": 8400000,
+          "sign_date": "2026-10-14",
+          "plan_end_date": "2026-12-23",
+          "status": "执行中",
+          "remark": "汽运分批配送",
+          "created_by": "系统预置",
+          "created_at": 1791960611942,
+          "updated_at": 1791960611942
+        },
+        {
+          "id": "o-seed-006",
+          "order_code": "HZ202610140002",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "mine_id": "",
+          "mine_name": "",
+          "voyage_id": "",
+          "trip_ids": [],
+          "customer": "河北新金钢铁有限公司",
+          "cargo_name": "钢坯",
+          "cargo_qty": 40000,
+          "amount": 9600000,
+          "sign_date": "2026-10-14",
+          "plan_end_date": "2027-01-12",
+          "status": "已确认",
+          "remark": "华北区域销售，分批交货",
+          "created_by": "系统预置",
+          "created_at": 1791960611942,
+          "updated_at": 1791960611942
+        },
+        {
+          "id": "o-seed-007",
+          "order_code": "HZ202610140003",
+          "contract_id": "c-seed-004",
+          "contract_code": "HZ-2026-004",
+          "mine_id": "",
+          "mine_name": "",
+          "voyage_id": "",
+          "trip_ids": [],
+          "customer": "河北陆港保税物流有限公司",
+          "cargo_name": "港口仓储服务",
+          "cargo_qty": 50000,
+          "amount": 1520000,
+          "sign_date": "2026-10-14",
+          "plan_end_date": "2027-03-13",
+          "status": "待确认",
+          "remark": "中转仓储服务框架订单",
+          "created_by": "系统预置",
+          "created_at": 1791960611942,
+          "updated_at": 1791960611942
+        },
+        {
+          "id": "o-seed-008",
+          "order_code": "HZ202610290001",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "mine_id": "mmwemahbd",
+          "mine_name": "西芒杜",
+          "voyage_id": "",
+          "trip_ids": [],
+          "customer": "河北新金钢铁有限公司",
+          "cargo_name": "高品位块矿",
+          "cargo_qty": 15000,
+          "amount": 4200000,
+          "sign_date": "2026-10-29",
+          "plan_end_date": "2026-12-13",
+          "status": "已终止",
+          "remark": "客户需求变更，双方协商终止",
+          "created_by": "系统预置",
+          "created_at": 1793256611942,
+          "updated_at": 1793256611942
+        },
+        {
+          "id": "o-seed-009",
+          "order_code": "HZ202611100001",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "mine_id": "",
+          "mine_name": "",
+          "voyage_id": "",
+          "trip_ids": [],
+          "customer": "河北新金钢铁有限公司",
+          "cargo_name": "钢坯",
+          "cargo_qty": 20000,
+          "amount": 4800000,
+          "sign_date": "2026-11-10",
+          "plan_end_date": "2027-02-11",
+          "status": "待确认",
+          "remark": "新增补库需求，待评审确认",
+          "created_by": "系统预置",
+          "created_at": 1794293411942,
+          "updated_at": 1794293411942
+        }
+      ]
+    },
+    "hz_settlements": {
+      "__version": "v3",
+      "list": [
+        {
+          "id": "s-seed-001",
+          "settle_code": "SK20260909001",
+          "order_id": "o-seed-002",
+          "order_code": "HZ202608300001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "customer": "武安市鑫源矿业有限公司",
+          "type": "应收",
+          "amount": 10540000,
+          "received": 5000000,
+          "paid": 0,
+          "settle_date": "2026-12-03",
+          "status": "部分结算",
+          "remark": "澳矿货款，已收预付部分",
+          "created_at": 1788936611943,
+          "updated_at": 1788936611943
+        },
+        {
+          "id": "s-seed-002",
+          "settle_code": "SK20260919001",
+          "order_id": "o-seed-003",
+          "order_code": "HZ202609140001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "customer": "武安市鑫源矿业有限公司",
+          "type": "应收",
+          "amount": 11160000,
+          "received": 0,
+          "paid": 0,
+          "settle_date": "2026-12-28",
+          "status": "待结算",
+          "remark": "待装船后开票结算",
+          "created_at": 1789800611943,
+          "updated_at": 1789800611943
+        },
+        {
+          "id": "s-seed-003",
+          "settle_code": "SK20260924001",
+          "order_id": "o-seed-004",
+          "order_code": "HZ202609140002",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "customer": "武安市鑫源矿业有限公司",
+          "type": "应收",
+          "amount": 19500000,
+          "received": 19500000,
+          "paid": 0,
+          "settle_date": "2026-12-13",
+          "status": "已结算",
+          "remark": "巴西矿货款，全额收讫",
+          "created_at": 1790232611943,
+          "updated_at": 1790232611943
+        },
+        {
+          "id": "s-seed-004",
+          "settle_code": "SK20261019001",
+          "order_id": "o-seed-005",
+          "order_code": "HZ202610140001",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "customer": "河北新金钢铁有限公司",
+          "type": "应收",
+          "amount": 8400000,
+          "received": 3000000,
+          "paid": 0,
+          "settle_date": "2026-12-08",
+          "status": "部分结算",
+          "remark": "钢坯货款，分批收款中",
+          "created_at": 1792392611943,
+          "updated_at": 1792392611943
+        },
+        {
+          "id": "s-seed-005",
+          "settle_code": "SK20260914001",
+          "order_id": "o-seed-002",
+          "order_code": "HZ202608300001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "customer": "武安市鑫源矿业有限公司",
+          "type": "应付",
+          "amount": 8200000,
+          "received": 0,
+          "paid": 8200000,
+          "settle_date": "2026-12-03",
+          "status": "已结算",
+          "remark": "采购与运费成本，已付清",
+          "created_at": 1789368611943,
+          "updated_at": 1789368611943
+        },
+        {
+          "id": "s-seed-006",
+          "settle_code": "SK20260924002",
+          "order_id": "o-seed-003",
+          "order_code": "HZ202609140001",
+          "contract_id": "c-seed-001",
+          "contract_code": "HZ-2026-001",
+          "customer": "武安市鑫源矿业有限公司",
+          "type": "应付",
+          "amount": 9800000,
+          "received": 0,
+          "paid": 2000000,
+          "settle_date": "2026-12-28",
+          "status": "部分结算",
+          "remark": "矿款预付部分",
+          "created_at": 1790232611943,
+          "updated_at": 1790232611943
+        },
+        {
+          "id": "s-seed-007",
+          "settle_code": "SK20261103001",
+          "order_id": "o-seed-009",
+          "order_code": "HZ202611100001",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "customer": "河北新金钢铁有限公司",
+          "type": "应付",
+          "amount": 4500000,
+          "received": 0,
+          "paid": 0,
+          "settle_date": "2027-02-01",
+          "status": "待结算",
+          "remark": "补库订单成本，待排款",
+          "created_at": 1793688611943,
+          "updated_at": 1793688611943
+        },
+        {
+          "id": "s-seed-008",
+          "settle_code": "SK20261101001",
+          "order_id": "o-seed-008",
+          "order_code": "HZ202610290001",
+          "contract_id": "c-seed-002",
+          "contract_code": "HZ-2026-002",
+          "customer": "河北新金钢铁有限公司",
+          "type": "应收",
+          "amount": 4200000,
+          "received": 0,
+          "paid": 0,
+          "settle_date": "2026-12-08",
+          "status": "已终止",
+          "remark": "订单终止，结算同步关闭",
+          "created_at": 1793515811943,
+          "updated_at": 1793515811943
+        }
+      ]
+    },
+    "hz_order_logs": [
+      {
+        "id": "log-seed-025",
+        "order_id": "o-seed-009",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1794293411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-024",
+        "order_id": "o-seed-008",
+        "from_status": "已确认",
+        "to_status": "已终止",
+        "operator": "系统预置",
+        "time": 1793602211942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-023",
+        "order_id": "o-seed-008",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1793429411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-022",
+        "order_id": "o-seed-008",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1793256611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-018",
+        "order_id": "o-seed-005",
+        "from_status": "已确认",
+        "to_status": "执行中",
+        "operator": "系统预置",
+        "time": 1792306211942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-017",
+        "order_id": "o-seed-005",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1792133411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-020",
+        "order_id": "o-seed-006",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1792133411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-016",
+        "order_id": "o-seed-005",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1791960611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-019",
+        "order_id": "o-seed-006",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1791960611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-021",
+        "order_id": "o-seed-007",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1791960611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-012",
+        "order_id": "o-seed-003",
+        "from_status": "已确认",
+        "to_status": "执行中",
+        "operator": "系统预置",
+        "time": 1789714211942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-015",
+        "order_id": "o-seed-004",
+        "from_status": "已确认",
+        "to_status": "执行中",
+        "operator": "系统预置",
+        "time": 1789714211942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-011",
+        "order_id": "o-seed-003",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1789541411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-014",
+        "order_id": "o-seed-004",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1789541411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-010",
+        "order_id": "o-seed-003",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1789368611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-013",
+        "order_id": "o-seed-004",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1789368611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-009",
+        "order_id": "o-seed-002",
+        "from_status": "执行中",
+        "to_status": "已发运",
+        "operator": "系统预置",
+        "time": 1788591011942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-008",
+        "order_id": "o-seed-002",
+        "from_status": "已确认",
+        "to_status": "执行中",
+        "operator": "系统预置",
+        "time": 1788418211942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-007",
+        "order_id": "o-seed-002",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1788245411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-006",
+        "order_id": "o-seed-002",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1788072611942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-005",
+        "order_id": "o-seed-001",
+        "from_status": "已发运",
+        "to_status": "已完成",
+        "operator": "系统预置",
+        "time": 1787467811942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-004",
+        "order_id": "o-seed-001",
+        "from_status": "执行中",
+        "to_status": "已发运",
+        "operator": "系统预置",
+        "time": 1787295011942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-003",
+        "order_id": "o-seed-001",
+        "from_status": "已确认",
+        "to_status": "执行中",
+        "operator": "系统预置",
+        "time": 1787122211942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-002",
+        "order_id": "o-seed-001",
+        "from_status": "待确认",
+        "to_status": "已确认",
+        "operator": "系统预置",
+        "time": 1786949411942,
+        "remark": ""
+      },
+      {
+        "id": "log-seed-001",
+        "order_id": "o-seed-001",
+        "from_status": "",
+        "to_status": "待确认",
+        "operator": "系统预置",
+        "time": 1786776611942,
+        "remark": ""
+      }
+    ],
+    "hz-scms-trips-v2": {
+      "seq": 13,
+      "trips": [
+        {
+          "id": "YS1013-001",
+          "mode": "rail",
+          "from": "淮安南",
+          "to": "郑州北",
+          "cargo": "煤炭",
+          "tons": 3200,
+          "nodeIndex": 0,
+          "time": 1794552251930,
+          "orderId": "SO1013-001",
+          "actualTons": null
+        },
+        {
+          "id": "YS1013-002",
+          "mode": "rail",
+          "from": "连云港东",
+          "to": "西安西",
+          "cargo": "钢材",
+          "tons": 2800,
+          "nodeIndex": 2,
+          "time": 1794551291930,
+          "orderId": "SO1013-002",
+          "actualTons": null
+        },
+        {
+          "id": "YS1013-003",
+          "mode": "rail",
+          "from": "新沂",
+          "to": "武汉北",
+          "cargo": "石英砂",
+          "tons": 1900,
+          "nodeIndex": 3,
+          "time": 1794550511930,
+          "orderId": "SO1013-003",
+          "actualTons": null
+        },
+        {
+          "id": "YS1013-004",
+          "mode": "rail",
+          "from": "徐州北",
+          "to": "成都北",
+          "cargo": "化肥",
+          "tons": 2600,
+          "nodeIndex": 5,
+          "time": 1794549131930,
+          "orderId": "SO1013-004",
+          "actualTons": null
+        },
+        {
+          "id": "YS1012-018",
+          "mode": "rail",
+          "from": "淮安南",
+          "to": "郑州北",
+          "cargo": "矿粉",
+          "tons": 3100,
+          "nodeIndex": 7,
+          "time": 1794545051930,
+          "orderId": "SO1013-001",
+          "actualTons": 3050
+        },
+        {
+          "id": "YS1013-005",
+          "mode": "inter",
+          "from": "淮安东",
+          "to": "洛阳西",
+          "cargo": "粮食",
+          "tons": 2200,
+          "nodeIndex": 1,
+          "time": 1794551711930,
+          "orderId": "SO1013-005",
+          "actualTons": null
+        },
+        {
+          "id": "YS1013-006",
+          "mode": "inter",
+          "from": "宿迁",
+          "to": "邯郸南",
+          "cargo": "钢材",
+          "tons": 2400,
+          "nodeIndex": 3,
+          "time": 1794550151930,
+          "orderId": "SO1013-006",
+          "actualTons": null
+        },
+        {
+          "id": "YS1013-007",
+          "mode": "inter",
+          "from": "淮安东",
+          "to": "石家庄南",
+          "cargo": "煤炭",
+          "tons": 3000,
+          "nodeIndex": 6,
+          "time": 1794548111930,
+          "orderId": "SO1013-007",
+          "actualTons": null
+        },
+        {
+          "id": "YS1012-021",
+          "mode": "inter",
+          "from": "宿迁",
+          "to": "邯郸南",
+          "cargo": "化肥",
+          "tons": 1800,
+          "nodeIndex": 7,
+          "time": 1794543131930,
+          "orderId": "SO1013-006",
+          "actualTons": 1798
+        },
+        {
+          "id": "YS1013-008",
+          "mode": "road",
+          "from": "淮安",
+          "to": "南京",
+          "cargo": "粮食",
+          "tons": 32,
+          "nodeIndex": 0,
+          "time": 1794552011930,
+          "orderId": "SO1013-008",
+          "actualTons": null
+        },
+        {
+          "id": "YS1013-009",
+          "mode": "road",
+          "from": "宿迁",
+          "to": "合肥",
+          "cargo": "石英砂",
+          "tons": 28,
+          "nodeIndex": 1,
+          "time": 1794549791930,
+          "orderId": "SO1013-009",
+          "actualTons": null
+        },
+        {
+          "id": "YS1012-025",
+          "mode": "road",
+          "from": "连云港",
+          "to": "徐州",
+          "cargo": "钢材",
+          "tons": 35,
+          "nodeIndex": 2,
+          "time": 1794544631930,
+          "orderId": "SO1012-025",
+          "actualTons": 35.4
+        }
+      ]
+    }
+  },
+  "direct": {
+    "contracts": [
+      {
+        "id": "c-seed-001",
+        "code": "HZ-2026-001",
+        "name": "铁精粉采购合同（武安现货）",
+        "type": "采购合同",
+        "partyA": "河北泓泽宜通供应链管理有限公司",
+        "partyB": "武安市鑫源矿业有限公司",
+        "partyC": "",
+        "amount": 18600000,
+        "received": 9000000,
+        "paid": 12000000,
+        "quantity": 30000,
+        "executed": 18600,
+        "signDate": "2026-01-10",
+        "endDate": "2026-12-31",
+        "status": "履行中"
+      },
+      {
+        "id": "c-seed-002",
+        "code": "HZ-2026-002",
+        "name": "钢坯销售合同（华北区域）",
+        "type": "销售合同",
+        "partyA": "河北泓泽宜通供应链管理有限公司",
+        "partyB": "河北新金钢铁有限公司",
+        "partyC": "",
+        "amount": 24300000,
+        "received": 15000000,
+        "paid": 0,
+        "quantity": 40000,
+        "executed": 26000,
+        "signDate": "2026-02-18",
+        "endDate": "2026-12-31",
+        "status": "履行中"
+      },
+      {
+        "id": "c-seed-003",
+        "code": "HZ-2026-003",
+        "name": "铁路运输合同（邯黄铁路煤炭）",
+        "type": "运输合同",
+        "partyA": "河北泓泽宜通供应链管理有限公司",
+        "partyB": "沧州沧港铁路有限公司",
+        "partyC": "",
+        "amount": 3850000,
+        "received": 3850000,
+        "paid": 3600000,
+        "quantity": 80000,
+        "executed": 80000,
+        "signDate": "2026-01-05",
+        "endDate": "2026-06-30",
+        "status": "已完成"
+      },
+      {
+        "id": "c-seed-004",
+        "code": "HZ-2026-004",
+        "name": "港口中转仓储服务合同",
+        "type": "服务合同",
+        "partyA": "河北泓泽宜通供应链管理有限公司",
+        "partyB": "河北陆港保税物流有限公司",
+        "partyC": "",
+        "amount": 1520000,
+        "received": 800000,
+        "paid": 900000,
+        "quantity": 50000,
+        "executed": 31500,
+        "signDate": "2026-03-12",
+        "endDate": "2027-03-11",
+        "status": "履行中"
+      },
+      {
+        "id": "c-seed-005",
+        "code": "HZ-2026-005",
+        "name": "焦炭采购合同（山西一级焦）",
+        "type": "采购合同",
+        "partyA": "河北泓泽宜通供应链管理有限公司",
+        "partyB": "山西潞安焦化有限责任公司",
+        "partyC": "",
+        "amount": 9180000,
+        "received": 0,
+        "paid": 4500000,
+        "quantity": 15000,
+        "executed": 7300,
+        "signDate": "2026-04-20",
+        "endDate": "2026-10-19",
+        "status": "已终止"
+      }
+    ],
+    "templates": [
+      {
+        "id": "tpl-seed-huoyun",
+        "category": "授权委托书",
+        "versions": [
+          {
+            "ver": "V1.0",
+            "time": 1789871400000,
+            "name": "火运授权委托书",
+            "intro": "本模版适用于火车运输的货物授权",
+            "content": "本模板正文以内置静态文档形式展示，详见详情页。",
+            "risks": [
+              "1、确认提货码头",
+              "2、提货授权吨数及提货时间"
+            ],
+            "remark": "初始版本",
+            "files": []
+          },
+          {
+            "ver": "V1.1",
+            "time": 1792026360000,
+            "name": "火运授权委托书",
+            "intro": "本模版适用于火车运输的货物授权",
+            "content": "本模板正文以内置静态文档形式展示，详见详情页。",
+            "risks": [
+              "1、确认提货码头",
+              "2、提货授权吨数及提货时间"
+            ],
+            "remark": "完善提货授权条款",
+            "files": []
+          }
+        ]
+      }
+    ]
+  },
+  "dicts": {
+    "dischargePorts": [
+      {
+        "name": "青岛港",
+        "country": "中国"
+      },
+      {
+        "name": "曹妃甸港",
+        "country": "中国"
+      },
+      {
+        "name": "日照港",
+        "country": "中国"
+      },
+      {
+        "name": "舟山港",
+        "country": "中国"
+      },
+      {
+        "name": "大连港",
+        "country": "中国"
+      },
+      {
+        "name": "天津港",
+        "country": "中国"
+      },
+      {
+        "name": "湛江港",
+        "country": "中国"
+      },
+      {
+        "name": "上海港",
+        "country": "中国"
+      },
+      {
+        "name": "连云港",
+        "country": "中国"
+      }
+    ],
+    "mineLoadPorts": [
+      {
+        "mine": "力拓",
+        "port": "丹皮尔港",
+        "country": "澳大利亚",
+        "note": "西澳矿区 → 丹皮尔港，铁路短倒约 300km"
+      },
+      {
+        "mine": "必和必拓",
+        "port": "黑德兰港",
+        "country": "澳大利亚",
+        "note": "纽曼矿区 → 黑德兰港，铁路短倒约 400km"
+      },
+      {
+        "mine": "福斯特库",
+        "port": "黑德兰港",
+        "country": "澳大利亚",
+        "note": "奇切斯特岭矿区 → 黑德兰港，铁路短倒约 250km"
+      },
+      {
+        "mine": "淡水河谷",
+        "port": "图巴朗港",
+        "country": "巴西",
+        "note": "卡拉加斯矿区 → 图巴朗港，铁路短倒约 900km"
+      }
+    ],
+    "orderStatus": [
+      "待确认",
+      "已确认",
+      "执行中",
+      "已发运",
+      "已完成",
+      "已终止"
+    ],
+    "settleTypes": [
+      "应收",
+      "应付"
+    ],
+    "voyageStatus": {
+      "pending": "待装船",
+      "loading": "装船中",
+      "sailing": "在途",
+      "arrived": "已到港",
+      "done": "已完成"
+    },
+    "spotMeta": {
+      "source": "中国矿产·中矿国链港口现货",
+      "dataDate": "2026-05-25"
+    }
+  }
+}

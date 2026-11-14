@@ -1,4 +1,4 @@
-// ===== order-detail 模块脚本（业务总览 · 订单详情页）=====
+// ===== order-detail 模块脚本（订单管理 · 订单详情页）=====
 // 复刻 hongze_demo OrderDetailPage：九态流转条 + 六页签
 // （基本信息 / 财务状态 / 发运状态 / 仓储堆存 / 货物动态 / 运输时间轴）
 // 财务金额自动同步运力合计；发运按通道累加并自动流转订单状态；
@@ -8,7 +8,7 @@
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {
@@ -46,6 +46,7 @@
     headUpdated: $('head-updated'),
     roleSelect: $('role-select'),
     delBtn: document.querySelector('.js-del'),
+    btnGotoPlan: $('btn-goto-plan'),
     statusTrack: $('status-track'),
     tabs: $('tabs'),
     toast: $('toast'),
@@ -1068,7 +1069,7 @@
   function handleDelete() {
     if (!window.confirm('确认删除订单 ' + order.id + ' 及其所有关联数据？')) return;
     data.deleteOrder(id);
-    location.href = '../business.html';
+    location.href = '../orders.html';
   }
 
   /* ==================== 事件绑定 ==================== */
@@ -1122,6 +1123,9 @@
   els.whChannel.addEventListener('change', renderWhStateBoxes);
 
   /* ==================== 初始化渲染 ==================== */
+
+  // 第四环节入口：运输方案（批次分配）页，href 需带订单 id
+  els.btnGotoPlan.href = 'order-plan.html?id=' + encodeURIComponent(id);
 
   els.headMono.textContent = order.id;
   els.headCreated.textContent = data.fmtDate(order.createdAt);

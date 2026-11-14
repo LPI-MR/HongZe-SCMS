@@ -141,7 +141,9 @@
     const endInput = document.getElementById('searchDateEnd');
 
     // 按当前检索条件过滤表格行；无匹配时显示空状态行
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       const start = startInput.value;
       const end = endInput.value;
       // 关键词检索：空格分隔多个词，全部命中（AND）才算匹配，不限字段模糊匹配
@@ -172,22 +174,22 @@
       renderPage();
     };
 
-    // 关键词输入 / 日期变更即筛（免点击查询按钮）
-    nameInput.addEventListener('input', () => applyFilter());
-    startInput.addEventListener('change', () => applyFilter());
-    endInput.addEventListener('change', () => applyFilter());
+    // 关键词输入 / 日期变更即筛（免点击查询按钮，回到第 1 页）
+    nameInput.addEventListener('input', () => applyFilter(true));
+    startInput.addEventListener('change', () => applyFilter(true));
+    endInput.addEventListener('change', () => applyFilter(true));
 
-    // 提交：阻止表单默认提交（保留回车触发过滤）
+    // 提交：阻止表单默认提交（保留回车触发过滤，回到第 1 页）
     form.addEventListener('submit', e => {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
-    // 重置：清空条件并回到「全部」流程胶囊，随后恢复显示全部行
+    // 重置：清空条件并回到「全部」流程胶囊，随后恢复显示全部行（回到第 1 页）
     form.addEventListener('reset', () => {
       resetFlowNav();
       // 等浏览器完成原生 reset 后再过滤
-      requestAnimationFrame(() => applyFilter());
+      requestAnimationFrame(() => applyFilter(true));
     });
   }
 
@@ -202,7 +204,7 @@
       if (!pill) return;
       activeFlow = pill.dataset.flow || '';
       nav.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p === pill));
-      if (applyFilter) applyFilter();
+      if (applyFilter) applyFilter(true); // 胶囊切换后回到第 1 页
     });
   }
 
@@ -240,8 +242,9 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach((r, i) => {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     // 同步分页控件状态
@@ -253,6 +256,18 @@
     $('pgPrev').disabled = curPage <= 1;
     $('pgNext').disabled = curPage >= pages;
     $('pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定订单行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(r => !r.hidden);
+    const idx = rows.findIndex(r => r.dataset.id === id);
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -603,6 +618,7 @@
     const mineId = document.getElementById('fMine').value;
     const mine = mines.find(m => m.id === mineId) || null;
 
+    let addedId = '';
     if (editingId) {
       // 编辑：更新既有订单（编号与状态不变，不写流转日志）
       const old = byId(editingId);
@@ -645,6 +661,7 @@
         updated_at: Date.now()
       };
       orders.push(o);
+      addedId = o.id;
       // 建单即记录初始化日志，与流转链保持一致
       biz.pushLog({
         id: genLogId(),
@@ -664,6 +681,7 @@
 
     closeDrawer();
     renderAll();
+    locateRowPage(addedId); // 新增订单可能落在其他页，跳转到位
   }
 
   // ----- 订单流转抽屉：目标状态单选（合法流转目标）+ 备注 -----

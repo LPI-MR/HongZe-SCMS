@@ -1,4 +1,4 @@
-// ===== order-plan 模块脚本（业务总览 · 运输方案页）=====
+// ===== order-plan 模块脚本（订单管理 · 运输方案页）=====
 // 复刻 hongze_demo PlanReportPage：订单 / 港口 / 铁路 / 公路 / 运输方案五节报告
 // + 批次可编辑表（编辑 / 保存双态切换）+ 分配摘要与汇总指标 + PDF 打印导出
 // 依赖 flow-data.js 提供的共享数据层
@@ -6,7 +6,7 @@
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {

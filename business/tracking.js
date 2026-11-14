@@ -149,7 +149,9 @@
     const endInput = document.getElementById('searchDateEnd');
 
     // 按当前检索条件过滤进度卡片；无匹配时显示空状态提示
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       const status = statusSelect.value;
       const start = startInput.value;
       const end = endInput.value;
@@ -179,22 +181,22 @@
       renderPage();
     };
 
-    // 关键词输入 / 状态切换 / 日期变更即筛（免点击查询按钮）
-    nameInput.addEventListener('input', () => applyFilter());
-    statusSelect.addEventListener('change', () => applyFilter());
-    startInput.addEventListener('change', () => applyFilter());
-    endInput.addEventListener('change', () => applyFilter());
+    // 关键词输入 / 状态切换 / 日期变更即筛（免点击查询按钮，回到第 1 页）
+    nameInput.addEventListener('input', () => applyFilter(true));
+    statusSelect.addEventListener('change', () => applyFilter(true));
+    startInput.addEventListener('change', () => applyFilter(true));
+    endInput.addEventListener('change', () => applyFilter(true));
 
-    // 提交：阻止表单默认提交（保留回车触发过滤）
+    // 提交：阻止表单默认提交（保留回车触发过滤，回到第 1 页）
     form.addEventListener('submit', e => {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
-    // 重置：清空条件后恢复显示全部卡片
+    // 重置：清空条件后恢复显示全部卡片（回到第 1 页）
     form.addEventListener('reset', () => {
       // 等浏览器完成原生 reset 后再过滤
-      requestAnimationFrame(() => applyFilter());
+      requestAnimationFrame(() => applyFilter(true));
     });
   }
 
@@ -224,8 +226,9 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     cards.forEach((c, i) => {
-      c.hidden = i < start || i >= start + pageSize;
+      c.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     // 同步分页控件状态

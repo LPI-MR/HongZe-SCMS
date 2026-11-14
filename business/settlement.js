@@ -108,7 +108,9 @@
     const endInput = document.getElementById('searchDateEnd');
 
     // 按当前检索条件过滤表格行；无匹配时显示空状态行
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       const type = typeSelect.value;
       const status = statusSelect.value;
       const start = startInput.value;
@@ -142,23 +144,23 @@
       renderPage();
     };
 
-    // 关键词输入 / 类型 / 状态切换 / 日期变更即筛（免点击查询按钮）
-    nameInput.addEventListener('input', () => applyFilter());
-    typeSelect.addEventListener('change', () => applyFilter());
-    statusSelect.addEventListener('change', () => applyFilter());
-    startInput.addEventListener('change', () => applyFilter());
-    endInput.addEventListener('change', () => applyFilter());
+    // 关键词输入 / 类型 / 状态切换 / 日期变更即筛（免点击查询按钮，回到第 1 页）
+    nameInput.addEventListener('input', () => applyFilter(true));
+    typeSelect.addEventListener('change', () => applyFilter(true));
+    statusSelect.addEventListener('change', () => applyFilter(true));
+    startInput.addEventListener('change', () => applyFilter(true));
+    endInput.addEventListener('change', () => applyFilter(true));
 
-    // 查询：阻止表单默认提交，执行过滤
+    // 查询：阻止表单默认提交，执行过滤（回到第 1 页）
     form.addEventListener('submit', e => {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
-    // 重置：清空条件后恢复显示全部行
+    // 重置：清空条件后恢复显示全部行（回到第 1 页）
     form.addEventListener('reset', () => {
       // 等浏览器完成原生 reset 后再过滤
-      requestAnimationFrame(() => applyFilter());
+      requestAnimationFrame(() => applyFilter(true));
     });
   }
 
@@ -188,8 +190,9 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach((r, i) => {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     // 同步分页控件状态
@@ -201,6 +204,18 @@
     $('pgPrev').disabled = curPage <= 1;
     $('pgNext').disabled = curPage >= pages;
     $('pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定结算行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(r => !r.hidden);
+    const idx = rows.findIndex(r => r.dataset.id === id);
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -521,6 +536,7 @@
 
     closeDrawer();
     renderAll();
+    locateRowPage(s.id); // 新增结算可能落在其他页，跳转到位
   }
 
   // ----- 收付登记抽屉：按单据类型登记对应方向金额（pay-grid 并排输入） -----
