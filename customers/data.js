@@ -6,8 +6,11 @@
    - 客户字段白名单（5.2）与字段清理（5.3）
    - 业务规则 BR-C01 ~ BR-C10
    - 客户状态机（9.3）：待审核→正常⇄停用、待审核→已驳回→重提→待审核
-   - 自主注册 / 平台代注册 / 系统迁移 三类数据来源
-   - 存量统一库（hz_customers_unified_v1）迁移映射（10.1 / 10.2）
+   - 自主注册 / 平台代注册 / 系统迁移（历史遗留标识） 数据来源
+   - 客户类型归类：注册 / 代注册时选择类型，管理页编辑弹窗可随时调整
+   ------------------------------------------------------------
+   注：旧「统一库同步迁移 + 人工归类面板」流程已下线（后端数据库就绪，
+   客户直接在注册 / 管理页录入与维护）；遗留待归类清单由 adoptPending 兼容并入。
    ------------------------------------------------------------
    设计约定：
    - 本文件为纯逻辑层：所有业务函数入参不依赖 DOM / localStorage，
@@ -29,20 +32,16 @@
   /* ==================== 存储键与版本 ==================== */
 
   var STORE_KEY = 'hz_customers_v2';            // 新版客户库
-  var PENDING_KEY = 'hz_customers_pending_v2';  // 迁移待归类清单（矿石贸易商）
-  var MIGRATION_KEY = 'hz_customers_migration_v2'; // 迁移状态标记与报告
-  var UNIFIED_KEY = 'hz_customers_unified_v1';  // 存量统一库（迁移数据源）
+  var PENDING_KEY = 'hz_customers_pending_v2';  // 遗留待归类清单（旧迁移流程存量，读入后清空）
   var STORE_VERSION = 'v2';
 
   /* ==================== 业务常量 ==================== */
 
-  // 客户类型（三选一、互斥，BR-C01）
+  // 客户类型（三选一、互斥，BR-C01）；注册 / 代注册均可选择，支持后期归类调整
   var TYPES = ['集采贸易商', '现货贸易商', '下游客户'];
-  // 代注册可选类型（BR-C03：不提供现货贸易商）
-  var OPERATOR_TYPES = ['集采贸易商', '下游客户'];
   // 客户状态（状态机 9.3）
   var STATUSES = ['待审核', '正常', '停用', '已驳回'];
-  // 客户来源（含迁移批次来源，10.2 假设）
+  // 客户来源（「系统迁移」仅为历史遗留数据的来源标识，不再产生新记录）
   var SOURCES = ['自主注册', '平台代注册', '系统迁移'];
   // 类型派生标签（BR-C10：系统派生，不可手工设置）
   var TYPE_TAGS = { '集采贸易商': '长协贸易商', '现货贸易商': '现货散单', '下游客户': '钢厂' };
@@ -52,12 +51,6 @@
 
   // 字段长度限制（5.2.1）
   var LIMITS = { nameMin: 2, nameMax: 50, contactMax: 20 };
-
-  // 存量标签体系（迁移映射依据，10.1）
-  var LEGACY_ROLES = ['物流服务商', '场站服务商', '仓储服务商', '付费客户'];
-  var LEGACY_INDUSTRIES = ['钢铁生产企业', '矿石贸易商', '铁路运营', '铁路场站', '仓储园区', '公路运输', '港口节点'];
-  var LEGACY_RESOURCE_ROLES = ['物流服务商', '场站服务商', '仓储服务商'];
-  var LEGACY_RESOURCE_INDUSTRIES = ['铁路运营', '铁路场站', '仓储园区', '公路运输', '港口节点'];
 
   /* ==================== 工具函数 ==================== */
 
@@ -140,7 +133,7 @@
     return errors;
   }
 
-  // 资质凭证校验（现货贸易商专属，必填[假设]）
+  // 资质凭证校验（注册时必填[假设]）
   function validateCredentials(credentials) {
     if (!Array.isArray(credentials) || credentials.length === 0) {
       return '请至少上传一份资质凭证';
@@ -187,7 +180,7 @@
 
   // 白名单展示字段：客户名称/客户类型/联系人/联系方式/统一社会信用代码/
   //                 客户来源/状态/创建时间/更新时间（+现货专属：资质凭证）
-  // 系统字段：id/name_key/reject_reason/history/source_refs/migrated_batch（不作为业务信息展示）
+  // 系统字段：id/name_key/reject_reason/history/source_refs（不作为业务信息展示）
   function newRecord(data, opts) {
     opts = opts || {};
     var now = fmtTime(new Date());
@@ -205,7 +198,6 @@
       reject_reason: '',
       history: opts.history || [],
       source_refs: Array.isArray(data.source_refs) ? data.source_refs.slice() : [],
-      migrated_batch: opts.migrated_batch || '',
       created_at: now,
       updated_at: now
     };
@@ -224,13 +216,16 @@
     return -1;
   }
 
-  /* ==================== 创建：平台代注册（F3 / BR-C03） ==================== */
+  /* ==================== 创建：平台代注册（F3） ==================== */
 
-  // 运营端代注册：类型仅集采贸易商/下游客户；保存即生效（状态 = 正常）
+  // 运营端代注册：三类客户均可直接录入；保存即生效（状态 = 正常）
   function createByOperator(list, data) {
     var errors = validateCoreFields(data);
-    if (!data.customer_type || OPERATOR_TYPES.indexOf(data.customer_type) < 0) {
-      errors.customer_type = '代注册类型仅支持：集采贸易商 / 下游客户';
+    var t = trimStr(data.customer_type);
+    if (!t) {
+      errors.customer_type = '请选择客户类型';
+    } else if (TYPES.indexOf(t) < 0) {
+      errors.customer_type = '客户类型无效（' + TYPES.join(' / ') + '）';
     }
     if (Object.keys(errors).length) {
       return { ok: false, code: 'INVALID', errors: errors, error: '字段校验未通过' };
@@ -239,20 +234,24 @@
     if (dup) {
       return { ok: false, code: 'DUP', error: dup.msg, dup_field: dup.field };
     }
-    var rec = newRecord(data, {
+    var rec = newRecord(Object.assign({}, data, { customer_type: t }), {
       source: '平台代注册',
       status: '正常',
-      history: [logEntry('代注册创建', '客户类型：' + data.customer_type + '，保存即生效')]
+      history: [logEntry('代注册创建', '客户类型：' + t + '，保存即生效')]
     });
     var next = list.concat([rec]);
     return { ok: true, list: next, customer: rec };
   }
 
-  /* ==================== 创建：自主注册（F4 / BR-C03 / BR-C09） ==================== */
+  /* ==================== 创建：自主注册（F4 / BR-C09） ==================== */
 
-  // 公开注册：类型固定现货贸易商；提交后待审核，审核通过前不生效
+  // 公开注册：三类客户类型均可选择（缺省现货贸易商）；提交后待审核，审核通过前不生效
   function createSelfRegistered(list, data) {
     var errors = validateCoreFields(data);
+    var t = trimStr(data.customer_type) || '现货贸易商';
+    if (TYPES.indexOf(t) < 0) {
+      errors.customer_type = '客户类型无效（' + TYPES.join(' / ') + '）';
+    }
     var e = validateCredentials(data.credentials);
     if (e) errors.credentials = e;
     if (Object.keys(errors).length) {
@@ -263,13 +262,13 @@
       return { ok: false, code: 'DUP', error: '该企业已注册，请直接登录或联系平台', dup_field: dup.field };
     }
     var rec = newRecord({
-      customer_type: '现货贸易商',
+      customer_type: t,
       name: data.name, contact: data.contact, phone: data.phone,
       credit_code: data.credit_code, credentials: data.credentials
     }, {
       source: '自主注册',
       status: '待审核',
-      history: [logEntry('自主注册提交', '提交注册申请，等待平台审核', '客户本人')]
+      history: [logEntry('自主注册提交', '注册类型：' + t + '，等待平台审核', '客户本人')]
     });
     var next = list.concat([rec]);
     return { ok: true, list: next, customer: rec };
@@ -350,10 +349,10 @@
   /* ==================== 编辑（F6 / AC-C07） ==================== */
 
   // 可编辑矩阵：
-  //   运营方：联系人、联系方式（白名单中除锁定字段外的可维护字段）；
-  //           统一社会信用代码仅允许在原值为空时补录（迁移存量补录场景）。
+  //   运营方：联系人、联系方式、客户类型（归类调整：待归类→三类 / 三类间重归类）；
+  //           统一社会信用代码仅允许在原值为空时补录。
   //   现货贸易商（本主体）：联系人、联系方式。
-  // 不可编辑：客户名称、客户类型、客户来源、非空信用代码（保证主体唯一与类型稳定）。
+  // 不可编辑：客户名称、客户来源、非空信用代码（保证主体唯一）。
   function updateInfo(list, id, patch, opts) {
     opts = opts || {};
     var role = opts.role || 'operator';   // operator | customer
@@ -370,8 +369,19 @@
     if (patch.name !== undefined && nameKeyOf(patch.name) !== rec.name_key) {
       errors.name = '客户名称不可修改';
     }
-    if (patch.customer_type !== undefined && patch.customer_type !== rec.customer_type) {
-      errors.customer_type = '客户类型创建后锁定，不可变更';
+    // 客户类型（归类）：待归类 → 任选三类；已有类型 → 三类间调整；不可清空
+    var newType = null;
+    if (patch.customer_type !== undefined) {
+      var t = trimStr(patch.customer_type);
+      if (t && t !== rec.customer_type) {
+        if (TYPES.indexOf(t) < 0) {
+          errors.customer_type = '客户类型无效（' + TYPES.join(' / ') + '）';
+        } else {
+          newType = t;
+        }
+      } else if (!t && rec.customer_type) {
+        errors.customer_type = '客户类型不可清空';
+      }
     }
     if (patch.source !== undefined && patch.source !== rec.source) {
       errors.source = '客户来源不可修改';
@@ -402,6 +412,8 @@
       return { ok: false, code: 'INVALID', errors: errors, error: '字段校验未通过' };
     }
 
+    if (newType) changed.push('客户类型');
+
     if (changed.length) {
       // 补录信用代码时需再次全量查重
       if (patch.credit_code !== undefined && !rec.credit_code) {
@@ -410,10 +422,20 @@
       }
       var next = list.slice();
       var updated = Object.assign({}, rec);
+      if (newType) updated.customer_type = newType;
       if (patch.contact !== undefined) updated.contact = trimStr(patch.contact);
       if (patch.phone !== undefined) updated.phone = trimStr(patch.phone);
       if (patch.credit_code !== undefined && !rec.credit_code) updated.credit_code = trimStr(patch.credit_code).toUpperCase();
-      updated.history = rec.history.concat([logEntry('信息修改', '修改：' + changed.join('、'))]);
+      // 类型变更单独成条历史（归类确认 / 类型调整），其余字段合并为「信息修改」
+      var logs = [];
+      if (newType) {
+        logs.push(!rec.customer_type
+          ? logEntry('归类确认', '人工归类为「' + newType + '」，状态不变')
+          : logEntry('类型调整', '客户类型由「' + rec.customer_type + '」调整为「' + newType + '」'));
+      }
+      var others = changed.filter(function (c) { return c !== '客户类型'; });
+      if (others.length) logs.push(logEntry('信息修改', '修改：' + others.join('、')));
+      updated.history = rec.history.concat(logs);
       touch(updated);
       next[i] = updated;
       return { ok: true, list: next, customer: updated, changed: changed };
@@ -444,157 +466,41 @@
 
   /* ==================== 业务引用查询（BR-C06 / BR-C09） ==================== */
 
-  // 供订单等业务模块引用：仅「正常」状态客户可选（停用/待审核/已驳回均排除）
+  // 供订单等业务模块引用：仅「正常」状态且已完成归类的客户可选
+  //（停用/待审核/已驳回排除；待归类存量主体未定类型，不进入业务可引用名单）
   function listActive(list) {
-    return list.filter(function (c) { return c.status === '正常'; });
+    return list.filter(function (c) { return c.status === '正常' && c.customer_type; });
   }
 
-  /* ==================== 数据迁移（10.1 / 10.2 / AC-C10） ==================== */
+  /* ==================== 存量待归类清单兼容（旧迁移流程已下线） ==================== */
 
-  // 从存量统一库实体提取联系人信息（白名单字段映射；profile 其余内容不迁移）
-  function extractContactFromProfile(profile) {
-    var out = { contact: '', phone: '' };
-    if (!profile) return out;
-    var pairs;
-    if (Array.isArray(profile)) {
-      pairs = profile.map(function (it) { return { k: trimStr(it && it.label), v: trimStr(it && it.value) }; });
-    } else if (typeof profile === 'object') {
-      pairs = Object.keys(profile).map(function (k) { return { k: trimStr(k), v: trimStr(profile[k]) }; });
-    } else {
-      return out;
-    }
-    pairs.forEach(function (p) {
-      if (!p.v) return;
-      if (!out.contact && /联系人|经办人/.test(p.k)) out.contact = p.v;
-      if (!out.phone && /电话|手机|联系方式/.test(p.k)) out.phone = p.v;
-    });
-    return out;
-  }
-
-  function pickFirst(arr) {
-    return (Array.isArray(arr) && arr.length) ? trimStr(arr[0]) : '';
-  }
-
-  function hasAny(arr, candidates) {
-    if (!Array.isArray(arr)) return false;
-    return arr.some(function (v) { return candidates.indexOf(trimStr(v)) >= 0; });
-  }
-
-  // 映射规则（10.1）：
-  //   矿石贸易商（行业）                              → 待人工归类清单（集采 或 现货）
-  //   钢铁生产企业（行业）                            → 下游客户，直接迁入（正常 / 系统迁移）
-  //   铁路运营等资源类行业 / 物流等资源类角色（角色）  → 移出客户模块（不迁入）
-  function migrateUnified(entities, existingList) {
-    var list = (existingList || []).slice();
-    var customers = [];
-    var pending = [];
-    var excluded = [];
-    var skipped = [];
-
-    (entities || []).forEach(function (ent) {
-      if (!ent || !trimStr(ent.name)) return;
-      var industries = Array.isArray(ent.industries) ? ent.industries : [];
-      var roles = Array.isArray(ent.roles) ? ent.roles : [];
-      var profile = extractContactFromProfile(ent.profile);
-
-      var data = {
-        name: trimStr(ent.name),
-        credit_code: trimStr(ent.creditCode).toUpperCase(),
-        contact: profile.contact,
-        phone: profile.phone,
-        customer_type: null,
+  // 背景：旧「统一库同步迁移 + 矿石贸易商人工归类面板」流程已下线。
+  // 下线前遗留在待归类清单中的主体一次性并入客户库：
+  //   customer_type 置空 → 列表标记「待归类」，由管理页编辑弹窗直接设置类型；
+  //   与客户库重名 / 重码的主体直接丢弃（避免查重冲突）。
+  function adoptPending(list, pendingList) {
+    var next = list.slice();
+    var adopted = 0;
+    (pendingList || []).forEach(function (p) {
+      if (!p || !trimStr(p.name)) return;
+      var dup = findDuplicate(next, { name: trimStr(p.name), credit_code: trimStr(p.credit_code) });
+      if (dup) return;
+      next.push(newRecord({
+        customer_type: '',
+        name: trimStr(p.name),
+        contact: trimStr(p.contact),
+        phone: trimStr(p.phone),
+        credit_code: trimStr(p.credit_code).toUpperCase(),
         credentials: [],
-        source_refs: Array.isArray(ent.source_refs) ? ent.source_refs : []
-      };
-
-      // 查重：与现有库及本批次已迁入记录比对（BR-C02）
-      var dup = findDuplicate(list.concat(customers), data);
-      if (dup) { skipped.push({ name: data.name, reason: dup.msg }); return; }
-
-      var bucket;
-      if (hasAny(industries, ['矿石贸易商'])) {
-        bucket = 'pending';   // 矿石贸易商 → 人工归类（行业判定优先于角色）
-      } else if (hasAny(industries, ['钢铁生产企业'])) {
-        bucket = 'steel';     // 下游客户直接映射
-      } else if (hasAny(industries, LEGACY_RESOURCE_INDUSTRIES) || hasAny(roles, LEGACY_RESOURCE_ROLES)) {
-        bucket = 'excluded';  // 资源类主体移出客户模块
-      } else {
-        bucket = 'pending';   // 无明确行业归属的付费主体，交人工归类
-      }
-
-      if (bucket === 'excluded') {
-        var tag = pickFirst(industries) || pickFirst(roles);
-        excluded.push({ name: data.name, reason: '资源类主体（' + tag + '），移出客户模块' });
-        return;
-      }
-
-      if (bucket === 'steel') {
-        var rec = newRecord({
-          customer_type: '下游客户',
-          name: data.name, contact: data.contact, phone: data.phone,
-          credit_code: data.credit_code, credentials: [],
-          source_refs: data.source_refs
-        }, {
-          source: '系统迁移',
-          status: '正常',
-          history: [logEntry('迁移迁入', '存量钢铁生产企业 → 下游客户，状态正常')],
-          migrated_batch: 'mig_' + Date.now().toString(36)
-        });
-        customers.push(rec);
-      } else {
-        pending.push({
-          id: 'mp_' + Date.now().toString(36) + '_' + Math.floor(Math.random() * 1e6),
-          name: data.name,
-          credit_code: data.credit_code,
-          contact: data.contact,
-          phone: data.phone,
-          source_refs: data.source_refs,
-          added_at: fmtTime(new Date())
-        });
-      }
+        source_refs: Array.isArray(p.source_refs) ? p.source_refs.slice() : []
+      }, {
+        source: '系统迁移',
+        status: '正常',
+        history: [logEntry('存量并入', '旧待归类清单主体并入客户库，待人工归类')]
+      }));
+      adopted++;
     });
-
-    return {
-      customers: customers,   // 直接迁入（下游客户）
-      pending: pending,       // 待人工归类（矿石贸易商）
-      excluded: excluded,     // 移出客户模块
-      skipped: skipped,       // 查重跳过
-      migrated_batch: 'mig_' + Date.now().toString(36)
-    };
-  }
-
-  // 人工归类：矿石贸易商 → 集采贸易商 / 现货贸易商（归类确认即生效[假设]）
-  function classifyPending(list, pendingList, pendingId, type) {
-    if (['集采贸易商', '现货贸易商'].indexOf(type) < 0) {
-      return { ok: false, code: 'INVALID', error: '归类类型无效（仅集采贸易商 / 现货贸易商）' };
-    }
-    var idx = -1;
-    for (var i = 0; i < (pendingList || []).length; i++) {
-      if (pendingList[i].id === pendingId) { idx = i; break; }
-    }
-    if (idx < 0) return { ok: false, code: 'NOT_FOUND', error: '待归类记录不存在' };
-    var item = pendingList[idx];
-    var dup = findDuplicate(list, { name: item.name, credit_code: item.credit_code });
-    if (dup) return { ok: false, code: 'DUP', error: dup.msg, dup_field: dup.field };
-
-    var rec = newRecord({
-      customer_type: type,
-      name: item.name,
-      contact: item.contact,
-      phone: item.phone,
-      credit_code: item.credit_code,
-      credentials: type === '现货贸易商' ? [] : [],
-      source_refs: item.source_refs || []
-    }, {
-      source: '系统迁移',
-      status: '正常',
-      history: [logEntry('归类确认', '存量矿石贸易商人工归类为「' + type + '」，状态正常')]
-    });
-    rec.migrated_batch = item.migrated_batch || '';
-    var nextList = list.concat([rec]);
-    var nextPending = pendingList.slice();
-    nextPending.splice(idx, 1);
-    return { ok: true, list: nextList, pending: nextPending, customer: rec };
+    return { list: next, adopted: adopted };
   }
 
   /* ==================== 浏览器持久化（localStorage 可用时生效） ==================== */
@@ -640,29 +546,13 @@
     }));
   }
 
-  function getMigrationState() {
-    return readJson(MIGRATION_KEY) || null;
-  }
-
-  function saveMigrationState(state) {
-    if (!hasStorage()) return;
-    localStorage.setItem(MIGRATION_KEY, JSON.stringify(state));
-  }
-
-  function readUnified() {
-    var w = readJson(UNIFIED_KEY);
-    return (w && Array.isArray(w.list)) ? w.list : null;
-  }
-
   /* ==================== 导出 ==================== */
 
   return {
     // 常量
-    STORE_KEY: STORE_KEY, PENDING_KEY: PENDING_KEY, MIGRATION_KEY: MIGRATION_KEY,
-    UNIFIED_KEY: UNIFIED_KEY, STORE_VERSION: STORE_VERSION,
-    TYPES: TYPES, OPERATOR_TYPES: OPERATOR_TYPES, STATUSES: STATUSES, SOURCES: SOURCES,
+    STORE_KEY: STORE_KEY, PENDING_KEY: PENDING_KEY, STORE_VERSION: STORE_VERSION,
+    TYPES: TYPES, STATUSES: STATUSES, SOURCES: SOURCES,
     TYPE_TAGS: TYPE_TAGS, OPERATOR: OPERATOR, LIMITS: LIMITS,
-    LEGACY_ROLES: LEGACY_ROLES, LEGACY_INDUSTRIES: LEGACY_INDUSTRIES,
     // 工具
     trimStr: trimStr, nameKeyOf: nameKeyOf, fmtTime: fmtTime, deriveTag: deriveTag,
     // 校验与查重
@@ -678,13 +568,10 @@
     reviewApprove: reviewApprove, reviewReject: reviewReject, resubmit: resubmit,
     updateInfo: updateInfo, setStatus: setStatus,
     listActive: listActive,
-    // 迁移
-    migrateUnified: migrateUnified, classifyPending: classifyPending,
-    extractContactFromProfile: extractContactFromProfile,
+    // 存量待归类清单兼容
+    adoptPending: adoptPending,
     // 存储
     hasStorage: hasStorage, loadStore: loadStore, saveStore: saveStore,
-    loadPending: loadPending, savePending: savePending,
-    getMigrationState: getMigrationState, saveMigrationState: saveMigrationState,
-    readUnified: readUnified
+    loadPending: loadPending, savePending: savePending
   };
 }));

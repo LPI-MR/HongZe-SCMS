@@ -46,19 +46,33 @@
     .hero h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
     .hero p { font-size: 13px; color: var(--sub); margin-top: 6px; }
 
-    .type-fixed {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
+    .type-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+    .type-pill {
+      flex: 1;
+      min-width: 140px;
+      padding: 12px 14px;
       border-radius: 12px;
-      background: rgba(255, 149, 0, 0.10);
-      border: 1px solid rgba(255, 149, 0, 0.25);
-      font-size: 13px;
-      color: #a04d00;
-      margin-bottom: 20px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
     }
-    .type-fixed b { font-weight: 600; }
+    .type-pill .pill-sub { font-size: 11px; font-weight: 400; color: var(--sub); }
+    .type-pill:hover { border-color: #b8b8bd; }
+    .type-pill.active {
+      border-color: var(--primary);
+      background: rgba(0, 113, 227, 0.06);
+      color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.10);
+    }
+    .type-pill:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.28); }
 
     .card {
       background: #fff;
@@ -196,13 +210,13 @@
   <div class="wrap">
     <div class="hero">
       <h1>客户入驻注册</h1>
-      <p>现货贸易商自主注册入口 · 提交后由平台运营方审核，审核通过即入驻成功</p>
+      <p>三类客户自主注册入口 · 选择客户类型后提交，由平台运营方审核，审核通过即入驻成功</p>
     </div>
 
-    <div class="type-fixed">
-      <b>注册类型：现货贸易商</b>
-      <span>（临时采购、散单业务为主）</span>
-      <span style="margin-left:auto;font-size:12px;">集采贸易商 / 钢厂客户由平台运营方代为注册，无需自行申请</span>
+    <div class="type-pills" id="typePills" role="radiogroup" aria-label="客户类型">
+      <button class="type-pill active" data-v="现货贸易商" type="button" role="radio" aria-checked="true">现货贸易商<span class="pill-sub">临时采购散单</span></button>
+      <button class="type-pill" data-v="集采贸易商" type="button" role="radio" aria-checked="false">集采贸易商<span class="pill-sub">长协贸易商</span></button>
+      <button class="type-pill" data-v="下游客户" type="button" role="radio" aria-checked="false">下游客户<span class="pill-sub">钢厂企业</span></button>
     </div>
 
     <!-- 注册表单 -->
@@ -368,6 +382,19 @@
       $('fContact').addEventListener('blur', checkContact);
       $('fPhone').addEventListener('blur', checkPhone);
 
+      /* ---------- 客户类型（归类） ---------- */
+      var regType = '现货贸易商';
+      $('typePills').addEventListener('click', function (e) {
+        var pill = e.target.closest('.type-pill');
+        if (!pill) return;
+        regType = pill.dataset.v;
+        this.querySelectorAll('.type-pill').forEach(function (p) {
+          var on = p === pill;
+          p.classList.toggle('active', on);
+          p.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+      });
+
       /* ---------- 提交注册 ---------- */
       $('btnSubmit').addEventListener('click', function () {
         var btn = this;
@@ -378,6 +405,7 @@
         btn.textContent = '提交中…';
         try {
           var res = D.createSelfRegistered(D.loadStore(), {
+            customer_type: regType,
             name: $('fName').value,
             credit_code: $('fCode').value,
             contact: $('fContact').value,
@@ -409,6 +437,12 @@
         files = [];
         renderFiles();
         ['hintName', 'hintCode', 'hintContact', 'hintPhone', 'hintFiles'].forEach(function (id) { $(id).textContent = ''; $(id).className = 'hint'; });
+        regType = '现货贸易商';
+        $('typePills').querySelectorAll('.type-pill').forEach(function (p) {
+          var on = p.dataset.v === regType;
+          p.classList.toggle('active', on);
+          p.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
         $('okCard').hidden = true;
         $('regCard').hidden = false;
       });

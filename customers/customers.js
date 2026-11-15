@@ -4,12 +4,13 @@
    功能（依据《PRD-客户管理模块》）：
    - F1 客户列表：类型 Tab + 搜索（名称/信用代码）+ 状态筛选 + 分页 + 操作列
    - F2 客户详情：白名单字段 + 资质凭证 + 状态变更记录
-   - F3 平台代注册：类型仅集采贸易商 / 下游客户，保存即生效
+   - F3 平台代注册：三类客户直接录入，保存即生效
    - F5 注册审核：通过 / 驳回（原因必填）
-   - F6 编辑：联系人、联系方式（名称/类型/来源/非空信用代码锁定）
+   - F6 编辑 / 归类：联系人、联系方式、客户类型（归类调整）；名称/来源/非空信用代码锁定
    - F7 停用 / 启用：二次确认
-   - 数据迁移：统一库一次性迁移 + 矿石贸易商人工归类面板
    权限（4.2，TBD-01 降级）：登录体系未接入，本页以运营端身份兜底。
+   注：旧「同步控制台 + 迁移归类面板」流程已下线，遗留待归类清单由启动时
+   mergeLegacyPending 自动并入客户库（待归类状态），在列表中直接编辑归类。
    ============================================================ */
 
 (function () {
@@ -35,6 +36,7 @@
     confirmId: null,
     confirmTarget: '停用',
     editId: null,
+    editType: '',
     currentDetail: null
   };
 
@@ -80,86 +82,20 @@
     return keys.length ? errors[keys[0]] : '';
   }
 
-  /* ==================== 数据迁移 ==================== */
+  /* ==================== 存量待归类清单并入 ==================== */
 
-  // 一次性迁移：统一库存在且未迁移过时自动执行（幂等：以迁移状态标记为准）
-  function runMigrationIfDue() {
-    var unified = D.readUnified();
-    if (!unified || !unified.length) return null;
-    if (D.getMigrationState()) return null;
-
-    var store = D.loadStore();
-    var plan = D.migrateUnified(unified, store);
-
-    D.saveStore(store.concat(plan.customers));
-    D.savePending(plan.pending);
-    var migState = {
-      done_at: D.fmtTime(new Date()),
-      batch: plan.migrated_batch,
-      source_count: unified.length,
-      counts: {
-        migrated: plan.customers.length,
-        pending: plan.pending.length,
-        excluded: plan.excluded.length,
-        skipped: plan.skipped.length
-      },
-      excluded: plan.excluded,
-      skipped: plan.skipped
-    };
-    D.saveMigrationState(migState);
-
-    if (plan.customers.length + plan.pending.length > 0) {
-      renderMigrationReport(migState);
-      openMask('migReportMask');
-    }
-    return migState;
-  }
-
-  function renderMigrationReport(s) {
-    var c = s.counts;
-    var html = '<div class="form-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">'
-      + kvBlock('存量主体', s.source_count + ' 家')
-      + kvBlock('直接迁入', c.migrated + ' 家（钢铁生产企业 → 下游客户）')
-      + kvBlock('待人工归类', c.pending + ' 家（矿石贸易商）')
-      + kvBlock('移出客户模块', c.excluded + ' 家（资源类主体）')
-      + '</div>';
-    if (c.skipped > 0) {
-      html += '<div class="section-title">查重跳过</div><div class="log-list">'
-        + (s.skipped || []).map(function (it) { return '<div class="log-item"><b>' + esc(it.name) + '</b>：' + esc(it.reason) + '</div>'; }).join('')
-        + '</div>';
-    }
-    if ((s.excluded || []).length > 0) {
-      html += '<div class="section-title" style="margin-top:16px;">移出清单</div><div class="log-list">'
-        + s.excluded.map(function (it) { return '<div class="log-item"><b>' + esc(it.name) + '</b>：' + esc(it.reason) + '</div>'; }).join('')
-        + '</div>';
-    }
-    html += '<div class="modal-note" style="margin-top: 14px;">迁移执行时间：' + esc(s.done_at) + '（一次性执行，非白名单字段不迁移不保留）</div>';
-    $('migReportBody').innerHTML = html;
-  }
-
-  function kvBlock(label, value) {
-    return '<div class="kv-item"><div class="kv-label">' + label + '</div><div class="kv-value" style="font-size:15px;font-weight:600;">' + esc(value) + '</div></div>';
-  }
-
-  function renderPendingPanel() {
+  // 旧迁移流程已下线：遗留在待归类清单（hz_customers_pending_v2）中的主体
+  // 启动时一次性并入客户库（customer_type 置空 → 列表标记「待归类」），
+  // 之后在列表中通过「归类」按钮打开编辑弹窗直接设置类型。
+  function mergeLegacyPending() {
     var pending = D.loadPending();
-    $('migPendingCount').textContent = pending.length;
-    var wrap = $('pendingList');
-    if (!pending.length) {
-      wrap.innerHTML = '<div class="modal-note">全部存量主体已完成归类</div>';
-      return;
+    if (!pending.length) return;
+    var res = D.adoptPending(D.loadStore(), pending);
+    if (res.adopted) D.saveStore(res.list);
+    D.savePending([]);   // 无论是否并入成功都清空，避免每次进入页面重复处理
+    if (res.adopted) {
+      toast('存量待归类主体已并入客户库（' + res.adopted + ' 家），可在列表中归类', 'success');
     }
-    wrap.innerHTML = pending.map(function (p) {
-      return '<div class="mig-row" data-id="' + esc(p.id) + '">'
-        + '<div class="mig-main"><b>' + esc(p.name) + '</b>'
-        + '<span class="mig-sub">' + (p.credit_code ? '信用代码 ' + esc(p.credit_code) : '信用代码待补录') + (p.contact ? ' · 联系人 ' + esc(p.contact) : '') + '</span></div>'
-        + '<select class="filter-select" data-role="classifyType">'
-        + '<option value="集采贸易商">集采贸易商（长协）</option>'
-        + '<option value="现货贸易商">现货贸易商（散单）</option>'
-        + '</select>'
-        + '<button class="btn btn-sm btn-primary" data-act="classify" type="button">确认归类</button>'
-        + '</div>';
-    }).join('');
   }
 
   /* ==================== 渲染：KPI / Tabs ==================== */
@@ -234,7 +170,8 @@
       if (c.status === '待审核') {
         ops.push('<button class="btn btn-sm btn-primary" data-act="review" data-id="' + c.id + '" type="button">审核</button>');
       } else {
-        ops.push('<button class="btn btn-sm btn-ghost" data-act="edit" data-id="' + c.id + '" type="button">编辑</button>');
+        // 无类型客户视为待归类，操作按钮文案为「归类」（打开编辑弹窗设置类型）
+        ops.push('<button class="btn btn-sm btn-ghost" data-act="edit" data-id="' + c.id + '" type="button">' + (c.customer_type ? '编辑' : '归类') + '</button>');
         if (c.status === '正常') {
           ops.push('<button class="btn btn-sm btn-ghost" data-act="toggle" data-id="' + c.id + '" type="button">停用</button>');
         } else if (c.status === '停用') {
@@ -256,16 +193,9 @@
 
   function renderAll() {
     var list = D.loadStore();
-    var pending = D.loadPending();
-    $('migBanner').hidden = pending.length === 0;
-    $('migPendingCount').textContent = pending.length;
-    var migState = D.getMigrationState();
-    $('btnMigPanel').hidden = !migState && pending.length === 0;
-
     renderKpi(list);
     renderTabs(list);
     renderTable();
-    renderPendingPanel();
   }
 
   /* ==================== 详情抽屉（F2） ==================== */
@@ -282,7 +212,9 @@
 
     var html = '<div class="drawer-section"><div class="section-title">基本信息</div><div class="kv-grid">'
       + kvItem('客户名称', c.name)
-      + kvItem('客户类型', esc(c.customer_type) + '（' + esc(D.deriveTag(c.customer_type)) + '）')
+      + kvItem('客户类型', c.customer_type
+          ? esc(c.customer_type) + '（' + esc(D.deriveTag(c.customer_type)) + '）'
+          : '<span class="c-tag src">待归类</span>')
       + kvItem('联系人', c.contact)
       + kvItem('联系方式', c.phone)
       + kvItem('统一社会信用代码', c.credit_code || '待补录')
@@ -394,7 +326,9 @@
     var c = findCustomer(id);
     if (!c) return;
     ctx.editId = id;
+    $('editModalTitle').textContent = c.customer_type ? '编辑客户信息' : '客户归类';
     $('editName').value = c.name;
+    setEditType(c.customer_type || '');
     $('editContact').value = c.contact;
     $('editPhone').value = c.phone;
     $('editCodeWrap').hidden = !!c.credit_code;
@@ -403,9 +337,20 @@
     openMask('editMask');
   }
 
+  function setEditType(t) {
+    ctx.editType = t;
+    $('editTypePills').querySelectorAll('.type-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.v === t);
+    });
+  }
+
   function bindEditModal() {
+    $('editTypePills').addEventListener('click', function (e) {
+      var pill = e.target.closest('.type-pill');
+      if (pill) setEditType(pill.dataset.v);
+    });
     $('btnEditSave').addEventListener('click', function () {
-      var patch = { contact: $('editContact').value, phone: $('editPhone').value };
+      var patch = { contact: $('editContact').value, phone: $('editPhone').value, customer_type: ctx.editType };
       if (!$('editCodeWrap').hidden) patch.credit_code = $('editCode').value;
       var res = D.updateInfo(D.loadStore(), ctx.editId, patch, { role: 'operator' });
       if (!res.ok) {
@@ -503,35 +448,6 @@
     });
   }
 
-  /* ==================== 归类面板 ==================== */
-
-  function bindClassifyPanel() {
-    $('btnClassify').addEventListener('click', function () { renderPendingPanel(); openMask('classifyMask'); });
-    $('btnMigPanel').addEventListener('click', function () {
-      renderPendingPanel();
-      if (D.loadPending().length) openMask('classifyMask');
-      else { renderMigrationReport(D.getMigrationState() || { counts: {}, done_at: '—' }); openMask('migReportMask'); }
-    });
-    $('btnMigReport').addEventListener('click', function () {
-      renderMigrationReport(D.getMigrationState() || { counts: {}, done_at: '—' });
-      openMask('migReportMask');
-    });
-    $('pendingList').addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-act="classify"]');
-      if (!btn) return;
-      var row = btn.closest('.mig-row');
-      var id = row.dataset.id;
-      var type = row.querySelector('[data-role="classifyType"]').value;
-      var res = D.classifyPending(D.loadStore(), D.loadPending(), id, type);
-      if (!res.ok) { toast(res.error, 'error'); return; }
-      D.saveStore(res.list);
-      D.savePending(res.pending);
-      toast('已归类为「' + type + '」：' + res.customer.name, 'success');
-      renderAll();
-      renderPendingPanel();
-    });
-  }
-
   /* ==================== 事件绑定 ==================== */
 
   function bindEvents() {
@@ -581,7 +497,6 @@
       else if (act === 'edit') openEditModal(id);
       else if (act === 'review') openReviewModal(id);
       else if (act === 'toggle') openConfirmToggle(id);
-      else if (act === 'classify') { /* 在归类面板内部处理 */ }
     });
 
     // 关闭类按钮
@@ -590,7 +505,7 @@
     });
     $('drawerClose').addEventListener('click', closeDrawer);
     $('drawerMask').addEventListener('click', closeDrawer);
-    ['createMask', 'editMask', 'reviewMask', 'confirmMask', 'classifyMask', 'migReportMask'].forEach(function (id) {
+    ['createMask', 'editMask', 'reviewMask', 'confirmMask'].forEach(function (id) {
       $(id).addEventListener('click', function (e) { if (e.target === this) closeMask(id); });
     });
 
@@ -598,7 +513,7 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
         if (!$('custDrawer').hidden) closeDrawer();
-        ['createMask', 'editMask', 'reviewMask', 'confirmMask', 'classifyMask', 'migReportMask'].forEach(function (id) {
+        ['createMask', 'editMask', 'reviewMask', 'confirmMask'].forEach(function (id) {
           if (!$(id).hidden) closeMask(id);
         });
       }
@@ -608,14 +523,13 @@
     bindEditModal();
     bindReviewModal();
     bindConfirmModal();
-    bindClassifyPanel();
   }
 
   /* ==================== 启动 ==================== */
 
   document.addEventListener('DOMContentLoaded', function () {
     bindEvents();
-    try { runMigrationIfDue(); } catch (e) { console.error('迁移执行失败', e); }
+    try { mergeLegacyPending(); } catch (e) { console.error('存量待归类并入失败', e); }
     renderAll();
   });
 })();

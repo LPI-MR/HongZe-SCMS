@@ -41,22 +41,12 @@
         <div class="ledger-header">
           <div>
             <div class="page-title">客户管理</div>
-            <div class="page-desc">三类客户分类管理：集采贸易商 / 现货贸易商 / 下游客户 · 数据来源：自主注册 + 平台代注册 + 系统迁移</div>
+            <div class="page-desc">三类客户分类管理：集采贸易商 / 现货贸易商 / 下游客户 · 支持注册录入、信息编辑与类型归类</div>
           </div>
           <div class="header-actions">
             <a class="btn btn-ghost" href="/customers/register.html" target="_blank" rel="noopener">公开注册入口</a>
-            <a class="btn btn-ghost" href="/customers/sync.html">同步控制台</a>
-            <button class="btn btn-ghost" id="btnMigPanel" type="button" hidden>迁移与归类</button>
             <button class="btn btn-primary" id="btnCreate" type="button">代注册客户</button>
           </div>
-        </div>
-
-        <!-- 存量迁移横幅：存在待归类主体时展示 -->
-        <div class="ledger-banner" id="migBanner" hidden>
-          <span class="banner-title">存量数据迁移</span>
-          <span class="banner-stat">矿石贸易商待人工归类：<em id="migPendingCount">0</em> 家，归类确认后正式进入客户库</span>
-          <button class="btn btn-sm btn-primary banner-action" id="btnClassify" type="button">查看归类清单</button>
-          <button class="btn btn-sm btn-ghost banner-action" id="btnMigReport" type="button">迁移报告</button>
         </div>
 
         <!-- 客户库概览 -->
@@ -74,7 +64,7 @@
           <div class="kp">
             <span class="kp-label">现货贸易商</span>
             <b class="kp-value" id="kpiType2">0</b>
-            <span class="kp-note">自主注册 · 临时采购散单</span>
+            <span class="kp-note">临时采购散单客户</span>
           </div>
           <div class="kp">
             <span class="kp-label">下游客户</span>
@@ -84,7 +74,7 @@
           <div class="kp">
             <span class="kp-label">待审核</span>
             <b class="kp-value" id="kpiPendingReview">0</b>
-            <span class="kp-note">现货贸易商注册审核</span>
+            <span class="kp-note">注册审核</span>
           </div>
         </div>
 
@@ -137,7 +127,7 @@
               <path d="M3 7v10l9 4 9-4V7" stroke="#c7c7cc" />
             </svg>
             <div class="eg-title">暂无客户</div>
-            <div class="eg-desc">可通过「代注册客户」新增集采贸易商 / 下游钢厂客户；现货贸易商通过公开注册入口自主注册</div>
+            <div class="eg-desc">可通过「代注册客户」直接录入三类客户，或通过公开注册入口自主注册</div>
             <button class="btn btn-primary btn-sm" id="btnCreateEmpty" type="button" style="margin-top: 14px;">代注册客户</button>
           </div>
 
@@ -179,9 +169,10 @@
             <label class="field-label">客户类型 <span class="required">*</span></label>
             <div class="type-pills" id="createTypePills">
               <button class="type-pill active" data-v="集采贸易商" type="button">集采贸易商<span class="pill-sub">长协贸易商</span></button>
+              <button class="type-pill" data-v="现货贸易商" type="button">现货贸易商<span class="pill-sub">临时采购散单</span></button>
               <button class="type-pill" data-v="下游客户" type="button">下游客户<span class="pill-sub">钢厂企业</span></button>
             </div>
-            <div class="form-tip">平台代注册面向集采贸易商与下游钢厂客户，保存即生效；现货贸易商请通过公开注册入口自主注册</div>
+            <div class="form-tip">保存即生效；客户类型可在列表「编辑 / 归类」中随时调整</div>
             <div class="req-err" data-err="customer_type"></div>
           </div>
           <div class="form-item">
@@ -215,19 +206,29 @@
     </div>
   </div>
 
-  <!-- 弹窗：编辑客户信息 -->
+  <!-- 弹窗：编辑客户信息 / 归类 -->
   <div class="modal-mask" id="editMask" hidden>
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-header">
-        <span class="modal-title">编辑客户信息</span>
+        <span class="modal-title" id="editModalTitle">编辑客户信息</span>
         <button class="modal-close" data-close="editMask" type="button" aria-label="关闭">&times;</button>
       </div>
       <div class="modal-body">
-        <div class="modal-note" style="margin-bottom: 14px;">客户名称、客户类型、客户来源不可修改；统一社会信用代码仅原值为空时可补录</div>
+        <div class="modal-note" style="margin-bottom: 14px;">客户名称、客户来源不可修改；客户类型可在三类间调整归类；统一社会信用代码仅原值为空时可补录</div>
         <div class="form-grid" id="editForm">
           <div class="form-item">
             <label class="field-label">客户名称</label>
             <input class="field-input" id="editName" type="text" disabled />
+          </div>
+          <div class="form-item">
+            <label class="field-label">客户类型 <span class="required">*</span></label>
+            <div class="type-pills" id="editTypePills">
+              <button class="type-pill" data-v="集采贸易商" type="button">集采贸易商<span class="pill-sub">长协贸易商</span></button>
+              <button class="type-pill" data-v="现货贸易商" type="button">现货贸易商<span class="pill-sub">临时采购散单</span></button>
+              <button class="type-pill" data-v="下游客户" type="button">下游客户<span class="pill-sub">钢厂企业</span></button>
+            </div>
+            <div class="form-tip">待归类客户请在此选择类型完成归类；已归类的客户可在三类间调整</div>
+            <div class="req-err" data-err="customer_type"></div>
           </div>
           <div class="form-grid">
             <div class="form-item">
@@ -295,39 +296,6 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" data-close="confirmMask" type="button">取消</button>
         <button class="btn btn-danger" id="btnConfirmSave" type="button">确认停用</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 弹窗：迁移归类面板 -->
-  <div class="modal-mask" id="classifyMask" hidden>
-    <div class="modal" style="width: min(680px, 100%);" role="dialog" aria-modal="true">
-      <div class="modal-header">
-        <span class="modal-title">存量矿石贸易商归类</span>
-        <button class="modal-close" data-close="classifyMask" type="button" aria-label="关闭">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="modal-note" style="margin-bottom: 14px;">
-          按迁移规则，矿石贸易商（临时采购、散单业务为主）需人工归类为「集采贸易商」或「现货贸易商」；归类确认后即正式进入客户库，类型创建后锁定
-        </div>
-        <div id="pendingList"></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" data-close="classifyMask" type="button">关闭</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 弹窗：迁移报告 -->
-  <div class="modal-mask" id="migReportMask" hidden>
-    <div class="modal" style="width: min(640px, 100%);" role="dialog" aria-modal="true">
-      <div class="modal-header">
-        <span class="modal-title">存量数据迁移报告</span>
-        <button class="modal-close" data-close="migReportMask" type="button" aria-label="关闭">&times;</button>
-      </div>
-      <div class="modal-body" id="migReportBody"></div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" data-close="migReportMask" type="button">关闭</button>
       </div>
     </div>
   </div>
