@@ -136,7 +136,8 @@
 
   // ===== 订单检索 =====
   // 数据行约定：tbody 中每条订单为一行，携带 data-* 属性——
-  //   data-id（唯一标识）、data-status、data-date（签订日期 YYYY-MM-DD）、data-amount（订单金额数值）
+  //   data-id（唯一标识）、data-status、data-date（签订日期 YYYY-MM-DD）、data-amount（订单金额数值）、
+  //   data-search（关键词检索文本：仅业务字段，不含序号 / 按钮文案 / 内部 id）
   // 空状态行使用 class="empty-row"，不参与过滤
   let applyFilter = null; // 供增删后重新应用检索条件
   let activeFlow = '';    // 流程胶囊当前选中状态（'' 表示全部）
@@ -155,17 +156,19 @@
       if (resetPage === true) curPage = 1;
       const start = startInput.value;
       const end = endInput.value;
-      // 关键词检索：空格分隔多个词，全部命中（AND）才算匹配，不限字段模糊匹配
-      const keywords = (nameInput.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
+      // 关键词检索：空格分隔多个词，全部命中（AND）才算匹配，不限字段模糊匹配；
+      // 忽略千分位逗号，使复制界面金额「512,345.67」与原始数字「512345.67」同等命中
+      const keywords = (nameInput.value || '').trim().toLowerCase()
+        .split(/\s+/).map(kw => kw.replace(/,/g, '')).filter(Boolean);
 
       let visible = 0;
       document.querySelectorAll('.ledger-table tbody tr').forEach(row => {
         if (row.classList.contains('empty-row')) return;
 
         const date = row.dataset.date || '';
-        // 行全文 = 所有单元格文本 + data 属性，作为关键词匹配范围
-        const text = row.textContent.toLowerCase() +
-          ' ' + Object.values(row.dataset).join(' ').toLowerCase();
+        // 关键词匹配范围：行检索文本（业务字段：编号 / 合同 / 客户 / 货物 / 货量 / 金额 / 矿山 / 航次 / 状态 / 日期），
+        // 不含序号、操作按钮文案与内部 id，避免「编辑」「详情」等通用词造成全表误命中
+        const text = (row.dataset.search || '').toLowerCase();
         const ok =
           keywords.every(kw => text.includes(kw)) &&
           (!activeFlow || row.dataset.status === activeFlow) &&
@@ -202,39 +205,31 @@
     });
   }
 
-  // ===== 流程胶囊导航（履约全流程快捷过滤：全部 + 6 个状态）=====
+  // ===== 履约管线过滤（九态管线 + 全部 / 已终止 一屏合一，结构由 orders-flow.js 渲染）=====
   function initFlowNav() {
     const nav = document.getElementById('flowNav');
     if (!nav) return;
 
-    // 点击胶囊切换过滤状态（事件委托）
+    // 点击管线分段切换过滤状态（事件委托，对动态渲染的分段永久生效）
     nav.addEventListener('click', e => {
-      const pill = e.target.closest('.pill[data-flow]');
-      if (!pill) return;
-      activeFlow = pill.dataset.flow || '';
-      nav.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p === pill));
-      if (applyFilter) applyFilter(true); // 胶囊切换后回到第 1 页
+      const seg = e.target.closest('[data-flow]');
+      if (!seg) return;
+      activeFlow = seg.dataset.flow || '';
+      nav.querySelectorAll('[data-flow]').forEach(p => p.classList.toggle('active', p === seg));
+      if (applyFilter) applyFilter(true); // 切换过滤后回到第 1 页
     });
   }
 
-  // 重置胶囊到「全部」
+  // 重置过滤到「全部」
   function resetFlowNav() {
     activeFlow = '';
     const nav = document.getElementById('flowNav');
     if (!nav) return;
-    nav.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', !p.dataset.flow));
+    nav.querySelectorAll('[data-flow]').forEach(p => p.classList.toggle('active', !p.dataset.flow));
   }
 
   // ===== 订单列表：数据驱动渲染 =====
   const tbody = document.querySelector('.ledger-table tbody');
-
-  // 按当前 DOM 顺序重排：删除中间行后自动前移补齐
-  function renumber() {
-    let i = 0;
-    tbody.querySelectorAll('tr:not(.empty-row)').forEach(row => {
-      row.querySelector('.col-index').textContent = ++i;
-    });
-  }
 
   // ----- 分页（基于检索后的可见行切片显示） -----
   let pageSize = 10;   // 每页条数
@@ -252,8 +247,11 @@
 
     const start = (curPage - 1) * pageSize;
     // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
+    // 序号随可见顺序连续编号（跨页连续：第 2 页从 pageSize+1 起；检索后 1..N 不再跳号）
     rows.forEach((r, i) => {
       r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
+      const idx = r.querySelector('.col-index');
+      if (idx) idx.textContent = i + 1;
     });
 
     // 同步分页控件状态
@@ -265,6 +263,8 @@
     $('pgPrev').disabled = curPage <= 1;
     $('pgNext').disabled = curPage >= pages;
     $('pgLast').disabled = curPage >= pages;
+
+    syncCheckAll(); // 翻页 / 检索后重算全选框状态（仅以当前页可见行为准）
   }
 
   // 定位指定订单行所在页码并跳转（新增保存后确保新行立即进入视野）
@@ -331,13 +331,7 @@
     const rateEl = document.getElementById('ovDoneRate');
     if (rateEl) rateEl.textContent = rate + '%';
 
-    // 流程胶囊计数：全部 + 各状态订单数
-    document.querySelectorAll('#flowNav .pill[data-flow]').forEach(pill => {
-      const f = pill.dataset.flow;
-      const n = f ? orders.filter(o => o.status === f).length : orders.length;
-      const c = pill.querySelector('.flow-count');
-      if (c) c.textContent = n;
-    });
+    // 管线分段计数由 orders-flow.js 统一维护（台账六态 + 流程九态合并口径），此处不再写入
 
     renderPage();
   }
@@ -356,7 +350,7 @@
     return v ? (v.voyage_code || '') : '';
   }
 
-  // 由订单数据对象构造表格行（序号由 renumber 按位置统一编号）
+  // 由订单数据对象构造表格行（序号由 renderPage 按检索分页后的可见顺序连续编号）
   // 操作列：流转 / 编辑 / 终止 / 删除（已终止订单仅保留编辑 / 删除）
   function renderRow(o) {
     const tr = document.createElement('tr');
@@ -368,6 +362,12 @@
     tr.dataset.status = o.status;
     tr.dataset.date = o.sign_date || '';
     tr.dataset.amount = o.amount || 0;
+    // 检索文本：与表格可见业务列同口径，原始数值（货量 / 金额）可按未格式化数字搜到
+    tr.dataset.search = [
+      o.order_code, o.contract_code || '', o.customer || '', o.cargo_name || '',
+      o.cargo_qty == null ? '' : o.cargo_qty, o.amount == null ? '' : o.amount,
+      o.mine_name || '', voyageText(o), o.status, o.sign_date || ''
+    ].join(' ');
 
     const open = o.status !== biz.ORDER_TERMINAL;
     const cells = [
@@ -403,7 +403,6 @@
     if (window.HZFlowMerge && typeof window.HZFlowMerge.appendRows === 'function') {
       window.HZFlowMerge.appendRows(tbody);
     }
-    renumber();
     updateStats();
     toggleEmptyRow();
     if (applyFilter) applyFilter();
@@ -441,7 +440,18 @@
     if (!o) return;
     currentId = id;
 
-    const trips = Array.isArray(o.trip_ids) ? o.trip_ids : [];
+    // 关联车次进度（运输 → 业务联动展示）：经 HZData 只读车次权威数据源回填实时进度
+    // 节点链长度与 transport/trips-store.js 的 MODES 保持一致（rail/inter 9 节点、road 3 节点）
+    const TRIP_NODES_LEN = { rail: 9, inter: 9, road: 3 };
+    const tripIds = Array.isArray(o.trip_ids) ? o.trip_ids : [];
+    const tripById = new Map(rawArr('trips').map(t => [t.id, t]));
+    const tripText = tripIds.length ? tripIds.map(tid => {
+      const t = tripById.get(tid);
+      if (!t) return esc(tid) + '（车次不存在，待运输调度同步）';
+      const len = t.mode === 'custom' && Array.isArray(t.nodes) ? t.nodes.length : (TRIP_NODES_LEN[t.mode] || 0);
+      const prog = len ? ` · ${Number(t.nodeIndex) + 1}/${len}` : '';
+      return esc(tid) + '（' + esc((t.mode === 'custom' ? '自定义通道' : { rail: '铁路直达', inter: '公铁联运', road: '汽运直达' }[t.mode] || '车次')) + prog + '）';
+    }).join('、') : '—';
     const info = [
       ['订单编号', esc(o.order_code)],
       ['订单状态', statusTag(o.status)],
@@ -452,7 +462,7 @@
       ['订单金额（元）', fmtAmount(o.amount)],
       ['货源矿山', esc(o.mine_name || '—')],
       ['关联航次', esc(voyageText(o) || '—')],
-      ['关联车次', trips.length ? esc(trips.join('、')) : '—'],
+      ['关联车次', tripText],
       ['签订日期', esc(o.sign_date || '—')],
       ['计划完成日期', esc(o.plan_end_date || '—')],
       ['备注', esc(o.remark || '—')]
@@ -986,7 +996,30 @@
     });
   }
 
-  // ----- 批量选择：表头全选（仅作用于当前可见行）-----
+  // ----- 批量选择：表头全选（仅作用于当前页可见行）-----
+  // 可见判断须同时排除「检索过滤」（hidden）与「分页切片」（style.display:none）两类隐藏行，
+  // 否则全选会把其他页的行一并勾选，导致导出范围错乱
+  function isRowOnCurPage(row) {
+    return !row.hidden && row.style.display !== 'none';
+  }
+
+  // 按当前页可见行的勾选情况同步全选框状态
+  function syncCheckAll() {
+    const checkAll = document.getElementById('checkAll');
+    if (!checkAll) return;
+    const boxes = [];
+    let allChecked = true;
+    tbody.querySelectorAll('tr[data-id]').forEach(row => {
+      if (!isRowOnCurPage(row)) return;
+      const cb = row.querySelector('.row-check');
+      if (cb) {
+        boxes.push(cb);
+        if (!cb.checked) allChecked = false;
+      }
+    });
+    checkAll.checked = boxes.length > 0 && allChecked;
+  }
+
   function initCheckAll() {
     const checkAll = document.getElementById('checkAll');
     if (!checkAll) return;
@@ -994,7 +1027,7 @@
     checkAll.addEventListener('change', () => {
       const checked = checkAll.checked;
       tbody.querySelectorAll('tr[data-id]').forEach(row => {
-        if (row.hidden) return; // 被检索过滤的行不参与全选
+        if (!isRowOnCurPage(row)) return; // 被检索过滤 / 不在当前页的行不参与全选
         const cb = row.querySelector('.row-check');
         if (cb) cb.checked = checked;
       });
@@ -1003,18 +1036,7 @@
     // 行勾选变化时同步全选框状态
     tbody.addEventListener('change', e => {
       if (!e.target.classList || !e.target.classList.contains('row-check')) return;
-
-      const boxes = [];
-      let allChecked = true;
-      tbody.querySelectorAll('tr[data-id]').forEach(row => {
-        if (row.hidden) return;
-        const cb = row.querySelector('.row-check');
-        if (cb) {
-          boxes.push(cb);
-          if (!cb.checked) allChecked = false;
-        }
-      });
-      checkAll.checked = boxes.length > 0 && allChecked;
+      syncCheckAll();
     });
   }
 

@@ -19,7 +19,7 @@ function psql(sql) {
 }
 
 const EXPECT = [
-  ['meta.dict_entry', 80],
+  ['meta.dict_entry', 82],  // 种子 79 条 + 运行期字典（truckDict 2 条、rail_goods 铁矿石 1 条）
   ['mine.mine_info', 5], ['mine.mine_product', 43], ['mine.mine_price_ref', 30], ['mine.mine_partner', 19],
   ['ocean.ocean_voyage', 6], ['ocean.ocean_voyage_sync', 5], ['ocean.ocean_spot', 20],
   ['ocean.ocean_coa', 1], ['ocean.ocean_coa_item', 14],
@@ -31,7 +31,7 @@ const EXPECT = [
   ['steel.steel_mill', 11],
   ['contract.contract', 5], ['contract.contract_template', 1],
   ['ops.trip', 12],
-  ['trade.order_ledger', 9], ['trade.order_ledger_trip', 5], ['trade.order_ledger_log', 25],
+  ['trade.order_ledger', 9], ['trade.order_ledger_trip', 12], ['trade.order_ledger_log', 27],
   ['trade.settlement', 8],
   ['pricing.truck_price_index', 31], ['pricing.rail_price_index', 16], ['pricing.iron_ore_index', 20],
 ];
@@ -61,6 +61,8 @@ const checks = [
   ['台账→矿山外键', `SELECT count(*) FROM trade.order_ledger l WHERE l.mine_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM mine.mine_info m WHERE m.id = l.mine_id)`],
   ['结算→台账外键', `SELECT count(*) FROM trade.settlement s WHERE s.order_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM trade.order_ledger l WHERE l.id = s.order_id)`],
   ['车次关联→车次表', `SELECT count(*) FROM trade.order_ledger_trip t WHERE NOT EXISTS (SELECT 1 FROM ops.trip x WHERE x.id = t.trip_id)`],
+  ['车次关联↔车次单号一致', `SELECT count(*) FROM trade.order_ledger_trip t JOIN ops.trip x ON x.id = t.trip_id JOIN trade.order_ledger l ON l.id = t.ledger_id WHERE x.order_ref IS DISTINCT FROM l.order_code`],
+  ['车次→台账外键', `SELECT count(*) FROM ops.trip x WHERE x.order_ref IS NOT NULL AND NOT EXISTS (SELECT 1 FROM trade.order_ledger l WHERE l.order_code = x.order_ref)`],
   ['海运同步→航次', `SELECT count(*) FROM ocean.ocean_voyage_sync s WHERE NOT EXISTS (SELECT 1 FROM ocean.ocean_voyage v WHERE v.id = s.voyage_id)`],
   ['垛位→供应商', `SELECT count(*) FROM wh.wh_stack k WHERE NOT EXISTS (SELECT 1 FROM wh.wh_supplier w WHERE w.id = k.supplier_id)`],
 ];
