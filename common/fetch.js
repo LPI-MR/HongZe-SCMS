@@ -77,6 +77,86 @@
     } catch (e) { /* 存储不可用时忽略 */ }
   }
 
+  // ===== 侧边栏收起 / 展开（AI 软件式；状态记忆 localStorage 持久化）=====
+  const LS_SB_COLLAPSED = 'hz_sidebar_collapsed';
+
+  // 同步侧边栏辅助状态：品牌区 title、收起态一级导航的悬停提示
+  function applySidebarChrome(sidebar) {
+    const collapsed = sidebar.classList.contains('collapsed');
+    const brand = sidebar.querySelector('.brand');
+    if (brand) brand.title = collapsed ? '展开侧边栏' : '收起侧边栏';
+    sidebar.querySelectorAll('.nav-item .label').forEach(label => {
+      const item = label.closest('.nav-item');
+      if (!item) return;
+      if (collapsed) {
+        const text = label.textContent.trim();
+        if (text) item.title = text;
+      } else {
+        item.removeAttribute('title');
+      }
+    });
+  }
+
+  function setSidebarCollapsed(sidebar, collapsed) {
+    sidebar.classList.toggle('collapsed', collapsed);
+    try {
+      localStorage.setItem(LS_SB_COLLAPSED, collapsed ? '1' : '0');
+    } catch (e) { /* 存储不可用时忽略 */ }
+    applySidebarChrome(sidebar);
+  }
+
+  // 品牌区即开关：点击 / 回车 / 空格切换收起态（无需单独按钮，各页面零改动）
+  function initSidebarCollapse() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar || sidebar.dataset.sbInit === '1') return;
+    sidebar.dataset.sbInit = '1';
+
+    const brand = sidebar.querySelector('.brand');
+    const brandName = sidebar.querySelector('.brand-name');
+    if (brand && brandName) {
+      // 收起态品牌字标：取系统名称首字
+      if (!sidebar.querySelector('.brand-mark')) {
+        const mark = document.createElement('div');
+        mark.className = 'brand-mark';
+        mark.textContent = (brandName.textContent.trim() || 'HZ').charAt(0);
+        brand.appendChild(mark);
+      }
+      // 折叠方向指示箭头（收起态隐藏，由 CSS 控制）
+      if (!sidebar.querySelector('.brand-chev')) {
+        const chev = document.createElement('span');
+        chev.className = 'brand-chev';
+        chev.setAttribute('aria-hidden', 'true');
+        chev.innerHTML = '<svg viewBox="0 0 24 24"><path d="M14.5 5l-7 7 7 7"/></svg>';
+        brand.appendChild(chev);
+      }
+      brand.classList.add('brand-toggle');
+      brand.setAttribute('role', 'button');
+      brand.setAttribute('tabindex', '0');
+      const toggle = () => setSidebarCollapsed(sidebar, !sidebar.classList.contains('collapsed'));
+      brand.addEventListener('click', toggle);
+      brand.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    }
+
+    // 恢复上次收起状态
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem(LS_SB_COLLAPSED) === '1';
+    } catch (e) { /* 存储不可用时忽略 */ }
+    if (collapsed) sidebar.classList.add('collapsed');
+    applySidebarChrome(sidebar);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebarCollapse, { once: true });
+  } else {
+    initSidebarCollapse();
+  }
+
   function loadNavbar() {
     const container = document.getElementById('navbar');
     if (!container) return;
@@ -89,6 +169,8 @@
       .then(html => {
         container.innerHTML = html;
         bindNavbar();
+        const sb = document.querySelector('.sidebar');
+        if (sb) applySidebarChrome(sb);
         document.dispatchEvent(new CustomEvent('navbar:loaded'));
       })
       .catch(err => {
@@ -111,13 +193,23 @@
       if (key && openState[key]) group.classList.add('open');
     });
 
-    // 二级菜单展开/收起（状态记忆）
+    // 二级菜单展开/收起（状态记忆；收起态点击分组 → 先展开侧边栏再展开该组）
     container.querySelectorAll('.nav-group > .nav-item.has-children').forEach(parent => {
       parent.addEventListener('click', () => {
         const group = parent.closest('.nav-group');
-        const open = group.classList.toggle('open');
         const label = parent.querySelector('.label');
-        setOpenGroup(label ? label.textContent.trim() : '', open);
+        const key = label ? label.textContent.trim() : '';
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar && sidebar.classList.contains('collapsed')) {
+          setSidebarCollapsed(sidebar, false);
+          if (!group.classList.contains('open')) {
+            group.classList.add('open');
+            setOpenGroup(key, true);
+          }
+          return;
+        }
+        const open = group.classList.toggle('open');
+        setOpenGroup(key, open);
       });
     });
 

@@ -131,7 +131,7 @@
 
 /* ============================================================
    差异化组件套件（Apple 风格设计语言：白卡 + 细边框 + 克制色彩）
-   biz-overview 概览条 / pill-nav 流程胶囊 / table-toolbar 轻检索 /
+   biz-overview 概览条 / flow-nav 管线过滤条 / table-toolbar 轻检索 /
    track-list 进度卡片流（四页统一语言、按业务特性差异化呈现）
    ============================================================ */
 
@@ -142,6 +142,24 @@
   gap: var(--space-sm);
 }
 
+/* --- 页头：Apple 式大标题层级（大而重的标题 + 弱化描述 + 右侧动作）--- */
+.ledger-header {
+  align-items: flex-start;
+  margin-bottom: var(--space-lg);
+}
+
+.ledger-header .page-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.ledger-header .page-desc {
+  margin-top: 5px;
+  font-size: 13px;
+}
+
 /* --- 概览条（替代四宫格统计卡：主指标 + 派生指标 + 完成率）--- */
 .biz-overview {
   display: flex;
@@ -150,7 +168,7 @@
   padding: var(--space-lg) var(--space-xl);
   background: var(--gray-100);
   border: 1px solid var(--gray-300);
-  border-radius: var(--radius-lg);
+  border-radius: 14px;
   box-shadow: var(--shadow-card);
   margin-bottom: var(--space-md);
 }
@@ -229,68 +247,145 @@
   transition: width 0.4s ease;
 }
 
-/* --- 流程胶囊导航（订单台账：履约全流程快捷过滤）--- */
-.pill-nav {
+/* --- 履约管线过滤条（结构化分组：总览 / 创建 / 履约 / 完成 / 终态）--- */
+/* 结构由 orders-flow.js 渲染：五组纵列（帽标在上、分段在下），组间流向箭头衔接；
+   点击即筛：active 分段以自身状态色实底高亮，空态半透明弱化 */
+.flow-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 28px;
+  padding: 14px 22px;
+  margin-bottom: var(--space-md);
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
+}
+
+/* 组纵列：帽标 + 分段行（结构化表达的核心单元）*/
+.flow-nav .fn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+/* 帽标：总览 / 创建 / 履约 / 完成 / 终态（加宽字距的 Apple 式轻标签）*/
+.flow-nav .fn-cap {
+  padding-left: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--gray-400);
+}
+
+.flow-nav .fn-segs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  gap: 6px;
 }
 
-.pill {
+.flow-nav .fn-seg {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid var(--gray-300);
+  gap: 7px;
+  height: 30px;
+  padding: 0 13px;
+  border: none;
   border-radius: 999px;
-  background: var(--gray-100);
-  font-size: 13px;
+  background: var(--gray-200);
   color: var(--gray-600);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.15s ease, border-color 0.15s ease,
-    background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.pill:hover {
-  transform: translateY(-1px);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  box-shadow: var(--shadow-hover);
+.flow-nav .fn-seg:hover {
+  background: color-mix(in srgb, var(--c, var(--color-primary)) 14%, var(--gray-100));
+  color: var(--c, var(--color-primary));
 }
 
-.pill.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+/* 选中态：状态色实底（--c 由行内样式注入）*/
+.flow-nav .fn-seg.active {
+  background: var(--c, var(--color-primary));
   color: #fff;
+  box-shadow: 0 1px 5px color-mix(in srgb, var(--c, var(--color-primary)) 35%, transparent);
 }
 
-/* 胶囊内状态圆点：与表格状态标签同色系 */
-.pill .flow-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--gray-400);
-}
+.flow-nav .fn-seg.is-empty { opacity: 0.45; }
+.flow-nav .fn-seg.is-empty.active { opacity: 1; }
 
-.pill .flow-dot.d-pending { background: var(--gray-400); }
-.pill .flow-dot.d-confirmed { background: var(--color-primary-dark); }
-.pill .flow-dot.d-running { background: var(--color-warning); }
-.pill .flow-dot.d-shipped { background: var(--color-primary); }
-.pill .flow-dot.d-done { background: var(--color-success); }
-.pill .flow-dot.d-terminated { background: var(--color-danger); }
+.flow-nav .fn-label { white-space: nowrap; }
 
-.pill.active .flow-dot { background: rgba(255, 255, 255, 0.9); }
-
-.pill .flow-count {
-  font-size: 12px;
-  color: var(--gray-500);
+.flow-nav .fn-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--gray-600);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-.pill.active .flow-count { color: rgba(255, 255, 255, 0.85); }
+.flow-nav .fn-seg.active .fn-count {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+
+/* 总览「全部」段：主动作色 */
+.flow-nav .fn-all {
+  --c: var(--color-primary);
+  font-weight: 600;
+}
+
+/* 组间流向箭头（› 形，指示履约方向；与分段行垂直居中：帽标约 13px + 组内间距 8px）*/
+.flow-nav .fn-flow {
+  align-self: flex-end;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 2px 11px;
+  border-top: 1.5px solid var(--gray-400);
+  border-right: 1.5px solid var(--gray-400);
+  transform: rotate(45deg);
+}
+
+/* 终态侧挂：已终止（右对齐独立危险色组）*/
+.flow-nav .fn-group.fn-side { margin-left: auto; }
+.flow-nav .fn-group.fn-side .fn-cap { color: color-mix(in srgb, var(--color-danger) 70%, var(--gray-400)); }
+.flow-nav .fn-group.fn-side .fn-seg { --c: var(--color-danger); }
+
+/* ===== 过滤条自适应：随页面宽度分级收拢 ===== */
+/* 中屏：「已终止」并入主流，避免换行后孤挂右侧 */
+@media (max-width: 1280px) {
+  .flow-nav .fn-group.fn-side { margin-left: 0; }
+}
+
+/* 窄屏：隐藏组间流向箭头，分段自然换行；内距与分段收拢 */
+@media (max-width: 1024px) {
+  .flow-nav { padding: 10px 14px; gap: 10px 18px; }
+  .flow-nav .fn-flow { display: none; }
+  .flow-nav .fn-seg { height: 28px; padding: 0 10px; font-size: 12px; }
+}
+
+/* 极窄：隐藏帽标、计数徽标收窄，节省横向空间 */
+@media (max-width: 640px) {
+  .flow-nav .fn-cap { display: none; }
+  .flow-nav .fn-group { gap: 0; }
+  .flow-nav .fn-count { min-width: 16px; height: 16px; padding: 0 4px; }
+}
 
 /* --- 轻检索工具条（嵌入 ledger-card 顶部，替代独立检索卡）--- */
 .table-toolbar {
@@ -1048,178 +1143,9 @@ body.lock-view .ledger-table td.mono-code {
 }
 
 /* ============================================================
-   R4 · 订单台账全链路视图：九态管道 / 流程行 / 进度点
-   管道分段颜色经 --fp-c 内联变量注入（与 flow-data.js STATUS_META 同源）
+   R4 · 订单台账全链路视图：管线过滤条 / 流程行 / 进度点
+   分段颜色经 --c 内联变量注入（与 flow-data.js STATUS_META 同源）
    ============================================================ */
-
-/* --- 链路总览管道容器 --- */
-.flow-pipeline-wrap {
-  margin: 0 0 var(--space-md);
-}
-
-.flow-pipeline {
-  display: flex;
-  align-items: stretch;
-  gap: 16px;
-  padding: 14px 18px;
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.flow-pipeline .fp-groups {
-  display: flex;
-  align-items: stretch;
-  gap: 14px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.flow-pipeline .fp-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 3 1 0;
-  min-width: 0;
-}
-
-.flow-pipeline .fp-group + .fp-group { flex: 3 1 0; }
-.flow-pipeline .fp-group:last-child { flex: 1 1 0; }
-
-/* 分组标题：竖排小签 */
-.flow-pipeline .fp-cap {
-  writing-mode: vertical-rl;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  color: var(--gray-500);
-  padding: 2px 0;
-  border-left: 2px solid var(--gray-200);
-  padding-left: 6px;
-  flex: none;
-}
-
-.flow-pipeline .fp-segs {
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* 分段：宽度按该状态订单数比例伸缩（flex-grow 内联注入） */
-.flow-pipeline .fp-seg {
-  position: relative;
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 8px 6px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: rgba(142, 142, 147, 0.1); /* 降级：不支持 color-mix 时 */
-  background: color-mix(in srgb, var(--fp-c, #8e8e93) 10%, #fff);
-  color: var(--fp-c, var(--gray-600));
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.flow-pipeline .fp-seg:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--fp-c, #8e8e93) 22%, transparent);
-}
-
-.flow-pipeline .fp-seg.active {
-  border-color: var(--fp-c, var(--color-primary));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--fp-c, #8e8e93) 18%, transparent);
-}
-
-.flow-pipeline .fp-seg.is-empty { opacity: 0.55; }
-
-.flow-pipeline .fp-num {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-
-.flow-pipeline .fp-label {
-  font-size: 11px;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-/* 段间箭头 */
-.flow-pipeline .fp-arrow {
-  flex: none;
-  width: 10px;
-  align-self: center;
-  height: 10px;
-  border-top: 1.5px solid var(--gray-300);
-  border-right: 1.5px solid var(--gray-300);
-  transform: rotate(45deg);
-  margin-right: 4px;
-}
-
-/* 组间分隔 */
-.flow-pipeline .fp-gap {
-  flex: none;
-  width: 1px;
-  background: var(--gray-200);
-  margin: 4px 0;
-}
-
-/* 已终止侧挂：独立于正向管道 */
-.flow-pipeline .fp-side {
-  flex: none;
-  display: flex;
-  align-items: center;
-  border-left: 1px solid var(--gray-200);
-  padding-left: 14px;
-}
-
-.flow-pipeline .fp-side-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 8px 12px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: rgba(255, 59, 48, 0.07);
-  color: var(--color-danger);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.flow-pipeline .fp-side-chip:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.18);
-}
-
-.flow-pipeline .fp-side-chip.active {
-  border-color: var(--color-danger);
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.14);
-}
-
-.flow-pipeline .fp-side-num {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-
-.flow-pipeline .fp-side-label {
-  font-size: 11px;
-  line-height: 1.2;
-}
 
 /* --- 台账合并行：创建阶段流程订单（浅底色区分来源） --- */
 body.lock-view .ledger-table tbody tr.flow-row td {
@@ -1271,18 +1197,6 @@ body.lock-view .ledger-table .flow-del:hover { background: rgba(255, 59, 48, 0.0
 .stage-dots i.cur {
   background: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.18);
-}
-
-/* --- 胶囊圆点：创建阶段四态（与 STATUS_META 颜色同源） --- */
-.pill .flow-dot.d-draft { background: #8e8e93; }
-.pill .flow-dot.d-port { background: #0071e3; }
-.pill .flow-dot.d-capacity { background: #ff9500; }
-.pill .flow-dot.d-plan { background: #af52de; }
-
-/* --- 管道窄屏降级：横向滚动（min-width 保证 9 段标签完整不截断） --- */
-@media (max-width: 1100px) {
-  .flow-pipeline { overflow-x: auto; }
-  .flow-pipeline .fp-groups { min-width: 840px; }
 }
 
 /* ============================================================

@@ -37,59 +37,9 @@
           </div>
         </div>
 
-        <!-- 链路总览区：业务工作流九态管道可视化（订单管理全流程工作流链路，R4） -->
-        <div class="flow-pipeline-wrap">
-          <div class="flow-pipeline" id="flowPipeline">
-            <!-- 由 orders-flow.js 渲染：创建 → 履约 → 完成 九态管道 + 已终止侧挂 -->
-          </div>
-        </div>
-
-        <!-- 流程胶囊导航：按履约状态一键过滤（全部 + 工作流 9 态 + 已终止，与管道联动） -->
-        <div class="pill-nav" id="flowNav">
-          <button class="pill active" type="button" data-flow="">
-            <span class="flow-dot"></span>全部
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="录入中">
-            <span class="flow-dot d-draft"></span>录入中
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="待港口">
-            <span class="flow-dot d-port"></span>待港口
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="待运力">
-            <span class="flow-dot d-capacity"></span>待运力
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="待方案">
-            <span class="flow-dot d-plan"></span>待方案
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="待确认">
-            <span class="flow-dot d-pending"></span>待确认
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="已确认">
-            <span class="flow-dot d-confirmed"></span>已确认
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="执行中">
-            <span class="flow-dot d-running"></span>执行中
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="已发运">
-            <span class="flow-dot d-shipped"></span>已发运
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="已完成">
-            <span class="flow-dot d-done"></span>已完成
-            <span class="flow-count">0</span>
-          </button>
-          <button class="pill" type="button" data-flow="已终止">
-            <span class="flow-dot d-terminated"></span>已终止
-            <span class="flow-count">0</span>
-          </button>
+        <!-- 履约管线过滤条：九态管线 + 全部 / 已终止 一屏合一（Apple 风格分段，点击即筛） -->
+        <div class="flow-nav" id="flowNav" aria-label="按履约状态过滤订单">
+          <!-- 由 orders-flow.js 渲染：全部 + 创建 / 履约 / 完成 三阶段九态管线 + 已终止侧挂 -->
         </div>
 
         <!-- 概览条：总额 / 数量 / 履约完成率（纳入滚动区，随内容滚动） -->
@@ -229,8 +179,8 @@
   <!-- 履约流程数据层：订单管理流程页 / 订单台账共用（flowOrders 九表资源） -->
   <script src="flow/flow-data.js?v=20261115a"></script>
   <!-- 模块脚本 -->
-  <script src="orders.js?v=20261115a"></script>
-  <!-- 全链路层脚本：九态管道可视化 + 创建阶段订单合并注入（R4） -->
-  <script src="orders-flow.js?v=20261115a"></script>
+  <script src="orders.js?v=20261115c"></script>
+  <!-- 全链路层脚本：管线过滤条 + 创建阶段订单合并注入（R4） -->
+  <script src="orders-flow.js?v=20261115d"></script>
 </body>
 </html>

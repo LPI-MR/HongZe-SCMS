@@ -169,6 +169,25 @@ async function insertChild(q, child, parentId, item, idx) {
 }
 
 /**
+ * 破坏性删除审计落库（audit.destructive_log，V009）。
+ * 位于业务事务内，经 SAVEPOINT 兜底：审计表缺失/写入失败仅降级为
+ * console 埋点，不阻断业务写入（回滚到审计保存点后继续）。
+ */
+async function auditDestructive(q, table, op, rowCount, rowIds) {
+  try {
+    await q('SAVEPOINT audit_destructive');
+    await q(
+      `INSERT INTO audit.destructive_log (table_name, op, row_count, row_ids)
+       VALUES ($1, $2, $3, $4::jsonb)`,
+      [table, op, rowCount || 0, JSON.stringify(rowIds || null)]);
+    await q('RELEASE SAVEPOINT audit_destructive');
+  } catch (e) {
+    try { await q('ROLLBACK TO SAVEPOINT audit_destructive'); } catch (_) { /* 事务已不可用则交由外层 */ }
+    console.warn(`[engine] 审计落库失败（op=${op} table=${table}）：${e.message}`);
+  }
+}
+
+/**
  * 全量替换（调用方须已开启事务）。
  * items: 前端对象数组；返回 { count }。
  */
@@ -184,15 +203,34 @@ async function replaceResource(q, res, items) {
 
   if (res.replace === 'truncate') {
     for (const child of res.children || []) await q(`DELETE FROM ${child.table}`);
+    // 审计：truncate 全删留痕（先计数，row_ids 不枚举）
+    const cnt = await q(`SELECT COUNT(*)::int AS n FROM ${res.table}`);
     await q(`DELETE FROM ${res.table}`);
+    await auditDestructive(q, res.table, 'truncate_wipe', cnt.rows[0].n, null);
   } else {
     for (const child of res.children || []) await q(`DELETE FROM ${child.table}`);
-    const ids = items.map(it => String(it[res.pkJs || 'id']));
-    if (ids.length) {
-      const ph = ids.map((_, i) => `$${i + 1}`).join(',');
-      await q(`DELETE FROM ${res.table} WHERE ${pkCol} NOT IN (${ph})`, ids);
-    } else {
-      await q(`DELETE FROM ${res.table}`);
+    // keepStale（合并写语义）：跳过 stale 行清理，只 upsert 提交的行。
+    // 适用无删除功能的主数据（如客户）：任何「提交列表缺行」的场景
+    // （多页签缓存落后、启动装载异常等）都不会误删 DB 存量行。
+    if (!res.keepStale) {
+      const ids = items.map(it => String(it[res.pkJs || 'id']));
+      if (ids.length) {
+        const ph = ids.map((_, i) => `$${i + 1}`).join(',');
+        const stale = await q(
+          `DELETE FROM ${res.table} WHERE ${pkCol} NOT IN (${ph}) RETURNING ${pkCol}`, ids);
+        // 日志 + 审计落库：stale 清理是破坏性删除，必须留痕（行数 + 行 id）便于回溯
+        if (stale.rowCount > 0) {
+          console.warn(`[engine] replaceResource(${res.table}) 清理 stale 行 ${stale.rowCount} 条：`
+            + stale.rows.map(r => r[pkCol]).join(','));
+          await auditDestructive(q, res.table, 'stale_cleanup', stale.rowCount,
+            stale.rows.map(r => String(r[pkCol])));
+        }
+      } else {
+        console.warn(`[engine] replaceResource(${res.table}) 提交为空列表，清空全表`);
+        const gone = await q(`DELETE FROM ${res.table} RETURNING ${pkCol}`);
+        await auditDestructive(q, res.table, 'empty_wipe', gone.rowCount,
+          gone.rows.map(r => String(r[pkCol])));
+      }
     }
   }
 
@@ -251,6 +289,10 @@ async function deleteRow(q, res, id) {
   const r = await q(
     `DELETE FROM ${res.table} WHERE ${res.pkCol || 'id'} = $1 RETURNING ${res.pkCol || 'id'}`,
     [id]);
+  if (r.rowCount > 0) {
+    await auditDestructive(q, res.table, 'single_delete', r.rowCount,
+      r.rows.map(x => String(x[res.pkCol || 'id'])));
+  }
   return { deleted: r.rowCount };
 }
 

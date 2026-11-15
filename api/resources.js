@@ -31,6 +31,9 @@ const RESOURCES = {
   /* ============ 矿山管理（mine.js v12，snake_case） ============ */
   mines: {
     table: 'mine.mine_info', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：矿山为无删除功能的主数据（仅有停用/启用软删除），
+    // PUT 只合并提交行、不清理未提交行 —— 缺行提交不会误删存量
+    keepStale: true,
     order: 'sort_no NULLS LAST, created_at NULLS LAST, id',
     indexField: 'sort_no',
     fields: [
@@ -127,6 +130,8 @@ const RESOURCES = {
   /* ============ 港口管理（ports.js v17，camelCase） ============ */
   ports: {
     table: 'port.port_info', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：港口为无删除功能的主数据，缺行提交不误删存量
+    keepStale: true,
     order: 'sort_no NULLS LAST, created_at NULLS LAST, id',
     indexField: 'sortNo',
     fields: [
@@ -152,6 +157,8 @@ const RESOURCES = {
   /* ============ 铁路（railway.js v14，camelCase） ============ */
   rails: {
     table: 'rail.rail_supplier', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：铁路供应商为无删除功能的主数据，缺行提交不误删存量
+    keepStale: true,
     order: 'sort_no NULLS LAST, created_at NULLS LAST, id',
     indexField: 'sortNo',
     fields: [
@@ -169,6 +176,8 @@ const RESOURCES = {
   /* ============ 中转站（transfer.js v19，camelCase） ============ */
   stations: {
     table: 'transfer.transfer_station', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：中转站为无删除功能的主数据，缺行提交不误删存量
+    keepStale: true,
     order: 'sort_no NULLS LAST, created_at NULLS LAST, id',
     indexField: 'sortNo',
     fields: [
@@ -183,6 +192,8 @@ const RESOURCES = {
   /* ============ 仓储（warehouse/ 四页，camelCase） ============ */
   warehouses: {
     table: 'wh.wh_supplier', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：仓储供应商为无删除功能的主数据，缺行提交不误删存量
+    keepStale: true,
     order: 'created_at NULLS LAST, id',
     fields: [
       ['id', 'id', 't'], ['name', 'name', 't'], ['type', 'type', 't'],
@@ -244,6 +255,8 @@ const RESOURCES = {
   /* ============ 钢厂（steel.js，camelCase） ============ */
   steels: {
     table: 'steel.steel_mill', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：钢厂为无删除功能的主数据，缺行提交不误删存量
+    keepStale: true,
     order: 'created_at NULLS LAST, id',
     fields: [
       ['id', 'id', 't'], ['name', 'name', 't'], ['type', 'type', 't'],
@@ -259,6 +272,10 @@ const RESOURCES = {
   /* ============ 客户管理（customers/data.js，snake_case，时间格式化串） ============ */
   customers: {
     table: 'customer.customer', conflict: 'id', replace: 'upsert',
+    // keepStale（合并写）：客户为无删除功能的主数据，PUT 只合并提交行、
+    // 不清理未提交行 —— 多页签缓存落后 / 装载异常时的缺行提交不会误删存量
+    // （修复「更新后数据消失」：原 DELETE NOT IN 会删掉提交列表之外的行）
+    keepStale: true,
     order: 'created_at NULLS LAST, id',
     payload: true,
     normalize(item) {

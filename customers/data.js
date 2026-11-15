@@ -515,8 +515,38 @@
   // 异步写：全量替换（PUT /api/customers）。成功返回 true（HZDB 缓存已更新）；
   // 失败返回 false（HZDB 已 toast 提示，缓存不动，调用方保留现场供重试）。
   // Node / 无基座环境（单元测试、种子导出沙箱）返回已决失败的 Promise。
+  // ------------------------------------------------------------
+  // 防误删保护（埋点）：PUT 为全量语义，提交残缺/空列表存在清库风险。
+  // 服务端已对 customers 启用 keepStale（合并写不删行），此处为前端双保险：
+  //   a) 缓存键缺失（未装载/资源缺失，loadStore 会兜底为 []）+ 空列表 → 拦截，
+  //      防止「未装载 → 保存 → PUT []」把服务端全量清空；
+  //   b) 缓存有数据但提交列表为空 → 拦截（客户无删除功能，空列表必为异常）；
+  //   c) 缓存键缺失但提交非空列表 → 放行（首启装载/单测场景），记录告警埋点。
   function saveStore(list) {
     if (typeof window === 'undefined' || !window.HZDB) return Promise.resolve(false);
+    var cached = window.HZDB.get ? window.HZDB.get(RESOURCE) : null;
+    var cachedIsArray = Array.isArray(cached);
+    var listIsArray = Array.isArray(list);
+    if (cachedIsArray && cached.length > 0 && listIsArray && list.length === 0) {
+      console.error('[customers] saveStore 拦截：缓存有 ' + cached.length + ' 行但提交列表为空，'
+        + '疑似缓存装载异常触发清库保护（不写入，请刷新页面重试）');
+      if (window.HZApi && window.HZApi.toast) {
+        window.HZApi.toast('检测到异常的空列表保存，已拦截以防数据丢失，请刷新页面重试', 'error');
+      }
+      return Promise.resolve(false);
+    }
+    if (!cachedIsArray) {
+      if (listIsArray && list.length === 0) {
+        console.error('[customers] saveStore 拦截：缓存未装载且提交空列表，'
+          + '拒绝写入以防清空服务端数据（请刷新页面后重试）');
+        if (window.HZApi && window.HZApi.toast) {
+          window.HZApi.toast('数据尚未装载，保存已拦截，请刷新页面后重试', 'error');
+        }
+        return Promise.resolve(false);
+      }
+      console.warn('[customers] saveStore 放行：缓存键缺失但提交 ' + (listIsArray ? list.length : '?')
+        + ' 行（首启装载或测试场景；服务端 keepStale 保证不删存量行）');
+    }
     return window.HZDB.put(RESOURCE, list);
   }
 

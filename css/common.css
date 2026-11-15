@@ -92,6 +92,93 @@ body {
   letter-spacing: 1px;
 }
 
+/* ===== 侧边栏收起 / 展开（AI 软件式；交互与状态记忆由 common/fetch.js 提供）===== */
+.sidebar { transition: width 0.25s ease; }
+
+/* 品牌区即开关：点击品牌区切换收起 / 展开（fetch.js 注入箭头与键盘语义）*/
+.brand {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.brand:hover { background: var(--gray-200); }
+
+.brand:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* 折叠方向指示箭头（悬停微移，收起态隐藏）*/
+.brand-chev {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.brand-chev svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand:hover .brand-chev {
+  color: var(--color-primary);
+  transform: translateY(-50%) translateX(-2px);
+}
+
+/* 收起态：64px 图标栏 */
+.sidebar.collapsed { width: 64px; }
+
+/* 收起态品牌字标（fetch.js 注入 .brand 内）*/
+.brand-mark {
+  display: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: var(--gray-100);
+  font-size: 15px;
+  font-weight: 600;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar.collapsed .brand {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-md) var(--space-xs) var(--space-sm);
+}
+
+.sidebar.collapsed .brand-name,
+.sidebar.collapsed .brand-sub { display: none; }
+
+.sidebar.collapsed .brand-mark { display: flex; }
+
+.sidebar.collapsed .brand-chev { display: none; }
+
+.sidebar.collapsed .nav { padding: var(--space-sm) var(--space-xs); }
+
+.sidebar.collapsed .nav-item {
+  padding: 0;
+  justify-content: center;
+}
+
+.sidebar.collapsed .nav-item .label,
+.sidebar.collapsed .nav-item .arrow { display: none; }
+
+.sidebar.collapsed .subnav { display: none; }
+
 /* ===== 一级导航 ===== */
 /* 动态加载容器：承接 sidebar 的弹性布局，让内部 .nav 正常伸展 */
 #navbar {

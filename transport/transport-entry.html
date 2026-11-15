@@ -128,8 +128,8 @@
                 <input id="n-tons" type="number" min="1" step="0.1" class="input" required placeholder="如：3200" />
               </div>
               <div class="field">
-                <label class="field-label" for="n-order">关联订单号（选填）</label>
-                <input id="n-order" class="input" list="order-list" placeholder="如：SO1013-001" />
+                <label class="field-label" for="n-order">关联订单号（选填，业务台账单号）</label>
+                <input id="n-order" class="input" list="order-list" placeholder="如：HZ202608150001" />
                 <datalist id="order-list"></datalist>
               </div>
             </div>
@@ -164,6 +164,11 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- API 网关 + PostgreSQL 数据基座（存储层迁移后必需，transport-entry.js 启动即调 HZDB） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
+  <!-- 业务模块数据层：车次 ⇄ 订单台账跨系统联动依赖（ledgerOrderOptions / saveOrders / saveLogs） -->
+  <script src="/business/business-data.js"></script>
   <!-- 共享数据层 -->
   <script src="trips-store.js?v=20261115a"></script>
   <!-- 录入页脚本 -->

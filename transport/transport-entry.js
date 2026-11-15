@@ -195,7 +195,7 @@
     // 已录过则回显，便于核对
     els.pLoaded.value = trip.loadedTons == null ? '' : trip.loadedTons;
     els.pActual.value = trip.actualTons == null ? '' : trip.actualTons;
-    toast(`车次 ${trip.id} 已更新至「${nodes[nodeIndex]}」`);
+    linkToast(`车次 ${trip.id} 已更新至「${nodes[nodeIndex]}」`);
     refreshTripSelect();
     renderLogs();
   });
@@ -311,6 +311,20 @@
       orderId: els.nOrder.value.trim(),
       time: Date.now(),
     });
+
+    // 关联订单校验（跨系统一致性）：必须引用业务台账中的有效订单（已终止订单不参与关联）
+    if (trip.orderId) {
+      const hit = findLedgerOrder(trip.orderId);
+      if (!hit) {
+        toast(`关联订单 ${trip.orderId} 不在业务订单台账中，请从建议列表选择`, 'error');
+        return;
+      }
+      // 超量预警（不阻断）：车次吨位超出订单剩余待运量时人工核实
+      if (hit.remaining > 0 && trip.tons > hit.remaining) {
+        toast(`提示：吨位超出订单 ${hit.code} 剩余待运量 ${fmtQty(hit.remaining)} 吨，请核实`);
+      }
+    }
+
     state.trips.push(trip);
     if (!await store.save(state)) {
       state.trips.pop();  // 落库失败回滚，车次号已被消耗（seq 已持久化）
@@ -328,15 +342,45 @@
     onModeChange();
     prefillId();
     fillOrderList();
-    toast(`车次 ${trip.id} 创建成功`);
+    linkToast(`车次 ${trip.id} 创建成功`);
     renderLogs();
   });
 
-  // 订单号建议列表（取自现有车次的关联订单，便于关联时选择）
+  // 关联订单建议列表：直读业务订单台账（业务 → 运输联动，消除两系统订单号孤岛）
+  // 选项文案展示 货名 / 订单货量 / 剩余待运量 / 订单状态（剩余 = 货量 − 已关联车次吨位合计）
   function fillOrderList() {
-    const ids = [...new Set(state.trips.map(t => (t.orderId || '').trim()).filter(Boolean))];
-    els.orderList.innerHTML = ids.map(id => `<option value="${esc(id)}"></option>`).join('');
+    const opts = store.ledgerOrderOptions();
+    els.orderList.innerHTML = opts.map(o =>
+      `<option value="${esc(o.code)}">${esc(o.cargo || '未填货名')} · 共 ${fmtQty(o.qty)} 吨 · 剩余 ${fmtQty(Math.max(o.remaining, 0))} 吨 · ${esc(o.status)}</option>`
+    ).join('');
   }
+
+  // 台账订单查找（按 HZ 单号）；未找到返回 null
+  function findLedgerOrder(code) {
+    return store.ledgerOrderOptions().find(o => o.code === code) || null;
+  }
+
+  // 千分位数量显示
+  function fmtQty(n) {
+    return Number(n || 0).toLocaleString('zh-CN');
+  }
+
+  // 联动结果提示：把台账状态推进信息附加到保存成功提示后
+  function linkToast(baseMsg) {
+    const sync = store.getLastSync();
+    if (sync.advanced.length) {
+      const detail = sync.advanced.map(a => `${a.code} → ${a.to}`).join('、');
+      toast(`${baseMsg}，订单联动：${detail}`);
+    } else {
+      toast(baseMsg);
+    }
+  }
+
+  // 选中台账订单后自动带出货名（公共字段直接映射：ledger.cargo_name → trip.cargo，可手工修改）
+  els.nOrder.addEventListener('change', () => {
+    const hit = findLedgerOrder(els.nOrder.value.trim());
+    if (hit && hit.cargo) els.nCargo.value = hit.cargo;
+  });
 
   // ===== 最近录入记录 =====
   function renderLogs() {

@@ -1,19 +1,18 @@
 // ===== orders-flow 模块脚本（订单台账 · 全链路层，R4 重构）=====
 // 职责（零侵入 orders.js 台账核心逻辑）：
-//   1. 链路总览：业务工作流九态管道可视化（创建 → 履约 → 完成 + 已终止侧挂），
-//      与订单管理流程页工作流链路同源（flow-data.js 九态状态机）
+//   1. 履约管线过滤条：九态管线 + 全部 / 已终止 一屏合一（Apple 风格分段，替代原
+//      「链路总览管道 + 流程胶囊导航」双组件，消除重复展示），点击过滤由 orders.js 接管
 //   2. 合并列表：创建阶段（录入中/待港口/待运力/待方案）的流程订单以行形式
-//      注入订单列表 tbody，融入既有检索 / 胶囊过滤 / 分页 / 编号
-//   3. 联动：管道点击 ↔ 胶囊过滤互相同步；流程行删除走 HZFlowData 级联删除
+//      注入订单列表 tbody，融入既有检索 / 管线过滤 / 分页 / 编号
+//   3. 联动：管线分段计数与空态随数据自动刷新；流程行删除走 HZFlowData 级联删除
 // 数据源 flowOrders 九表资源（flow-data.js，HZDB 基座），台账六态订单仍由 orders.js 管理，互不干扰
 (function () {
   'use strict';
 
   const data = window.HZFlowData;
-  const pipeline = document.getElementById('flowPipeline');
   const flowNav = document.getElementById('flowNav');
 
-  // 九态 → 台账胶囊统一标签（与 flowNav 内 .pill[data-flow] 值一致，供 applyFilter 匹配）
+  // 九态 → 台账管线分段统一标签（与分段 data-flow 值一致，供 applyFilter 匹配）
   const STATE_TO_PILL = {
     draft: '录入中',
     port: '待港口',
@@ -75,84 +74,69 @@
     return html + '</span>';
   }
 
-  /* ==================== 链路总览管道 ==================== */
+  /* ==================== 履约管线过滤条（九态管线 + 全部 / 已终止 一屏合一） ==================== */
 
-  function renderPipeline() {
-    if (!pipeline) return;
+  // 一次性构建管线分段结构（结构固定不随数据重建，避免整条重渲导致选中态丢失；
+  // 点击过滤由 orders.js initFlowNav 事件委托接管，active 态亦由 orders.js 维护）。
+  // 结构化分组：总览 / 创建 / 履约 / 完成 / 终态 五组纵列（帽标在上、分段在下），
+  // 组间以流向箭头衔接，替代原单行平铺的胶囊流
+  function buildFlowNav() {
+    if (!flowNav || flowNav.dataset.fnBuilt === '1') return;
 
-    const flow = data.listOrders();
-    const ledger = ledgerOrders();
+    const capBlock = cap => '<span class="fn-cap">' + cap + '</span>';
+    const segsOpen = '<div class="fn-segs">';
+    const segsClose = '</div>';
 
-    // 九态计数
-    const counts = {};
-    flow.forEach(o => {
-      const s = data.migrateStatus(o.status) || 'draft';
-      counts[s] = (counts[s] || 0) + 1;
-    });
-    const terminated = ledger.filter(o => o.status === '已终止').length;
+    // 总览组：全部订单
+    let html =
+      '<div class="fn-group fn-lead">' +
+      capBlock('总览') +
+      segsOpen +
+      '<button type="button" class="fn-seg fn-all active" data-flow="" title="全部订单">' +
+      '<span class="fn-label">全部</span>' +
+      '<span class="fn-count">0</span>' +
+      '</button>' +
+      segsClose +
+      '</div>';
 
-    let html = '<div class="fp-groups">';
+    // 三阶段九态管线（组间流向箭头）
     GROUPS.forEach((g, gi) => {
-      if (gi > 0) html += '<span class="fp-gap" aria-hidden="true"></span>';
-      html += '<div class="fp-group">' +
-        '<div class="fp-cap">' + g.cap + '</div>' +
-        '<div class="fp-segs">';
-      g.states.forEach((s, si) => {
+      if (gi > 0) html += '<span class="fn-flow" aria-hidden="true"></span>';
+      html += '<div class="fn-group">' +
+        capBlock(g.cap) +
+        segsOpen;
+      g.states.forEach(s => {
         const meta = data.STATUS_META[s];
-        const n = counts[s] || 0;
         html +=
-          '<button type="button" class="fp-seg' + (n ? '' : ' is-empty') + '" data-state="' + s + '"' +
+          '<button type="button" class="fn-seg is-empty" data-state="' + s + '"' +
           ' data-flow="' + data.esc(STATE_TO_PILL[s]) + '"' +
-          ' style="--fp-c:' + meta.color + ';flex-grow:' + Math.max(n, 0.6) + '"' +
-          ' title="' + data.esc(meta.label) + ' · ' + n + ' 单">' +
-          '<span class="fp-num">' + n + '</span>' +
-          '<span class="fp-label">' + data.esc(meta.label) + '</span>' +
+          ' style="--c:' + meta.color + '"' +
+          ' title="' + data.esc(meta.label) + '">' +
+          '<span class="fn-label">' + data.esc(STATE_TO_PILL[s]) + '</span>' +
+          '<span class="fn-count">0</span>' +
         '</button>';
-        if (si < g.states.length - 1) html += '<span class="fp-arrow" aria-hidden="true"></span>';
       });
-      html += '</div></div>';
+      html += segsClose + '</div>';
     });
-    html += '</div>';
 
-    // 已终止侧挂：独立于正向管道，不占链路宽度
-    html += '<div class="fp-side">' +
-      '<button type="button" class="fp-side-chip" data-flow="已终止" title="已终止 · ' + terminated + ' 单">' +
-      '<span class="fp-side-num">' + terminated + '</span>' +
-      '<span class="fp-side-label">已终止</span>' +
-    '</button></div>';
+    // 终态侧挂：右对齐独立危险色组，不占正向管线
+    html += '<div class="fn-group fn-side">' +
+      capBlock('终态') +
+      segsOpen +
+      '<button type="button" class="fn-seg" data-flow="已终止" style="--c:#ff3b30" title="已终止">' +
+      '<span class="fn-label">已终止</span>' +
+      '<span class="fn-count">0</span>' +
+      '</button>' +
+      segsClose +
+      '</div>';
 
-    pipeline.innerHTML = html;
-    syncPipelineActive();
-  }
-
-  // 高亮同步：以当前激活胶囊（orders.js 维护 .active）反推管道高亮
-  function syncPipelineActive() {
-    if (!pipeline || !flowNav) return;
-    const active = flowNav.querySelector('.pill.active[data-flow]');
-    const flow = active ? (active.dataset.flow || '') : '';
-    pipeline.querySelectorAll('.fp-seg, .fp-side-chip').forEach(seg => {
-      seg.classList.toggle('active', (seg.dataset.flow || '') === flow);
-    });
-  }
-
-  // 管道点击 → 模拟对应胶囊点击，复用 orders.js 既有过滤逻辑
-  if (pipeline) {
-    pipeline.addEventListener('click', e => {
-      const seg = e.target.closest('[data-flow]');
-      if (!seg || !flowNav) return;
-      const pill = flowNav.querySelector('.pill[data-flow="' + seg.dataset.flow + '"]');
-      if (pill) pill.click();
-    });
-  }
-
-  // 胶囊点击（含管道触发的模拟点击）→ 同步管道高亮
-  if (flowNav) {
-    flowNav.addEventListener('click', () => syncPipelineActive());
+    flowNav.innerHTML = html;
+    flowNav.dataset.fnBuilt = '1';
   }
 
   /* ==================== 合并列表注入 ==================== */
 
-  // 追加创建阶段流程订单行（renderAll 的 renumber 之前调用，编号/过滤/分页自动覆盖）
+  // 追加创建阶段流程订单行（renderAll 中在统计/过滤/分页之前调用，编号/过滤/分页自动覆盖）
   function appendRows(tbody) {
     if (!tbody) return;
     // 幂等：先移除旧注入行
@@ -178,10 +162,16 @@
       tr.dataset.customer = o.trader || '';
       tr.dataset.cargo = o.cargoName || '';
       tr.dataset.mine = o.mine || '';
-      // 统一标签与胶囊 data-flow 一致：胶囊过滤对台账行 / 流程行同时生效
+      // 统一标签与管线分段 data-flow 一致：分段过滤对台账行 / 流程行同时生效
       tr.dataset.status = pill;
       tr.dataset.date = data.fmtDateShort(o.createdAt);
       tr.dataset.amount = amount || 0;
+      // 检索文本：与台账行同口径（可见业务列，原始数值可搜，不含按钮文案 / 内部属性）
+      tr.dataset.search = [
+        o.id, o.trader || '', o.cargoName || '',
+        qty || '', amount || '', o.mine || '',
+        v ? (v.voyage_code || '') : '', pill, tr.dataset.date
+      ].join(' ');
 
       // col-check 留空：流程行不参与勾选与批量导出（导出仅覆盖台账订单）
       tr.innerHTML =
@@ -206,11 +196,11 @@
     });
   }
 
-  /* ==================== 胶囊计数修正 ==================== */
+  /* ==================== 管线分段计数修正 ==================== */
 
-  // orders.js updateStats 仅统计台账六态；此处合并流程订单计数（全部 + 9 态统一口径）
-  function updatePillCounts() {
-    if (!flowNav) return;
+  // orders.js updateStats 不再写分段计数；此处统一维护（台账六态 + 流程九态合并口径）
+  function updateFlowCounts() {
+    if (!flowNav || flowNav.dataset.fnBuilt !== '1') return;
     const ledger = ledgerOrders();
     const flow = data.listOrders();
 
@@ -222,11 +212,13 @@
       if (key) counts[key] = (counts[key] || 0) + 1;
     });
 
-    flowNav.querySelectorAll('.pill[data-flow]').forEach(p => {
-      const c = p.querySelector('.flow-count');
+    flowNav.querySelectorAll('.fn-seg[data-flow]').forEach(seg => {
+      const c = seg.querySelector('.fn-count');
       if (!c) return;
-      const key = p.dataset.flow || '';
-      c.textContent = key === '' ? (ledger.length + flow.length) : (counts[key] || 0);
+      const key = seg.dataset.flow || '';
+      const n = key === '' ? (ledger.length + flow.length) : (counts[key] || 0);
+      c.textContent = n;
+      if (key !== '') seg.classList.toggle('is-empty', n === 0);
     });
 
     // 横幅与概览条补齐全链路口径：orders.js 仅写台账六态，
@@ -273,15 +265,15 @@
 
   /* ==================== 事件与初始化 ==================== */
 
-  // 暴露合并钩子：orders.js renderAll 在 renumber 前调用 appendRows 注入创建阶段流程订单行
+  // 暴露合并钩子：orders.js renderAll 在统计/过滤/分页前调用 appendRows 注入创建阶段流程订单行
   window.HZFlowMerge = { appendRows: appendRows };
 
-  // 台账每次重渲（renderAll 末尾派发）后：刷新管道 + 胶囊计数 + 高亮
+  // 台账每次重渲（renderAll 末尾派发）后：刷新管线分段计数与空态
   document.addEventListener('hz:orders-rendered', () => {
-    renderPipeline();
-    updatePillCounts();
+    updateFlowCounts();
   });
 
+  buildFlowNav();
   initFlowRowActions();
 
   // orders.js 初始 renderAll 先于本脚本执行（合并钩子当时未定义），
