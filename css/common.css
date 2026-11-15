@@ -440,6 +440,9 @@ body {
 
 /* ===== 通用按钮 ===== */
 .btn {
+  display: inline-flex;           /* a.btn 与 button.btn 文字统一垂直/水平居中 */
+  align-items: center;
+  justify-content: center;
   height: 36px;
   padding: 0 var(--space-lg);
   border: 1px solid transparent;
