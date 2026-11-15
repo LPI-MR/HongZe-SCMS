@@ -7,7 +7,8 @@
          台账握手（FR-03）、状态机流转、订单删除级联、
          E8 幂等防重、E9 保存失败透传、o5 静态接线契约。
    环境说明：flow-data.js 为浏览器 IIFE（window.HZFlowData），
-   Node 下以 mock 的 window / localStorage 模拟浏览器全局。
+   Node 下以 mock 的 window 与 HZDB 数据基座（内存实现，遵循
+   get 同步读 / put 全量替换 async 契约）模拟浏览器全局。
    ============================================================ */
 
 'use strict';
@@ -19,21 +20,32 @@ const path = require('node:path');
 
 /* ---------- 浏览器全局模拟 ---------- */
 
-function makeStorage() {
-  const map = new Map();
+// HZDB 数据基座模拟（common/hz-db.js 契约）：get 同步读（缺失 undefined）、
+// put 全量替换（深拷贝模拟持久化往返）、remove 单条删
+function makeHZDB() {
+  const tables = {};
   return {
-    getItem: k => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => { map.set(k, String(v)); },
-    removeItem: k => { map.delete(k); },
-    clear: () => map.clear(),
+    ready: async () => tables,
+    get: (key) => (Object.prototype.hasOwnProperty.call(tables, key) ? tables[key] : undefined),
+    put: async (key, list) => {
+      tables[key] = JSON.parse(JSON.stringify(list));
+      return true;
+    },
+    remove: async (key, id) => {
+      if (Array.isArray(tables[key])) tables[key] = tables[key].filter(x => String(x.id) !== String(id));
+      return true;
+    },
+    putDict: async () => true,
+    seq: () => 13,
+    reset: () => { Object.keys(tables).forEach(k => delete tables[k]); },
   };
 }
 
-const mockStorage = makeStorage();
-global.localStorage = mockStorage;
+const mockHZDB = makeHZDB();
 
 const ledgerCalls = [];   // 记录台账联动调用（FR-03 握手）
 global.window = {
+  HZDB: mockHZDB,
   HZUnits: {
     // 与 common/units.js 同口径：吨 → 万吨，非法/0 返回 null
     normalizeTo: (v, from, to) => {
@@ -42,8 +54,8 @@ global.window = {
     },
   },
   HZBusinessData: {
-    syncFlowOrder: order => ledgerCalls.push(order),
-    removeFlowOrder: id => ledgerCalls.push({ __removed: id }),
+    syncFlowOrder: async order => ledgerCalls.push(order),
+    removeFlowOrder: async id => ledgerCalls.push({ __removed: id }),
   },
 };
 
@@ -63,7 +75,7 @@ const SUBJECT_OK = {
 };
 
 // 复刻 order-new.js submitOrder 的完整提交链（除 toast/跳转）
-function submitChain(over) {
+async function submitChain(over) {
   const payload = Object.assign({
     mine: '力拓',
     category: 'PB粉、杨迪粉、罗布河粉',
@@ -93,24 +105,22 @@ function submitChain(over) {
   const nowIso = new Date().toISOString();
   order.createdAt = nowIso;
   order.updatedAt = nowIso;
-  data.saveOrder(order);                                   // 落库 + 台账/航次联动
-  data.upsertPort(D.buildPortPrefill(order));              // 港口信息预填
-  data.upsertCapacities(order.id, D.buildCapacityPrefills(order, payload.plans, data.genCapacityId)); // 运力预填
+  await data.saveOrder(order);                             // 落库 + 台账/航次联动
+  await data.upsertPort(D.buildPortPrefill(order));        // 港口信息预填
+  await data.upsertCapacities(order.id, D.buildCapacityPrefills(order, payload.plans, data.genCapacityId)); // 运力预填
   return { payload, order, plansRes: payload.plans };
 }
 
 function oceanVoyages() {
-  try {
-    const v = JSON.parse(mockStorage.getItem('hz_ocean_voyages'));
-    return Array.isArray(v) ? v : [];
-  } catch (e) { return []; }
+  const v = mockHZDB.get('voyages');
+  return Array.isArray(v) ? v : [];
 }
 
 /* ==================== 1. 提交端到端（F6③ / TBD-10） ==================== */
 
-test('提交链路：订单落库为「待港口」且时间戳为 ISO', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
+test('提交链路：订单落库为「待港口」且时间戳为 ISO', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
   const saved = data.getOrder(order.id);
   assert.ok(saved, '订单已落库');
   assert.equal(saved.status, 'port');
@@ -120,9 +130,9 @@ test('提交链路：订单落库为「待港口」且时间戳为 ISO', () => {
   assert.equal('draftMark' in saved, false); // AC-O04
 });
 
-test('提交链路：港口信息预填（TBD-10：港口名/码头首项/拥堵度正常）', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
+test('提交链路：港口信息预填（TBD-10：港口名/码头首项/拥堵度正常）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
   const port = data.getPort(order.id);
   assert.ok(port, '港口记录已生成');
   assert.equal(port.orderId, order.id);
@@ -132,9 +142,9 @@ test('提交链路：港口信息预填（TBD-10：港口名/码头首项/拥堵
   assert.equal(port.waitHours, 0);
 });
 
-test('提交链路：运力方案预填 3 行且数值留 0 人工确认（TBD-10）', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
+test('提交链路：运力方案预填 3 行且数值留 0 人工确认（TBD-10）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
   const rows = data.listCapacities(order.id);
   assert.equal(rows.length, 3);
   assert.deepEqual(rows.map(r => r.channelType), ['road', 'rail_transit', 'rail_direct']);
@@ -153,9 +163,9 @@ test('提交链路：运力方案预填 3 行且数值留 0 人工确认（TBD-1
 
 /* ==================== 2. 海运航次联动（R1 / AC-O09） ==================== */
 
-test('海运联动：船名+货量齐备时自动生成航次，vessel_info 9 项随单同步（AC-O09）', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
+test('海运联动：船名+货量齐备时自动生成航次，vessel_info 9 项随单同步（AC-O09）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
   const voyages = oceanVoyages().filter(v => v.flow_ref === order.id);
   assert.equal(voyages.length, 1, '按 flow_ref 幂等生成 1 条航次');
   const rec = voyages[0];
@@ -173,14 +183,14 @@ test('海运联动：船名+货量齐备时自动生成航次，vessel_info 9 �
   assert.equal(rec.vessel_info.consignee, '收货方');
 });
 
-test('海运联动：未填船名不同步（航运信息未完整）', () => {
-  mockStorage.clear();
-  const { order } = submitChain({ vessel: '' });
+test('海运联动：未填船名不同步（航运信息未完整）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain({ vessel: '' });
   assert.equal(oceanVoyages().filter(v => v.flow_ref === order.id).length, 0);
 });
 
-test('海运联动：货量为 0 不同步（单位换算非法不落库）', () => {
-  mockStorage.clear();
+test('海运联动：货量为 0 不同步（单位换算非法不落库）', async () => {
+  mockHZDB.reset();
   // tonnage=0 属 E3 非法值，validateForm 会拦截（另测）；此处直接构造落库验证同步口径
   const order = D.buildOrder({
     mine: '力拓', cargoName: 'PB粉', cargoQuality: '品位 62%', tonnage: '0',
@@ -193,17 +203,17 @@ test('海运联动：货量为 0 不同步（单位换算非法不落库）', ()
   order.id = data.genOrderId();
   order.status = 'port';
   order.createdAt = new Date().toISOString();
-  data.saveOrder(order);
+  await data.saveOrder(order);
   assert.equal(order.cargoTotal, 0);
   assert.equal(oceanVoyages().filter(v => v.flow_ref === order.id).length, 0);
 });
 
-test('海运联动：重复保存幂等更新（E8 防重口径，航次不重复生成）', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
+test('海运联动：重复保存幂等更新（E8 防重口径，航次不重复生成）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
   // 模拟再次保存（如回到上一步修改后重新提交）
   order.vesselInfo.company = '招商轮船';
-  data.saveOrder(order);
+  await data.saveOrder(order);
   const voyages = oceanVoyages().filter(v => v.flow_ref === order.id);
   assert.equal(voyages.length, 1);
   assert.equal(voyages[0].vessel_info.company, '招商轮船'); // vessel_info 随单更新
@@ -213,49 +223,49 @@ test('海运联动：重复保存幂等更新（E8 防重口径，航次不重�
 
 /* ==================== 3. 台账握手与状态机（FR-03 / F6②） ==================== */
 
-test('台账握手：saveOrder 触发 syncFlowOrder 调用（状态过滤由 business-data 承担）', () => {
-  mockStorage.clear();
+test('台账握手：saveOrder 触发 syncFlowOrder 调用（状态过滤由 business-data 承担）', async () => {
+  mockHZDB.reset();
   ledgerCalls.length = 0;
-  const { order } = submitChain();
+  const { order } = await submitChain();
   const hit = ledgerCalls.find(c => c && c.id === order.id);
   assert.ok(hit, '台账联动已接收流程订单');
   assert.equal(hit.status, 'port');
 });
 
-test('状态机：待港口 → 待运力合法，回退非法', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
-  assert.equal(data.transitionStatus(order.id, 'capacity', '销售', 'sales'), true);
+test('状态机：待港口 → 待运力合法，回退非法', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
+  assert.equal(await data.transitionStatus(order.id, 'capacity', '销售', 'sales'), true);
   assert.equal(data.getOrder(order.id).status, 'capacity');
-  assert.equal(data.transitionStatus(order.id, 'draft', '销售', 'sales'), false, '不允许回退');
+  assert.equal(await data.transitionStatus(order.id, 'draft', '销售', 'sales'), false, '不允许回退');
   assert.equal(data.getOrder(order.id).status, 'capacity');
 });
 
-test('状态机：admin 可跳步至待确认（后续台账同步点）', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
-  assert.equal(data.transitionStatus(order.id, 'pending_confirm', '管理员', 'admin'), true);
+test('状态机：admin 可跳步至待确认（后续台账同步点）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
+  assert.equal(await data.transitionStatus(order.id, 'pending_confirm', '管理员', 'admin'), true);
   assert.equal(data.getOrder(order.id).status, 'pending_confirm');
   assert.equal(D.isLedgerSynced('pending_confirm'), true);
 });
 
 /* ==================== 4. 订单编号与删除级联 ==================== */
 
-test('订单编号：HZyyyyMMddNNNN 当日流水递增', () => {
-  mockStorage.clear();
+test('订单编号：HZyyyyMMddNNNN 当日流水递增', async () => {
+  mockHZDB.reset();
   const a = data.genOrderId();
   assert.match(a, /^HZ\d{8}\d{4}$/);
   // genOrderId 只读不写：落一条订单后再取号应递增
-  data.saveOrder({ id: a, status: 'draft', createdAt: new Date().toISOString() });
+  await data.saveOrder({ id: a, status: 'draft', createdAt: new Date().toISOString() });
   const b = data.genOrderId();
   assert.equal(Number(b.slice(-4)), Number(a.slice(-4)) + 1);
 });
 
-test('删除订单：级联清空订单/港口/运力/航次并联动台账（R1/FR-03）', () => {
-  mockStorage.clear();
-  const { order } = submitChain();
+test('删除订单：级联清空订单/港口/运力/航次并联动台账（R1/FR-03）', async () => {
+  mockHZDB.reset();
+  const { order } = await submitChain();
   ledgerCalls.length = 0;
-  data.deleteOrder(order.id);
+  assert.equal(await data.deleteOrder(order.id), true);
   assert.equal(data.getOrder(order.id), undefined);
   assert.equal(data.getPort(order.id), undefined);
   assert.equal(data.listCapacities(order.id).length, 0);
@@ -265,24 +275,27 @@ test('删除订单：级联清空订单/港口/运力/航次并联动台账（R1
 
 /* ==================== 5. E9 保存失败透传（页面保留表单重试） ==================== */
 
-test('E9：存储异常时 saveOrder 抛错（页面 catch 提示重试，不静默丢单）', () => {
-  mockStorage.clear();
-  const originalSet = mockStorage.setItem;
-  mockStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+test('E9：写库失败 saveOrder 透传 false（页面保持表单现场重试，不静默丢单）', async () => {
+  mockHZDB.reset();
+  // 模拟写库失败：HZDB 已 toast，put 返回 false（原 localStorage 配额异常改为契约失败透传）
+  const originalPut = mockHZDB.put;
+  mockHZDB.put = async () => false;
   try {
-    assert.throws(() => {
-      const order = D.buildOrder({
-        mine: '力拓', cargoName: 'PB粉', cargoQuality: '品位 62%', tonnage: '70000',
-        price: '800', port: '黄骅港', wharfs: [], vessel: '',
-        destination: { station: '武安站', yard: '河北陆港保税物流中心（保税堆场）', steel: '' },
-        vesselInfo: null, plans: { triggered: false, missing: [], plans: [] },
-      }, SUBJECT_OK);
-      order.id = data.genOrderId();
-      order.status = 'port';
-      data.saveOrder(order);
-    }, /QuotaExceededError/);
+    const order = D.buildOrder({
+      mine: '力拓', cargoName: 'PB粉', cargoQuality: '品位 62%', tonnage: '70000',
+      price: '800', port: '黄骅港', wharfs: [], vessel: '',
+      destination: { station: '武安站', yard: '河北陆港保税物流中心（保税堆场）', steel: '' },
+      vesselInfo: null, plans: { triggered: false, missing: [], plans: [] },
+    }, SUBJECT_OK);
+    order.id = data.genOrderId();
+    order.status = 'port';
+    assert.equal(await data.saveOrder(order), false, '失败透传 false');
+    assert.equal(data.getOrder(order.id), undefined, '失败订单不得残留在缓存中');
+    assert.equal(data.listOrders().length, 0, '订单列表为空');
+    // 订单对象仍在调用方手里：页面据此保持表单现场供重试
+    assert.equal(order.status, 'port');
   } finally {
-    mockStorage.setItem = originalSet;
+    mockHZDB.put = originalPut;
   }
 });
 
@@ -358,7 +371,7 @@ test('接线：完成方案弹窗与订单详情页提供第四环节「运输�
 
 test('接线：新建订单页脚本装配顺序完整（根绝对路径，默认首屏 / 与深层 URL 均可用）', () => {
   const html = read('business/flow/order-new.html');
-  ['/common/fetch.js', '/common/hz-data.js', '/common/units.js',
+  ['/common/fetch.js', '/common/hz-api.js', '/common/hz-db.js', '/common/hz-data.js', '/common/units.js',
    '/business/flow/flow-data.js', '/business/flow/order-new-data.js',
    '/business/business-data.js', '/customers/data.js', '/business/flow/order-new.js']
     .forEach(s => assert.ok(html.indexOf(s) >= 0, '缺少脚本引用：' + s));

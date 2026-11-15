@@ -167,9 +167,12 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 业务共享数据层：订单 / 结算 / 流转日志读写 -->
-  <script src="business-data.js"></script>
+  <script src="business-data.js?v=20261115a"></script>
   <!-- 模块脚本 -->
-  <script src="settlement.js"></script>
+  <script src="settlement.js?v=20261115a"></script>
 </body>
 </html>

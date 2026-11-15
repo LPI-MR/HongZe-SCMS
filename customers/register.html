@@ -285,7 +285,10 @@
     </div>
   </div>
 
-  <script src="/customers/data.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
+  <script src="/customers/data.js?v=20261115a"></script>
   <script>
     (function () {
       'use strict';
@@ -317,30 +320,6 @@
         n = Number(n) || 0;
         return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : n >= 1024 ? (n / 1024).toFixed(0) + ' KB' : n + ' B';
       }
-
-      $('fileDrop').addEventListener('click', function () { $('fileInput').click(); });
-      $('fileDrop').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') $('fileInput').click(); });
-      $('fileInput').addEventListener('change', function () {
-        Array.prototype.forEach.call(this.files || [], function (file) {
-          var item = { id: 'f' + Date.now() + Math.floor(Math.random() * 1e4), name: file.name, size: file.size, type: file.type, data: null };
-          var push = function () { files.push(item); renderFiles(); };
-          if (file.size <= MAX_INLINE && /^image\//.test(file.type)) {
-            var reader = new FileReader();
-            reader.onload = function () { item.data = reader.result; push(); };
-            reader.onerror = function () { push(); };
-            reader.readAsDataURL(file);
-          } else {
-            push();
-          }
-        });
-        this.value = '';
-      });
-      $('fileList').addEventListener('click', function (e) {
-        var del = e.target.closest('.fdel');
-        if (!del) return;
-        files.splice(Number(del.dataset.i), 1);
-        renderFiles();
-      });
 
       /* ---------- 字段校验与查重 ---------- */
       function setHint(id, msg, cls) {
@@ -377,113 +356,13 @@
         return ok;
       }
 
-      $('fName').addEventListener('blur', function () { checkName(true); });
-      $('fCode').addEventListener('blur', function () { checkCode(true); });
-      $('fContact').addEventListener('blur', checkContact);
-      $('fPhone').addEventListener('blur', checkPhone);
-
       /* ---------- 客户类型（归类） ---------- */
       var regType = '现货贸易商';
-      $('typePills').addEventListener('click', function (e) {
-        var pill = e.target.closest('.type-pill');
-        if (!pill) return;
-        regType = pill.dataset.v;
-        this.querySelectorAll('.type-pill').forEach(function (p) {
-          var on = p === pill;
-          p.classList.toggle('active', on);
-          p.setAttribute('aria-checked', on ? 'true' : 'false');
-        });
-      });
-
-      /* ---------- 提交注册 ---------- */
-      $('btnSubmit').addEventListener('click', function () {
-        var btn = this;
-        var checks = [checkName(), checkCode(), checkContact(), checkPhone(), checkFiles()];
-        if (checks.some(function (v) { return !v; })) return;
-
-        btn.disabled = true;
-        btn.textContent = '提交中…';
-        try {
-          var res = D.createSelfRegistered(D.loadStore(), {
-            customer_type: regType,
-            name: $('fName').value,
-            credit_code: $('fCode').value,
-            contact: $('fContact').value,
-            phone: $('fPhone').value,
-            credentials: files.slice()
-          });
-          if (!res.ok) {
-            if (res.code === 'DUP') {
-              setHint('hintName', res.error, 'err');
-              setHint('hintCode', res.error, 'err');
-            }
-            btn.disabled = false;
-            btn.textContent = '提交注册申请';
-            return;
-          }
-          D.saveStore(res.list);
-          $('okDesc').textContent = '「' + res.customer.name + '」注册申请已提交，状态：待审核。平台运营方审核通过后即正式入驻，可通过下方「审核进度查询」跟踪状态。';
-          $('regCard').hidden = true;
-          $('okCard').hidden = false;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } finally {
-          btn.disabled = false;
-          btn.textContent = '提交注册申请';
-        }
-      });
-
-      $('btnAgain').addEventListener('click', function () {
-        ['fName', 'fCode', 'fContact', 'fPhone'].forEach(function (id) { $(id).value = ''; });
-        files = [];
-        renderFiles();
-        ['hintName', 'hintCode', 'hintContact', 'hintPhone', 'hintFiles'].forEach(function (id) { $(id).textContent = ''; $(id).className = 'hint'; });
-        regType = '现货贸易商';
-        $('typePills').querySelectorAll('.type-pill').forEach(function (p) {
-          var on = p.dataset.v === regType;
-          p.classList.toggle('active', on);
-          p.setAttribute('aria-checked', on ? 'true' : 'false');
-        });
-        $('okCard').hidden = true;
-        $('regCard').hidden = false;
-      });
 
       /* ---------- 审核进度查询 + 已驳回重提（BR-C05） ---------- */
       var qCtx = null;
 
       function esc2(s) { return esc(s); }
-
-      $('btnQuery').addEventListener('click', function () {
-        var name = D.trimStr($('qName').value);
-        var code = D.trimStr($('qCode').value).toUpperCase();
-        var box = $('qResult');
-        box.hidden = false;
-        if (!name || !code) {
-          box.innerHTML = '<span style="color:var(--err);">请输入客户名称与统一社会信用代码</span>';
-          return;
-        }
-        var rec = D.loadStore().filter(function (c) {
-          return D.nameKeyOf(c.name) === D.nameKeyOf(name)
-            && D.trimStr(c.credit_code).toUpperCase() === code
-            && c.source === '自主注册';
-        })[0];
-        if (!rec) {
-          box.innerHTML = '<span style="color:var(--sub);">未查询到注册记录，请确认名称与信用代码与注册时一致</span>';
-          return;
-        }
-        qCtx = rec;
-        var pill = rec.status === '正常' ? '<span class="status-pill normal">审核通过 · 已入驻</span>'
-          : rec.status === '待审核' ? '<span class="status-pill pending">待平台审核</span>'
-          : rec.status === '停用' ? '<span class="status-pill normal">已入驻（账号已停用）</span>'
-          : '<span class="status-pill rejected">已驳回</span>';
-        var html = '<div>' + esc(rec.name) + ' &nbsp; ' + pill + '</div>';
-        if (rec.status === '已驳回' && rec.reject_reason) {
-          html += '<div class="reject-box">驳回原因：' + esc(rec.reject_reason) + '</div>'
-            + '<button class="resub-btn" id="btnResub" type="button">修改信息并重新提交</button><div id="resubForm"></div>';
-        }
-        box.innerHTML = html;
-        var rb = $('btnResub');
-        if (rb) rb.addEventListener('click', renderResubForm);
-      });
 
       function renderResubForm() {
         if (!qCtx) return;
@@ -494,18 +373,154 @@
           + '<input class="field-input" id="rPhone" type="text" maxlength="20" value="' + esc(qCtx.phone) + '" /></div>'
           + '</div>'
           + '<button class="submit-btn" id="btnResubSave" type="button" style="max-width:220px;">重新提交审核</button>';
-        $('btnResubSave').addEventListener('click', function () {
+        $('btnResubSave').addEventListener('click', async function () {
           var res = D.resubmit(D.loadStore(), qCtx.id, { contact: $('rContact').value, phone: $('rPhone').value });
           if (!res.ok) {
             var msg = res.errors ? (res.errors.contact || res.errors.phone || '') : res.error;
             $('qResult').innerHTML = '<span style="color:var(--err);">' + esc(msg || '重新提交失败') + '</span>';
             return;
           }
-          D.saveStore(res.list);
+          if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，查询结果保留现场可重试
           qCtx = res.customer;
           $('qResult').innerHTML = '<span style="color:var(--ok);">已重新提交，状态：待平台审核</span>';
         });
       }
+
+      /* ---------- 事件绑定（数据基座就绪后执行，数据读写走 HZDB 缓存） ---------- */
+      function bindEvents() {
+        /* 资质凭证（本地暂存：元数据 + 小文件内容预览） */
+        $('fileDrop').addEventListener('click', function () { $('fileInput').click(); });
+        $('fileDrop').addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') $('fileInput').click(); });
+        $('fileInput').addEventListener('change', function () {
+          Array.prototype.forEach.call(this.files || [], function (file) {
+            var item = { id: 'f' + Date.now() + Math.floor(Math.random() * 1e4), name: file.name, size: file.size, type: file.type, data: null };
+            var push = function () { files.push(item); renderFiles(); };
+            if (file.size <= MAX_INLINE && /^image\//.test(file.type)) {
+              var reader = new FileReader();
+              reader.onload = function () { item.data = reader.result; push(); };
+              reader.onerror = function () { push(); };
+              reader.readAsDataURL(file);
+            } else {
+              push();
+            }
+          });
+          this.value = '';
+        });
+        $('fileList').addEventListener('click', function (e) {
+          var del = e.target.closest('.fdel');
+          if (!del) return;
+          files.splice(Number(del.dataset.i), 1);
+          renderFiles();
+        });
+
+        /* 字段校验与查重 */
+        $('fName').addEventListener('blur', function () { checkName(true); });
+        $('fCode').addEventListener('blur', function () { checkCode(true); });
+        $('fContact').addEventListener('blur', checkContact);
+        $('fPhone').addEventListener('blur', checkPhone);
+
+        /* 客户类型（归类） */
+        $('typePills').addEventListener('click', function (e) {
+          var pill = e.target.closest('.type-pill');
+          if (!pill) return;
+          regType = pill.dataset.v;
+          this.querySelectorAll('.type-pill').forEach(function (p) {
+            var on = p === pill;
+            p.classList.toggle('active', on);
+            p.setAttribute('aria-checked', on ? 'true' : 'false');
+          });
+        });
+
+        /* 提交注册 */
+        $('btnSubmit').addEventListener('click', async function () {
+          var btn = this;
+          var checks = [checkName(), checkCode(), checkContact(), checkPhone(), checkFiles()];
+          if (checks.some(function (v) { return !v; })) return;
+
+          btn.disabled = true;
+          btn.textContent = '提交中…';
+          try {
+            var res = D.createSelfRegistered(D.loadStore(), {
+              customer_type: regType,
+              name: $('fName').value,
+              credit_code: $('fCode').value,
+              contact: $('fContact').value,
+              phone: $('fPhone').value,
+              credentials: files.slice()
+            });
+            if (!res.ok) {
+              if (res.code === 'DUP') {
+                setHint('hintName', res.error, 'err');
+                setHint('hintCode', res.error, 'err');
+              }
+              return;
+            }
+            if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，表单保留现场可重试
+            $('okDesc').textContent = '「' + res.customer.name + '」注册申请已提交，状态：待审核。平台运营方审核通过后即正式入驻，可通过下方「审核进度查询」跟踪状态。';
+            $('regCard').hidden = true;
+            $('okCard').hidden = false;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } finally {
+            btn.disabled = false;
+            btn.textContent = '提交注册申请';
+          }
+        });
+
+        $('btnAgain').addEventListener('click', function () {
+          ['fName', 'fCode', 'fContact', 'fPhone'].forEach(function (id) { $(id).value = ''; });
+          files = [];
+          renderFiles();
+          ['hintName', 'hintCode', 'hintContact', 'hintPhone', 'hintFiles'].forEach(function (id) { $(id).textContent = ''; $(id).className = 'hint'; });
+          regType = '现货贸易商';
+          $('typePills').querySelectorAll('.type-pill').forEach(function (p) {
+            var on = p.dataset.v === regType;
+            p.classList.toggle('active', on);
+            p.setAttribute('aria-checked', on ? 'true' : 'false');
+          });
+          $('okCard').hidden = true;
+          $('regCard').hidden = false;
+        });
+
+        /* 审核进度查询 + 已驳回重提（BR-C05） */
+        $('btnQuery').addEventListener('click', function () {
+          var name = D.trimStr($('qName').value);
+          var code = D.trimStr($('qCode').value).toUpperCase();
+          var box = $('qResult');
+          box.hidden = false;
+          if (!name || !code) {
+            box.innerHTML = '<span style="color:var(--err);">请输入客户名称与统一社会信用代码</span>';
+            return;
+          }
+          var rec = D.loadStore().filter(function (c) {
+            return D.nameKeyOf(c.name) === D.nameKeyOf(name)
+              && D.trimStr(c.credit_code).toUpperCase() === code
+              && c.source === '自主注册';
+          })[0];
+          if (!rec) {
+            box.innerHTML = '<span style="color:var(--sub);">未查询到注册记录，请确认名称与信用代码与注册时一致</span>';
+            return;
+          }
+          qCtx = rec;
+          var pill = rec.status === '正常' ? '<span class="status-pill normal">审核通过 · 已入驻</span>'
+            : rec.status === '待审核' ? '<span class="status-pill pending">待平台审核</span>'
+            : rec.status === '停用' ? '<span class="status-pill normal">已入驻（账号已停用）</span>'
+            : '<span class="status-pill rejected">已驳回</span>';
+          var html = '<div>' + esc(rec.name) + ' &nbsp; ' + pill + '</div>';
+          if (rec.status === '已驳回' && rec.reject_reason) {
+            html += '<div class="reject-box">驳回原因：' + esc(rec.reject_reason) + '</div>'
+              + '<button class="resub-btn" id="btnResub" type="button">修改信息并重新提交</button><div id="resubForm"></div>';
+          }
+          box.innerHTML = html;
+          var rb = $('btnResub');
+          if (rb) rb.addEventListener('click', renderResubForm);
+        });
+      }
+
+      async function boot() {
+        await HZDB.ready();   // 启动遮罩 + /api/bootstrap 全量装载（失败可点重试）
+        bindEvents();
+      }
+      boot();
     })();
   </script>
 </body>

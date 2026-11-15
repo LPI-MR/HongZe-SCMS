@@ -193,11 +193,14 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 业务流程共享数据层 -->
-  <script src="flow-data.js"></script>
+  <script src="flow-data.js?v=20261115a"></script>
   <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
-  <script src="../business-data.js"></script>
+  <script src="../business-data.js?v=20261115a"></script>
   <!-- 运力方案脚本 -->
-  <script src="order-capacity.js"></script>
+  <script src="order-capacity.js?v=20261115a"></script>
 </body>
 </html>

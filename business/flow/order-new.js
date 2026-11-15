@@ -703,7 +703,7 @@
     };
   }
 
-  function submitOrder() {
+  async function submitOrder() {
     if (state.submitting) return; // E8 防重：提交期间忽略重复点击
     const payload = collectPayload();
     const res = D.validateForm(payload, state.subjectRes);
@@ -723,11 +723,12 @@
       order.createdAt = nowIso;
       order.updatedAt = nowIso;
       // 落库并联动：订单台账（达同步点时）+ 海运航次（船名与吨数齐备时，vessel_info 9 项随单同步）
-      data.saveOrder(order);
+      // 任一写库失败（HZDB 已 toast）：保留表单供重试
+      if (!await data.saveOrder(order)) return;
       // 港口信息预填（F6③/TBD-10：港口名/码头首项带入，拥堵度默认正常）
-      data.upsertPort(D.buildPortPrefill(order));
+      if (!await data.upsertPort(D.buildPortPrefill(order))) return;
       // 运力方案预填（F6③/TBD-10：按智能方案生成 3 行通道，数值留 0 人工确认）
-      data.upsertCapacities(order.id, D.buildCapacityPrefills(order, state.plansRes, data.genCapacityId));
+      if (!await data.upsertCapacities(order.id, D.buildCapacityPrefills(order, state.plansRes, data.genCapacityId))) return;
       state.savedOrder = order; // 成功浮层跳转（进入港口信息 / 订单详情）携带订单 id
       // 提交成功浮层（TBD-08：进入下一步为主操作）
       els.successOrderId.textContent = order.id;
@@ -821,5 +822,11 @@
     refreshPlans();      // F4：初始未触发，展示缺失项提示
   }
 
-  init();
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  // （导航高亮属纯 DOM 会话逻辑，保持顶层立即执行，不依赖数据基座）
+  async function boot() {
+    await HZDB.ready();
+    init();
+  }
+  boot().catch(err => console.error('新建订单页初始化失败：', err));
 })();

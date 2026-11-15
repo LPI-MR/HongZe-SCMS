@@ -1,6 +1,6 @@
 // ===== 合同模板模块脚本 =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责模板分类、版本控制等本模块逻辑
-// 模板数据持久化到 localStorage（hz_contract_templates），刷新页面不丢失
+// 模板数据持久化到 PostgreSQL（templates 资源，整对象存 content jsonb），刷新页面不丢失
 //
 // 数据结构：
 //   templates = [ { id, category, versions: [ { ver, time, name, content, remark } ] } ]
@@ -45,41 +45,7 @@
   }
 
   // ===== 数据层 =====
-  const STORAGE_KEY = 'hz_contract_templates';
   const CATS = ['采购类合同', '销售类合同', '运输类合同', '咨询服务类合同', '通用类合同', '授权委托书'];
-
-  // 种子版本号：种子内容变更时递增，浏览器检测到不匹配自动丢弃旧缓存、加载最新种子
-  const SEED_VERSION = 'v1';
-
-  // 写死的合同模板种子数据：火运授权委托书（V1.0 → V1.1 两个版本）
-  const SEED_TEMPLATES = [
-    {
-      id: 'tpl-seed-huoyun',
-      category: '授权委托书',
-      versions: [
-        {
-          ver: 'V1.0',
-          time: new Date(2026, 8, 20, 10, 30).getTime(),
-          name: '火运授权委托书',
-          intro: '本模版适用于火车运输的货物授权',
-          content: '本模板正文以内置静态文档形式展示，详见详情页。',
-          risks: ['1、确认提货码头', '2、提货授权吨数及提货时间'],
-          remark: '初始版本',
-          files: []
-        },
-        {
-          ver: 'V1.1',
-          time: new Date(2026, 9, 15, 9, 6).getTime(),
-          name: '火运授权委托书',
-          intro: '本模版适用于火车运输的货物授权',
-          content: '本模板正文以内置静态文档形式展示，详见详情页。',
-          risks: ['1、确认提货码头', '2、提货授权吨数及提货时间'],
-          remark: '完善提货授权条款',
-          files: []
-        }
-      ]
-    }
-  ];
 
   // 写死模板的详情查看内容（静态 HTML，替代 PDF 转换管线，内容固定、无乱码风险）
   const STATIC_DOCS = {
@@ -101,7 +67,9 @@
     ].join('\n')
   };
 
-  let templates = load();
+  // 模板列表：[{id, category, versions: [{ver, time, name, intro, content, risks, remark, files}]}]
+  // boot 时经 HZDB.ready() 从数据库装载（templates 资源整对象保真）
+  let templates = [];
   let curCat = '全部';     // 当前分类筛选
   let editingId = null;    // 正在编辑的模板 id；null = 新建
 
@@ -113,43 +81,11 @@
       if (!Array.isArray(v.files)) v.files = [];
     });
   }
-  templates.forEach(normalizeFiles);
 
-  function load() {
-    try {
-      // 包装格式 { __version, list }：版本不匹配或旧格式数据一律回退种子
-      const v = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (v && v.__version === SEED_VERSION && Array.isArray(v.list)) {
-        return v.list;
-      }
-      return seed();
-    } catch (e) {
-      return seed();
-    }
-  }
-
-  // 首次使用（或版本升级）写入种子数据（深拷贝，避免编辑污染种子）
-  function seed() {
-    return JSON.parse(JSON.stringify(SEED_TEMPLATES));
-  }
-
+  // 保存：全量写回数据库（PUT /api/templates，整数组为 body）；失败由 HZDB toast 提示，
+  // 页面内存保留供重试，调用方按返回值决定是否回滚
   function save() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ __version: SEED_VERSION, list: templates }));
-    } catch (e) {
-      // 配额超限：剥离各模板最新版本的大文档附件后重试（正文与版本记录保留）
-      templates.forEach(t => {
-        const v = t.versions[t.versions.length - 1];
-        if (v && v.files) v.files = [];
-        if (v) v.file = null;
-      });
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
-        alert('本地存储空间不足：各模板最新版本的大文档附件未能保存（正文与版本记录已保存，可重新上传）');
-      } catch (e2) {
-        alert('本地存储空间不足，本次修改未能保存到浏览器，请清理旧模板后重试');
-      }
-    }
+    return HZDB.put('templates', templates);
   }
 
   function uid() {
@@ -804,7 +740,7 @@
     pendingFiles = [];
   }
 
-  function saveTpl() {
+  async function saveTpl() {
     const name = $('fTplName').value.trim();
     if (!name) {
       showTip('请填写模板名称');
@@ -820,7 +756,7 @@
     const major = $('fTplMajor').checked;
 
     if (!editingId) {
-      // 新建：首版本 V1.0
+      // 新建：首版本 V1.0（落库失败回滚弹出）
       templates.push({
         id: uid(),
         category: category,
@@ -828,6 +764,7 @@
                      intro: intro, content: content, risks: risks,
                      remark: '', files: pendingFiles.slice() }]
       });
+      if (!await save()) { templates.pop(); return; }
     } else {
       const t = byId(editingId);
       const cur = curVer(t);
@@ -835,6 +772,9 @@
       const filesChanged =
         JSON.stringify(pendingFiles) !== JSON.stringify(cur.files || []);
 
+      // 字段快照：落库失败时恢复（编辑会先改内存再写库）
+      const prev = { category: t.category, name: cur.name, intro: cur.intro,
+                     content: cur.content, risks: cur.risks.slice() };
       t.category = category;
       cur.name = name;
       cur.intro = intro;
@@ -843,13 +783,18 @@
 
       if (!filesChanged) {
         // 无文件变动：直接覆盖当前版本的介绍信息，版本号不变
-        save();
+        if (!await save()) {
+          t.category = prev.category;
+          cur.name = prev.name; cur.intro = prev.intro;
+          cur.content = prev.content; cur.risks = prev.risks;
+          return;
+        }
         closeEditor();
         renderAll();
         return;
       }
 
-      // 文件变动：生成新版本（主版本勾选生效）
+      // 文件变动：生成新版本（主版本勾选生效；落库失败回滚版本与字段）
       t.versions.push({
         ver: nextVer(cur.ver, major),
         time: Date.now(),
@@ -860,9 +805,15 @@
         remark: remark || '更新模板文档',
         files: pendingFiles.slice()
       });
+      if (!await save()) {
+        t.versions.pop();
+        t.category = prev.category;
+        cur.name = prev.name; cur.intro = prev.intro;
+        cur.content = prev.content; cur.risks = prev.risks;
+        return;
+      }
     }
 
-    save();   // 内置配额降级：超限时自动剥离大文档附件重试并提示
     closeEditor();
     renderAll();
   }
@@ -928,7 +879,7 @@
   }
 
   // 恢复历史版本：以旧版本内容生成新版本（版本号继续递进，全程可追溯）
-  function restoreVersion(id, ver) {
+  async function restoreVersion(id, ver) {
     const t = byId(id);
     const v = t && t.versions.find(x => x.ver === ver);
     if (!t || !v || v === curVer(t)) return;
@@ -947,7 +898,7 @@
       remark: '恢复自 ' + ver,
       files: (cur.files || []).slice()   // 文档附件不回滚，继承当前版本
     });
-    save();
+    if (!await save()) { t.versions.pop(); return; }  // 落库失败回滚版本
     renderAll();
     renderHistory(id);           // 刷新历史列表（新版本成为当前）
     $('hisView').hidden = true;
@@ -1021,7 +972,7 @@
     });
 
     // 模板卡片操作（事件委托）
-    $('tplGrid').addEventListener('click', e => {
+    $('tplGrid').addEventListener('click', async e => {
       const btn = e.target.closest('.tpl-act');
       if (!btn) {
         // 点击条目主体（非操作按钮）→ 进入详情
@@ -1044,13 +995,10 @@
         const ok = window.confirm('删除模板「' + curVer(t).name + '」及其全部 ' +
           t.versions.length + ' 个版本？删除后不可恢复。');
         if (!ok) return;
-        try {
-          templates = templates.filter(x => x.id !== id);
-          save();
-        } catch (e) {
-          alert('删除时保存数据出错：' + e.message);
-        }
-        renderAll();   // 无论保存是否报错，都保证界面恢复
+        const prevList = templates.slice();
+        templates = templates.filter(x => x.id !== id);
+        if (!await save()) { templates = prevList; return; }  // 落库失败回滚
+        renderAll();
       }
     });
 
@@ -1065,6 +1013,15 @@
     });
   }
 
-  bindEvents();
-  renderAll();
+  // 启动：等 HZDB 缓存基座就绪后从数据库装载模板，再绑定事件与渲染
+  async function boot() {
+    await HZDB.ready();
+    templates = HZDB.get('templates') || [];
+    if (!Array.isArray(templates)) templates = [];
+    templates.forEach(normalizeFiles);
+
+    bindEvents();
+    renderAll();
+  }
+  boot();
 })();

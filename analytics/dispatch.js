@@ -1,8 +1,8 @@
 // ===== 调度数据分析（先选/输订单，再看该订单分析）=====
-// 数据来源：
-//   调度车次   localStorage 'hz-scms-trips-v2'（与调度看板/信息录入共享）
-//   仓储出库   localStorage 'hz_warehouse_io_v1'（进销存台账流水，结构 { list }，r.order 关联订单号）
-//   订单台账   localStorage 'hz-scms-orders-v1'（本页维护：订单号 + 总委托量）
+// 数据来源（PostgreSQL，经 HZDB 缓存基座装载；每 8 秒直拉 API 刷新保持跨页同步）：
+//   调度车次   /api/trips（与调度看板/信息录入共享）
+//   仓储出库   /api/ioRecords（进销存台账流水，r.order 关联订单号）
+//   订单台账   /api/analyticsOrders（本页维护：订单号 + 总委托量）
 // 口径：
 //   出港＝车次已过「发出」节点（rail/inter 下标≥4，road 下标≥1）
 //   在途＝已发出且未到库；入库＝已到库（优先取实际到货吨 actualTons）
@@ -29,9 +29,8 @@
 
   /* ==================== 数据层 ==================== */
 
-  const TRIPS_KEY = 'hz-scms-trips-v2';
-  const IO_KEY = 'hz_warehouse_io_v1';
-  const ORDERS_KEY = 'hz-scms-orders-v1';
+  // 页面内存缓存（boot 时从 HZDB 缓存装载，轮询时经 API 刷新）
+  const cache = { orders: [], trips: [], ios: [] };
 
   // 节点链（与 transport/trips-store.js 保持一致；发出下标 / 终态下标由此推导）
   const NODES = {
@@ -42,35 +41,37 @@
   const SENT_IDX = { rail: 4, inter: 4, road: 1 };
   const MODE_NAME = { rail: '沧港直达', inter: '公铁联运', road: '汽运直达' };
 
-  function readJSON(key, fallback) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      const data = JSON.parse(raw);
-      return data == null ? fallback : data;
-    } catch (e) {
-      return fallback;
-    }
-  }
-
   function loadTrips() {
-    const data = readJSON(TRIPS_KEY, { trips: [] });
-    return Array.isArray(data.trips) ? data.trips : [];
+    return Array.isArray(cache.trips) ? cache.trips : [];
   }
 
   function loadIoRecords() {
-    // 仓储出入库存储结构为 { list: [...] }（与 warehouse.js 保存格式一致）
-    const data = readJSON(IO_KEY, { list: [] });
-    return Array.isArray(data.list) ? data.list : [];
+    return Array.isArray(cache.ios) ? cache.ios : [];
   }
 
   function loadOrders() {
-    const data = readJSON(ORDERS_KEY, { list: [] });
-    return Array.isArray(data.list) ? data.list : [];
+    return Array.isArray(cache.orders) ? cache.orders : [];
   }
 
+  // 订单台账落库（PUT /api/analyticsOrders 全量替换）；失败 toast 由 HZDB 提示，
+  // 返回 false 时调用方按快照回滚内存
   function saveOrders(list) {
-    localStorage.setItem(ORDERS_KEY, JSON.stringify({ list }));
+    return HZDB.put('analyticsOrders', list);
+  }
+
+  // 轮询刷新：直拉最新数据（订单台账 / 调度车次 / 仓储出入库），失败静默待下轮重试
+  async function refreshData() {
+    try {
+      const [orders, tripsData, ios] = await Promise.all([
+        HZAPI.get('/api/analyticsOrders'),
+        HZAPI.get('/api/trips'),
+        HZAPI.get('/api/ioRecords'),
+      ]);
+      if (Array.isArray(orders)) cache.orders = orders;
+      if (tripsData && Array.isArray(tripsData.trips)) cache.trips = tripsData.trips;
+      if (Array.isArray(ios)) cache.ios = ios;
+      renderAll();
+    } catch (e) { /* 网络/服务异常：保留现场，下一轮重试 */ }
   }
 
   function genId() {
@@ -99,8 +100,8 @@
   }
 
   function supplierName(id) {
-    const data = readJSON('hz_warehouse_suppliers_v1', { list: [] });
-    const s = (data.list || []).find(x => x.id === id);
+    const list = HZDB.get('warehouses') || [];
+    const s = list.find(x => x.id === id);
     return s ? s.name : '';
   }
 
@@ -328,7 +329,7 @@
   });
 
   // ① 登记新订单
-  document.getElementById('btn-add').addEventListener('click', () => {
+  document.getElementById('btn-add').addEventListener('click', async () => {
     const idInput = document.getElementById('order-id');
     const qtyInput = document.getElementById('order-qty');
     const orderId = idInput.value.trim();
@@ -338,15 +339,16 @@
     const qtyRaw = qtyInput.value.trim();
     const rec = { id: genId(), orderId, qty: qtyRaw === '' ? null : Number(qtyRaw), createdAt: Date.now() };
     list.push(rec);
-    saveOrders(list);
+    if (!await saveOrders(list)) { list.pop(); return; }
     selectedId = rec.id;
     idInput.value = ''; qtyInput.value = '';
     renderAll();
   });
 
   // ① 从调度导入订单号
-  document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('btn-import').addEventListener('click', async () => {
     const list = loadOrders();
+    const prevList = list.slice();
     const known = new Set(list.map(o => o.orderId));
     const found = new Set(loadTrips().map(t => (t.orderId || '').trim()).filter(Boolean));
     let added = 0;
@@ -358,32 +360,36 @@
       if (!firstNew) firstNew = rec.id;
       added += 1;
     });
-    saveOrders(list);
+    if (!added) { alert('调度车次中的订单号均已登记'); return; }
+    if (!await saveOrders(list)) { cache.orders = prevList; return; }
     if (firstNew) selectedId = firstNew;
     renderAll();
-    if (!added) alert('调度车次中的订单号均已登记');
   });
 
   // ② 详情：委托量编辑 + 删除
-  document.getElementById('detail-qty').addEventListener('change', e => {
-    const { orders } = getData();
-    const cur = currentOrder(orders);
+  document.getElementById('detail-qty').addEventListener('change', async e => {
+    const list = loadOrders();
+    const cur = currentOrder(list);
     if (!cur) return;
+    const prevQty = cur.qty;
     const raw = e.target.value.trim();
     cur.qty = raw === '' ? null : Number(raw);
-    saveOrders(orders);
+    if (!await saveOrders(list)) { cur.qty = prevQty; return; }
     renderAll();
   });
 
-  document.getElementById('detail-del').addEventListener('click', () => {
+  document.getElementById('detail-del').addEventListener('click', async () => {
     if (!selectedId) return;
-    saveOrders(loadOrders().filter(o => o.id !== selectedId));
+    const list = loadOrders();
+    const prevList = list.slice();
+    cache.orders = list.filter(o => o.id !== selectedId);
+    if (!await saveOrders(cache.orders)) { cache.orders = prevList; return; }
     selectedId = null;
     renderAll();
   });
 
   // ③ 一览：点击订单号切换分析 / 委托量编辑 / 删除
-  document.getElementById('all-body').addEventListener('click', e => {
+  document.getElementById('all-body').addEventListener('click', async e => {
     const pick = e.target.closest('[data-act="pick"]');
     if (pick) {
       selectedId = pick.closest('tr').dataset.id;
@@ -393,30 +399,38 @@
     const del = e.target.closest('[data-act="del"]');
     if (del) {
       const id = del.closest('tr').dataset.id;
-      saveOrders(loadOrders().filter(o => o.id !== id));
+      const list = loadOrders();
+      const prevList = list.slice();
+      cache.orders = list.filter(o => o.id !== id);
+      if (!await saveOrders(cache.orders)) { cache.orders = prevList; return; }
       if (selectedId === id) selectedId = null;
       renderAll();
     }
   });
 
-  document.getElementById('all-body').addEventListener('change', e => {
+  document.getElementById('all-body').addEventListener('change', async e => {
     const input = e.target.closest('input[data-field="qty"]');
     if (!input) return;
     const id = input.closest('tr').dataset.id;
     const list = loadOrders();
     const order = list.find(o => o.id === id);
     if (!order) return;
+    const prevQty = order.qty;
     const raw = input.value.trim();
     order.qty = raw === '' ? null : Number(raw);
-    saveOrders(list);
+    if (!await saveOrders(list)) { order.qty = prevQty; return; }
     renderAll();
   });
 
-  // 与其他模块共享 localStorage：外部修改后自动同步
-  window.addEventListener('storage', e => {
-    if (e.key === TRIPS_KEY || e.key === IO_KEY || e.key === ORDERS_KEY) renderAll();
-  });
-  setInterval(renderAll, 8000);
+  // ===== 初始化（数据从 PostgreSQL 装载；每 8 秒直拉 API 保持跨页同步） =====
+  async function boot() {
+    await HZDB.ready();
+    cache.orders = HZDB.get('analyticsOrders') || [];
+    cache.trips = HZDB.get('trips') || [];
+    cache.ios = HZDB.get('ioRecords') || [];
+    renderAll();
+    setInterval(refreshData, 8000);
+  }
 
-  renderAll();
+  boot();
 })();

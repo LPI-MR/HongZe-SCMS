@@ -10,12 +10,14 @@
    - 客户类型归类：注册 / 代注册时选择类型，管理页编辑弹窗可随时调整
    ------------------------------------------------------------
    注：旧「统一库同步迁移 + 人工归类面板」流程已下线（后端数据库就绪，
-   客户直接在注册 / 管理页录入与维护）；遗留待归类清单由 adoptPending 兼容并入。
+   客户直接在注册 / 管理页录入与维护）；迁移期遗留的待归类存量（DB 资源
+   customersPending）由 adoptPending 兼容并入。
    ------------------------------------------------------------
    设计约定：
-   - 本文件为纯逻辑层：所有业务函数入参不依赖 DOM / localStorage，
+   - 本文件为纯逻辑层：所有业务函数入参不依赖 DOM / 数据库连接，
      便于 Node 环境单元测试（UMD 导出）。
-   - 浏览器持久化封装在文件尾部（localStorage 可用时才启用）。
+   - 持久化走 HZDB 数据基座（PostgreSQL）：loadStore() 同步读缓存，
+     saveStore() 异步全量替换（PUT /api/customers），封装在文件尾部。
    ============================================================ */
 
 (function (root, factory) {
@@ -29,11 +31,9 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  /* ==================== 存储键与版本 ==================== */
+  /* ==================== 存储资源 ==================== */
 
-  var STORE_KEY = 'hz_customers_v2';            // 新版客户库
-  var PENDING_KEY = 'hz_customers_pending_v2';  // 遗留待归类清单（旧迁移流程存量，读入后清空）
-  var STORE_VERSION = 'v2';
+  var RESOURCE = 'customers';   // API 资源名（GET/PUT /api/customers，HZDB 缓存键）
 
   /* ==================== 业务常量 ==================== */
 
@@ -503,54 +503,28 @@
     return { list: next, adopted: adopted };
   }
 
-  /* ==================== 浏览器持久化（localStorage 可用时生效） ==================== */
+  /* ==================== 持久化（HZDB 数据基座 · PostgreSQL） ==================== */
 
-  function hasStorage() {
-    try { return typeof localStorage !== 'undefined' && !!localStorage; } catch (e) { return false; }
-  }
-
-  function readJson(key) {
-    if (!hasStorage()) return null;
-    try {
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : null;
-    } catch (e) { return null; }
-  }
-
+  // 同步读：HZDB.ready() 装载 /api/bootstrap 后取缓存（键 = 资源名 customers）；
+  // 未装载 / 资源缺失兜底空数组；返回浅拷贝，业务层不改动缓存原数组
   function loadStore() {
-    var w = readJson(STORE_KEY);
-    if (w && Array.isArray(w.list)) return w.list;
-    return [];
+    var w = (typeof window !== 'undefined' && window.HZDB) ? window.HZDB.get(RESOURCE) : null;
+    return Array.isArray(w) ? w.slice() : [];
   }
 
+  // 异步写：全量替换（PUT /api/customers）。成功返回 true（HZDB 缓存已更新）；
+  // 失败返回 false（HZDB 已 toast 提示，缓存不动，调用方保留现场供重试）。
+  // Node / 无基座环境（单元测试、种子导出沙箱）返回已决失败的 Promise。
   function saveStore(list) {
-    if (!hasStorage()) return;
-    localStorage.setItem(STORE_KEY, JSON.stringify({
-      __version: STORE_VERSION,
-      updated_at: fmtTime(new Date()),
-      list: list
-    }));
-  }
-
-  function loadPending() {
-    var w = readJson(PENDING_KEY);
-    return (w && Array.isArray(w.list)) ? w.list : [];
-  }
-
-  function savePending(pendingList) {
-    if (!hasStorage()) return;
-    localStorage.setItem(PENDING_KEY, JSON.stringify({
-      __version: STORE_VERSION,
-      updated_at: fmtTime(new Date()),
-      list: pendingList || []
-    }));
+    if (typeof window === 'undefined' || !window.HZDB) return Promise.resolve(false);
+    return window.HZDB.put(RESOURCE, list);
   }
 
   /* ==================== 导出 ==================== */
 
   return {
     // 常量
-    STORE_KEY: STORE_KEY, PENDING_KEY: PENDING_KEY, STORE_VERSION: STORE_VERSION,
+    RESOURCE: RESOURCE,
     TYPES: TYPES, STATUSES: STATUSES, SOURCES: SOURCES,
     TYPE_TAGS: TYPE_TAGS, OPERATOR: OPERATOR, LIMITS: LIMITS,
     // 工具
@@ -570,8 +544,7 @@
     listActive: listActive,
     // 存量待归类清单兼容
     adoptPending: adoptPending,
-    // 存储
-    hasStorage: hasStorage, loadStore: loadStore, saveStore: saveStore,
-    loadPending: loadPending, savePending: savePending
+    // 存储（loadStore 同步读缓存；saveStore 异步写库，返回 Promise<boolean>）
+    loadStore: loadStore, saveStore: saveStore
   };
 }));

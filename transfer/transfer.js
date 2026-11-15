@@ -1,85 +1,9 @@
 // ===== 中转站点管理模块脚本 =====
 // 列表页（transfer.html）：检索卡片 + 台账卡片（搜索 / 分页 / 导出 / 新增 / 编辑 / 删除）
 // 详情页（transfer-detail.html?id=xxx）：站点概览 + 指标 + 信息卡片 + 堆场仓库表格（✎ 编辑）
-// 数据持久化：localStorage（hz_transfer_stations），{__version, list} 包装格式，版本不匹配自动回种子
+// 数据持久化到 PostgreSQL：读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/stations 全量替换
 (function () {
   'use strict';
-
-  var STORAGE_KEY = 'hz_transfer_stations';
-  var VERSION = 'v19';   // v19：删除「既有通道运输成本」卡片及相关编辑功能
-
-  // ===== 种子数据（曹庄镇站 / 邢台南站 / 康城站）=====
-  var SEED = [
-    {
-      id: 'st-caozhuangzhen',
-      name: '曹庄镇站',
-      subtitle: '河北省邯郸市鸡泽县曹庄镇·邯黄铁路沿线',
-      photo: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=railway%20freight%20station%20in%20north%20china%20plain%2C%20container%20yard%20with%20stacked%20shipping%20containers%2C%20blue%20gantry%20crane%2C%20electrified%20tracks%20with%20freight%20wagons%2C%20clear%20daylight%2C%20realistic%20photography&image_size=landscape_16_9',
-      intro: '邯黄铁路沿线重要中转节点，承担大宗货物装卸、仓储集散与公铁换装功能，衔接黄骅港方向铁海联运班列',
-      metrics: [
-        { label: '设计年装卸能力', value: '200', unit: '万吨' },
-        { label: '货场面积', value: '20', unit: '万㎡' },
-        { label: '货物线', value: '2', unit: '条' }
-      ],
-      basicInfo: [
-        { label: '站点名称', value: '曹庄镇站' },
-        { label: '所属线路', value: '邯黄铁路' },
-        { label: '所属地区', value: '河北省邯郸市鸡泽县曹庄镇' },
-        { label: '站点性质', value: '货运站、中间站' },
-        { label: '运行时间', value: '2025年' },
-        { label: '隶属铁路局', value: '中国铁路北京局集团有限公司' },
-        { label: '车站等级', value: '四级' }
-      ],
-      stationIntro: '2025年，启动铁路线延长工程，曹庄镇站轨道由450米延长至1050米，装卸能力预计560万吨/年。具备20、40英尺集装箱及整车发到作业能力，可满足整列火车直接进出装卸。现已实现东盟班列常态化运行，成为京津冀地区唯一常态化运行的"中国—东盟"陆地运输通道。',
-      scale: '货场1处，横列式布置，货物线2条，有效长度450米，装卸作业时需对整列解编为半列列车推送进入。'
-    },
-    {
-      id: 'st-xingtainan',
-      name: '邢台南站',
-      subtitle: '',
-      photo: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=modern%20railway%20freight%20logistics%20yard%2C%20gantry%20cranes%20over%20rail%20sidings%2C%20container%20handling%20area%20and%20warehouses%2C%20sunny%20day%2C%20realistic%20photography&image_size=landscape_16_9',
-      intro: '邯黄铁路（邢台至黄骅港铁路）上的重要中间站，主要承担煤炭、玻璃、粮食、农产品、钢材等大宗货物的运输任务，通过邯黄铁路与沿海港口实现海铁联运，是冀中南地区重要的物流节点。',
-      metrics: [
-        { label: '实际货运量', value: '667.2', unit: '万吨', note: '数据时间2024年' },
-        { label: '货场面积', value: '25.5', unit: '万㎡' },
-        { label: '铁路线路总数', value: '4', unit: '条' }
-      ],
-      basicInfo: [
-        { label: '站点名称', value: '邢台南站' },
-        { label: '所属线路', value: '邯黄铁路' },
-        { label: '所属地区', value: '河北省邢台市' },
-        { label: '站点性质', value: '货运站、中间站' },
-        { label: '运行时间', value: '2013年' },
-        { label: '隶属铁路局', value: '中国铁路北京局集团有限公司' },
-        { label: '车站等级', value: '-' }
-      ],
-      stationIntro: '邢台南站主要承担煤炭、玻璃、粮食、农产品、钢材等大宗货物的运输任务。车站通过邯黄铁路与天津港、黄骅港、唐山港等沿海港口实现海铁联运，是冀中南地区重要的物流节点。2024年，该站全年累计完成货物运输量667.2万吨，同比增长23.2%',
-      scale: '一台四线（含正线1条），侧式站台。货场面积25.5万平方米，占地386亩，日吞吐量达5000吨。'
-    },
-    {
-      id: 'st-kangcheng',
-      name: '康城站',
-      subtitle: '',
-      photo: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=bulk%20cargo%20railway%20freight%20terminal%2C%20raw%20material%20stockpile%20yard%20with%20loader%20machine%2C%20hopper%20freight%20wagons%20on%20tracks%2C%20industrial%20scenery%2C%20realistic%20photography&image_size=landscape_16_9',
-      intro: '邯长铁路沿线车站，2024年6月，邯长线康城站改造工程正式开通运营，进一步提升了该站的货运功能，强化了与铁路运输的衔接，有效缓解了公路运输压力，促进了区域经济发展',
-      metrics: [
-        { label: '实际货运量', value: '-' },
-        { label: '货场面积', value: '-' },
-        { label: '装卸线数量', value: '8', unit: '条' }
-      ],
-      basicInfo: [
-        { label: '站点名称', value: '康城站' },
-        { label: '所属线路', value: '邯长铁路' },
-        { label: '所属地区', value: '河北省武安市' },
-        { label: '站点性质', value: '客货运站、中间站' },
-        { label: '运行时间', value: '1943年' },
-        { label: '隶属铁路局', value: '中国铁路北京局集团有限公司' },
-        { label: '车站等级', value: '三级' }
-      ],
-      stationIntro: '康城站是邯郸站与武安站之间的一个重要中间站，连接着京广铁路与沙午铁路方向。距离邯郸站23公里。其上下行区间均已实现电气化',
-      scale: '车站设有到发线8条（含正线2条），有效长度为871m~1044m。'
-    }
-  ];
 
   // ===== 状态 =====
   var stations = [];
@@ -142,29 +66,15 @@
   else document.addEventListener('navbar:loaded', setActiveNav, { once: true });
 
   // ===== 数据读写 =====
+  // 保存：全量写回数据库（PUT /api/stations）；失败由 HZDB toast 提示，页面内存保留可重试
   function saveData() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ __version: VERSION, list: stations }));
-    } catch (e) {
-      toast('保存失败：浏览器本地存储不可用');
-    }
+    return HZDB.put('stations', stations);
   }
 
+  // 读取：boot 完成后从 HZDB 缓存同步取（未装载时为空数组兜底）
   function loadData() {
-    var stored = null;
-    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) { /* 忽略 */ }
-    if (stored) {
-      try {
-        var parsed = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed.list) && parsed.__version === VERSION) {
-          stations = parsed.list;
-          return;
-        }
-      } catch (e) { /* 解析失败则重新写入种子数据 */ }
-    }
-    // 版本不匹配或无缓存：写入种子数据（副本，避免污染 SEED）
-    stations = JSON.parse(JSON.stringify(SEED));
-    saveData();
+    var list = HZDB.get('stations');
+    stations = Array.isArray(list) ? list : [];
   }
 
   function findStation(id) {
@@ -312,7 +222,7 @@
     s[key] = s[key] || [];
     var body = '<div id="f-kv-rows">' + s[key].map(kvRowHTML).join('') + '</div>'
       + '<button class="form-add" id="f-kv-add">＋ 添加字段</button>';
-    openModal(title, body, function () {
+    openModal(title, body, async function () {
       var rows = [];
       document.querySelectorAll('#f-kv-rows .form-kv-row').forEach(function (row) {
         var label = row.querySelector('.f-label').value.trim();
@@ -320,7 +230,7 @@
         if (label || value) rows.push({ label: label, value: value });
       });
       s[key] = rows;
-      saveData();
+      if (!await saveData()) return;
       renderDetail();
       toast(title + '已更新');
     });
@@ -347,7 +257,7 @@
     }
     var body = '<div id="f-yard-rows">' + s.yards.map(yardRow).join('') + '</div>'
       + '<button class="form-add" id="f-yard-add">＋ 添加堆场/仓库</button>';
-    openModal('编辑堆场/仓库信息', body, function () {
+    openModal('编辑堆场/仓库信息', body, async function () {
       var rows = [];
       document.querySelectorAll('#f-yard-rows .form-yard-row').forEach(function (row) {
         var name = row.querySelector('.y-name').value.trim();
@@ -360,7 +270,7 @@
         });
       });
       s.yards = rows;
-      saveData();
+      if (!await saveData()) return;
       renderDetail();
       toast('堆场/仓库信息已更新');
     });
@@ -377,9 +287,9 @@
     if (!s) return;
     var body = '<textarea id="f-station-intro" placeholder="输入站点介绍" style="width:100%;min-height:170px;resize:vertical;">'
       + esc(s.stationIntro || '') + '</textarea>';
-    openModal('编辑站点介绍', body, function () {
+    openModal('编辑站点介绍', body, async function () {
       s.stationIntro = $('#f-station-intro').value.trim();
-      saveData();
+      if (!await saveData()) return;
       renderDetail();
       toast('站点介绍已更新');
     });
@@ -390,9 +300,9 @@
     if (!s) return;
     var body = '<textarea id="f-scale" placeholder="输入站场规模" style="width:100%;min-height:170px;resize:vertical;">'
       + esc(s.scale || '') + '</textarea>';
-    openModal('编辑站场规模', body, function () {
+    openModal('编辑站场规模', body, async function () {
       s.scale = $('#f-scale').value.trim();
-      saveData();
+      if (!await saveData()) return;
       renderDetail();
       toast('站场规模已更新');
     });
@@ -564,7 +474,7 @@
     var body = '<div class="form-row"><label>站点名称</label><input id="f-new-name" placeholder="如：XX站"></div>'
       + '<div class="form-row"><label>副标题</label><input id="f-new-sub" placeholder="如：河北省XX市·XX铁路沿线"></div>'
       + '<div class="form-row"><label>站点简介</label><input id="f-new-intro" placeholder="一句话介绍该站点"></div>';
-    openModal('新增站点', body, function () {
+    openModal('新增站点', body, async function () {
       var name = $('#f-new-name').value.trim();
       if (!name) { toast('站点名称不能为空'); return false; }
       var newId = uid('st');
@@ -588,7 +498,7 @@
         stationIntro: '',
         yards: []
       });
-      saveData();
+      if (!await saveData()) return;
       renderAll();
       locateRowPage(newId); // 新增行可能落在其他页，跳转到位
       toast('已新增「' + name + '」，点击名称进入详情补充信息');
@@ -601,7 +511,7 @@
     var body = '<div class="form-row"><label>站点名称</label><input id="f-edit-name" value="' + esc(s.name) + '"></div>'
       + '<div class="form-row"><label>副标题</label><input id="f-edit-sub" value="' + esc(s.subtitle) + '"></div>'
       + '<div class="form-row"><label>站点简介</label><input id="f-edit-intro" value="' + esc(s.intro) + '"></div>';
-    openModal('编辑站点', body, function () {
+    openModal('编辑站点', body, async function () {
       var name = $('#f-edit-name').value.trim();
       if (!name) { toast('站点名称不能为空'); return false; }
       s.name = name;
@@ -614,7 +524,7 @@
           if (r.label === '所属地区') r.value = s.subtitle;
         });
       }
-      saveData();
+      if (!await saveData()) return;
       renderAll();
       toast('已保存');
     });
@@ -625,9 +535,9 @@
     if (!s) return;
     var body = '<p style="font-size:14px;color:var(--gray-700);">确定删除「<b>' + esc(s.name)
       + '</b>」？删除后无法恢复。</p>';
-    openModal('删除站点', body, function () {
+    openModal('删除站点', body, async function () {
       stations = stations.filter(function (x) { return x.id !== id; });
-      saveData();
+      if (!await saveData()) return;
       renderAll();
       toast('已删除「' + s.name + '」');
     });
@@ -712,36 +622,42 @@
   }
 
   // ===== 初始化 =====
-  loadData();
+  // 装载数据库缓存后再渲染（boot 遮罩失败时可点重试）
+  async function boot() {
+    await HZDB.ready();
+    loadData();
 
-  if (detailPanel) {
-    // 详情模式
-    renderDetail();
+    if (detailPanel) {
+      // 详情模式
+      renderDetail();
 
-    $('#backBtn').addEventListener('click', function () {
-      location.href = '/transfer/transfer.html';
-    });
+      $('#backBtn').addEventListener('click', function () {
+        location.href = '/transfer/transfer.html';
+      });
 
-    document.addEventListener('click', function (e) {
-      var editBtn = e.target.closest('[data-edit]');
-      if (!editBtn) return;
-      var key = editBtn.getAttribute('data-edit');
-      if (key === 'basicInfo') editKV('basicInfo', '基本信息');
-      else if (key === 'stationIntro') editStationIntro();
-      else if (key === 'scale') editScale();
-      else if (key === 'yards') editYards();
-    });
-  } else {
-    // 列表模式
-    initSearch();
-    initTableActions();
-    initExport();
-    bindPager();
-    renderAll();
+      document.addEventListener('click', function (e) {
+        var editBtn = e.target.closest('[data-edit]');
+        if (!editBtn) return;
+        var key = editBtn.getAttribute('data-edit');
+        if (key === 'basicInfo') editKV('basicInfo', '基本信息');
+        else if (key === 'stationIntro') editStationIntro();
+        else if (key === 'scale') editScale();
+        else if (key === 'yards') editYards();
+      });
+    } else {
+      // 列表模式
+      initSearch();
+      initTableActions();
+      initExport();
+      bindPager();
+      renderAll();
+    }
+
+    var addBtn = $('#btnAddStation');
+    if (addBtn) addBtn.addEventListener('click', addStation);
   }
+  boot();
 
-  var addBtn = $('#btnAddStation');
-  if (addBtn) addBtn.addEventListener('click', addStation);
   $('#modalMask').addEventListener('click', function (e) {
     if (e.target === this) closeModal();
   });

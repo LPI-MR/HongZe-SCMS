@@ -1,6 +1,6 @@
 // ===== contracts 模块 · 数据看板脚本 =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责导航高亮与 KPI 统计
-// KPI 数据实时汇总自合同台账（localStorage: hz_contracts）
+// KPI 数据实时汇总自合同台账（PostgreSQL contracts 表，经共享数据层 contracts-data.js）
 (function () {
   'use strict';
 
@@ -42,7 +42,7 @@
   }
 
   // ===== KPI 统计 =====
-  // 数据来源与合同台账完全一致：共享数据层 contracts-data.js（localStorage hz_contracts）
+  // 数据来源与合同台账完全一致：共享数据层 contracts-data.js（数据库 contracts 表）
   function loadContracts() {
     return window.HZContractData.load();
   }
@@ -354,10 +354,15 @@
     }[m]));
   }
 
-  renderKpis();
-  renderTypeChart();
-  renderSignCharts();
-  renderCashflowChart();
-  renderPayChart();
-  renderWarnList();
+  // 启动：等 HZDB 缓存基座就绪后从数据库读合同数据，再渲染全部图表
+  async function boot() {
+    await HZDB.ready();
+    renderKpis();
+    renderTypeChart();
+    renderSignCharts();
+    renderCashflowChart();
+    renderPayChart();
+    renderWarnList();
+  }
+  boot();
 })();

@@ -53,27 +53,37 @@
   };
 
   const id = new URLSearchParams(location.search).get('id') || '';
-  const order = id ? data.getOrder(id) : undefined;
+  let order = null;      // 当前流程订单（loadData 装载）
+  let port = {};         // 港口信息：默认值合并草稿/已有记录（loadData 装载）
+  let portRecords = [];  // 港口管理已录入数据（loadData 装载）
 
-  // 港口信息：默认值（港口名称联动订单预计到达港口）合并已有记录
-  const defaults = {
-    orderId: id,
-    portName: order ? (order.destPort || '') : '',
-    congestion: 'normal',
-    efficiency: '',
-    wharf: '',
-    berth: '',
-    yard: '',
-    waitHours: 0,
-    updatedAt: new Date().toISOString(),
-  };
-  const existing = id ? data.getPort(id) : undefined;
-  const port = Object.assign({}, defaults, existing || {});
+  // 装载数据：订单 + 港口草稿 + 港口管理基础数据（须在 HZDB.ready 之后调用）
+  function loadData() {
+    order = id ? data.getOrder(id) : undefined;
 
-  // ===== 订单不存在：仅展示空状态 =====
-  if (!order) {
+    // 港口信息：默认值（港口名称联动订单预计到达港口）合并已有记录
+    const defaults = {
+      orderId: id,
+      portName: order ? (order.destPort || '') : '',
+      congestion: 'normal',
+      efficiency: '',
+      wharf: '',
+      berth: '',
+      yard: '',
+      waitHours: 0,
+      updatedAt: new Date().toISOString(),
+    };
+    const existing = id ? data.getPort(id) : undefined;
+    port = Object.assign({}, defaults, existing || {});
+
+    // 港口管理已录入数据（common/hz-data.js：ports 资源缓存）
+    const hz = window.HZData;
+    portRecords = hz ? hz.list('ports') : [];
+  }
+
+  // ===== 订单不存在：仅展示空状态（boot 中调用） =====
+  function showMissing() {
     els.missing.hidden = false;
-    return;
   }
 
   /* ==================== 通用提示 ==================== */
@@ -99,8 +109,9 @@
   let autoSaveTimer = null;
   function scheduleAutoSave() {
     clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      data.upsertPort(port);
+    autoSaveTimer = setTimeout(async () => {
+      // 落库失败（HZDB 已 toast）：不提示「已保存」，待下次输入重试
+      if (!await data.upsertPort(port)) return;
       showSaved();
     }, 800);
   }
@@ -150,9 +161,7 @@
 
   /* ==================== 港口管理基础数据联动（R3） ==================== */
 
-  // 港口管理已录入数据（common/hz-data.js：ports → hz_ports_data）
-  const hz = window.HZData;
-  const portRecords = hz ? hz.list('ports') : [];
+  // 港口管理已录入数据（portRecords）：loadData 中装载（见页面状态）
 
   // 港名归一：「青岛港」「青岛」视为同一港口
   function normPortName(name) {
@@ -303,127 +312,146 @@
 
   /* ==================== 保存并下一步 ==================== */
 
-  function next() {
-    data.upsertPort(port);
-    data.updateOrderStatus(id, 'capacity');
+  // 保存并下一步：先落库港口信息与订单状态，成功后再跳转（失败 HZDB 已 toast，留在本页）
+  async function next() {
+    if (!await data.upsertPort(port)) return;
+    if (!await data.updateOrderStatus(id, 'capacity')) return;
     location.href = 'order-capacity.html?id=' + encodeURIComponent(id);
   }
 
   /* ==================== 初始化填充与事件绑定 ==================== */
 
-  // 上一步 / 步骤条回退：返回订单录入页
-  els.btnPrev.href = 'order-form.html?id=' + encodeURIComponent(id);
-  els.stepBack.href = 'order-form.html?id=' + encodeURIComponent(id);
+  // 绑定事件并完成首次渲染（boot 中 loadData 之后调用）
+  function initPage() {
+    // 上一步 / 步骤条回退：返回订单录入页
+    els.btnPrev.href = 'order-form.html?id=' + encodeURIComponent(id);
+    els.stepBack.href = 'order-form.html?id=' + encodeURIComponent(id);
 
-  // 通用字段填充 + 输入事件（港口信息全部选填，不做必填校验）
-  document.querySelectorAll('[data-field]').forEach(input => {
-    const f = input.dataset.field;
-    if (f === 'waitHours') {
-      input.value = port[f] || '';
-      input.addEventListener('input', e => {
-        port[f] = Number(e.target.value) || 0;
-        refreshSummaries();
-        scheduleAutoSave();
-      });
-    } else {
-      input.value = port[f] || '';
-      input.addEventListener('input', e => {
-        port[f] = e.target.value;
-        refreshSummaries();
-        scheduleAutoSave();
-      });
-    }
-  });
-
-  // ===== 港口管理联动初始化：ss 下拉 / 默认提示 / 概要卡 =====
-
-  // 港口名称：选项来自「港口管理」；选择后渲染概要卡 + 自动填充码头/泊位/堆场
-  setupSS(
-    document.querySelector('[data-field="portName"]'),
-    () => portRecords.map(p => ({
-      value: p.name,
-      label: p.name,
-      sub: kvGet(p.basicInfo, '所属地区') || p.subtitle || ''
-    })),
-    name => {
-      commitField('portName', name);
-      const rec = findPortRecord(name);
-      renderPortSummary(rec);
-      if (rec) {
-        const n = applyPortLinkage(rec);
-        if (n > 0) toast('已从「港口管理」自动填充 ' + n + ' 个关联字段');
-        refreshSummaries();
-        scheduleAutoSave();
+    // 通用字段填充 + 输入事件（港口信息全部选填，不做必填校验）
+    document.querySelectorAll('[data-field]').forEach(input => {
+      const f = input.dataset.field;
+      if (f === 'waitHours') {
+        input.value = port[f] || '';
+        input.addEventListener('input', e => {
+          port[f] = Number(e.target.value) || 0;
+          refreshSummaries();
+          scheduleAutoSave();
+        });
+      } else {
+        input.value = port[f] || '';
+        input.addEventListener('input', e => {
+          port[f] = e.target.value;
+          refreshSummaries();
+          scheduleAutoSave();
+        });
       }
-    }
-  );
-
-  // 码头：已选港口的港区列表；选择视为手动指定，恢复默认提示
-  setupSS(
-    document.querySelector('[data-field="wharf"]'),
-    () => {
-      const rec = findPortRecord(port.portName);
-      return (rec && Array.isArray(rec.zones) ? rec.zones : [])
-        .filter(z => z && z.name)
-        .map(z => ({ value: z.name, label: z.name, sub: z.location || '' }));
-    },
-    v => { unmarkLinked('wharf'); commitField('wharf', v); },
-    '请先选择上方港口名称'
-  );
-
-  // 泊位：已选港口的泊位等级（港区设施提取 / 泊位指标）
-  setupSS(
-    document.querySelector('[data-field="berth"]'),
-    berthOptions,
-    v => { unmarkLinked('berth'); commitField('berth', v); },
-    '请先选择上方港口名称'
-  );
-
-  // 联动 hint 默认文案
-  document.querySelectorAll('.hint[data-linked]').forEach(h => {
-    h.textContent = h.dataset.linkedDefault || '';
-  });
-
-  // 初始概要卡：草稿/订单到港口命中「港口管理」数据时展示
-  const initRec = findPortRecord(port.portName);
-  if (initRec) renderPortSummary(initRec);
-
-  // 点击下拉外部收起面板
-  document.addEventListener('click', e => {
-    document.querySelectorAll('.ss .ss-panel.open').forEach(p => {
-      if (!p.parentElement.contains(e.target)) p.classList.remove('open');
     });
-  });
 
-  // 拥堵三态切换
-  els.congGroup.addEventListener('click', e => {
-    const btn = e.target.closest('[data-cong]');
-    if (!btn || port.congestion === btn.dataset.cong) return;
-    port.congestion = btn.dataset.cong;
+    // ===== 港口管理联动初始化：ss 下拉 / 默认提示 / 概要卡 =====
+
+    // 港口名称：选项来自「港口管理」；选择后渲染概要卡 + 自动填充码头/泊位/堆场
+    setupSS(
+      document.querySelector('[data-field="portName"]'),
+      () => portRecords.map(p => ({
+        value: p.name,
+        label: p.name,
+        sub: kvGet(p.basicInfo, '所属地区') || p.subtitle || ''
+      })),
+      name => {
+        commitField('portName', name);
+        const rec = findPortRecord(name);
+        renderPortSummary(rec);
+        if (rec) {
+          const n = applyPortLinkage(rec);
+          if (n > 0) toast('已从「港口管理」自动填充 ' + n + ' 个关联字段');
+          refreshSummaries();
+          scheduleAutoSave();
+        }
+      }
+    );
+
+    // 码头：已选港口的港区列表；选择视为手动指定，恢复默认提示
+    setupSS(
+      document.querySelector('[data-field="wharf"]'),
+      () => {
+        const rec = findPortRecord(port.portName);
+        return (rec && Array.isArray(rec.zones) ? rec.zones : [])
+          .filter(z => z && z.name)
+          .map(z => ({ value: z.name, label: z.name, sub: z.location || '' }));
+      },
+      v => { unmarkLinked('wharf'); commitField('wharf', v); },
+      '请先选择上方港口名称'
+    );
+
+    // 泊位：已选港口的泊位等级（港区设施提取 / 泊位指标）
+    setupSS(
+      document.querySelector('[data-field="berth"]'),
+      berthOptions,
+      v => { unmarkLinked('berth'); commitField('berth', v); },
+      '请先选择上方港口名称'
+    );
+
+    // 联动 hint 默认文案
+    document.querySelectorAll('.hint[data-linked]').forEach(h => {
+      h.textContent = h.dataset.linkedDefault || '';
+    });
+
+    // 初始概要卡：草稿/订单到港口命中「港口管理」数据时展示
+    const initRec = findPortRecord(port.portName);
+    if (initRec) renderPortSummary(initRec);
+
+    // 点击下拉外部收起面板
+    document.addEventListener('click', e => {
+      document.querySelectorAll('.ss .ss-panel.open').forEach(p => {
+        if (!p.parentElement.contains(e.target)) p.classList.remove('open');
+      });
+    });
+
+    // 拥堵三态切换
+    els.congGroup.addEventListener('click', e => {
+      const btn = e.target.closest('[data-cong]');
+      if (!btn || port.congestion === btn.dataset.cong) return;
+      port.congestion = btn.dataset.cong;
+      renderCongestion();
+      scheduleAutoSave();
+    });
+
+    // 折叠面板开合
+    document.querySelectorAll('[data-collapse]').forEach(head => {
+      head.addEventListener('click', () => {
+        head.closest('.flow-collapse').classList.toggle('open');
+      });
+    });
+
+    els.footer.addEventListener('click', e => {
+      if (e.target.closest('#btn-next')) next();
+    });
+
+    // 初始化渲染
     renderCongestion();
-    scheduleAutoSave();
-  });
+    refreshSummaries();
+    renderOrderInfo();
+  }
 
-  // 折叠面板开合
-  document.querySelectorAll('[data-collapse]').forEach(head => {
-    head.addEventListener('click', () => {
-      head.closest('.flow-collapse').classList.toggle('open');
-    });
-  });
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();
 
-  els.footer.addEventListener('click', e => {
-    if (e.target.closest('#btn-next')) next();
-  });
+    // 订单不存在：仅展示空状态，不绑定后续事件
+    if (!order) {
+      showMissing();
+      return;
+    }
 
-  // 初始化渲染
-  renderCongestion();
-  refreshSummaries();
-  renderOrderInfo();
+    initPage();
 
-  els.missing.hidden = true;
-  els.steps.hidden = false;
-  els.head.hidden = false;
-  els.panel.hidden = false;
-  els.infoPanel.hidden = false;
-  els.footer.hidden = false;
+    els.missing.hidden = true;
+    els.steps.hidden = false;
+    els.head.hidden = false;
+    els.panel.hidden = false;
+    els.infoPanel.hidden = false;
+    els.footer.hidden = false;
+  }
+  boot().catch(err => console.error('港口信息录入页初始化失败：', err));
 })();

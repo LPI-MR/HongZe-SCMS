@@ -1,102 +1,9 @@
 // ===== 铁路供应商管理模块脚本 =====
 // 列表页（railway.html）：检索卡片 + 台账卡片（搜索 / 分页 / 导出 / 新增 / 编辑 / 删除）
 // 详情页（railway-detail.html?id=xxx）：概览头 + 工商基本信息 + 企业介绍 + 对接人（✎ 编辑）
-// 数据持久化：localStorage（hz_railway_suppliers），{__version, list} 包装格式
+// 数据持久化到 PostgreSQL：读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/rails 全量替换
 (function () {
   'use strict';
-
-  var STORAGE_KEY = 'hz_railway_suppliers';
-  var VERSION = 'v14';   // v14：删除沧港「2、通道运输成本」表格（保留车型固定单价表）
-
-  // ===== 种子数据（沧港铁路 / 建投多式联运）=====
-  var SEED = [
-    {
-      id: 'rs-canggang',
-      name: '沧州沧港铁路有限公司',
-      shortName: '沧港铁路',
-      site: 'https://www.czcgtl.com',
-      facts: [
-        { label: '统一社会信用代码', value: '91130983695867945E', mono: true },
-        { label: '法定代表人', value: '刘永亮' },
-        { label: '注册资本', value: '34788.47万元' },
-        { label: '成立日期', value: '2009-10-22' },
-        { label: '经营状态', value: '存续', ok: true },
-        { label: '企业类型', value: '有限责任公司（台港澳与境内合资）' },
-        { label: '注册地址', value: '河北省沧州市黄骅市羊二庄镇杨庄火车站' },
-        { label: '国标行业', value: '装卸搬运' },
-        { label: '企业规模', value: '大型' },
-        { label: '主营业务', value: '铁路货运' },
-        { label: '辅助业务', value: '装卸；道路货运；建设、保养及维修等' }
-      ],
-      intro: [
-        '国内首家地方铁路上市公司。以河北省为基地，核心运营沧港铁路货运系统，连接京沪铁路与黄骅港，承担"西煤东运"重要任务。2026年，开通黄骅港至冀中南铁矿石运输新通道，依托沧港铁路成熟既有路网资源，成功构建起黄骅港进口铁矿石经京沪铁路直达冀中南地区的海铁联运新链路。'
-      ],
-      fees: {
-        items: [
-          '1、铁路运输包干服务费用包括以下内容：',
-          '（1）邯黄运输综合服务费 13 元/吨（含 9% 的税）。',
-          '（2）沧港运输综合服务费 13.75 元/吨（其中铁路运费 11.65 元/吨，含 9% 的税；取送车费 2.1 元/吨，含 6% 的税）。',
-          '（3）沧州站经国铁到乙方指定到站运费如下（含 9% 的税）：'
-        ],
-        tables: [
-          {
-            headers: ['车型', '发站', '到站', '固定单价（元/箱）'],
-            rows: [
-              ['70吨级', '沧州', '武安', '1675.84'],
-              ['70吨级', '沧州', '康城', '1657.28'],
-              ['70吨级', '沧州', '磁山', '1717.44'],
-              ['60吨级', '沧州', '武安', '1416.42'],
-              ['60吨级', '沧州', '康城', '1401.03'],
-              ['60吨级', '沧州', '磁山', '1451.79']
-            ]
-          }
-        ]
-      },
-      persons: [
-        { name: '苏轶州', role: '', tel: '18032717609' }
-      ]
-    },
-    {
-      id: 'rs-jiandou',
-      name: '河北建投交通多式联运有限责任公司',
-      shortName: '建投多式联运',
-      site: '',
-      facts: [
-        { label: '统一社会信用代码', value: '91130104MAK95D1R1W', mono: true },
-        { label: '法定代表人', value: '杨晓乐' },
-        { label: '注册资本', value: '5000万元' },
-        { label: '成立日期', value: '2026-03-23' },
-        { label: '经营状态', value: '存续', ok: true },
-        { label: '企业类型', value: '有限责任公司（非自然人投资或控股的法人独资）' },
-        { label: '注册地址', value: '河北省石家庄市桥西区' },
-        { label: '国标行业', value: '集装箱道路运输' },
-        { label: '企业规模', value: '中型' },
-        { label: '主营业务', value: '多式联运、国际班列运输、数字化与供应链物流' },
-        { label: '辅助业务', value: '仓储与集散；物流园与货场运营；综合物流服务' }
-      ],
-      intro: [
-        '由河北建投交通投资有限责任公司100%控股。依托邯黄铁路、和邢铁路、建投铁路为核心资源，着力构建"通道+枢纽+平台"现代化物流体系。',
-        '以公铁、铁海联运为核心任务，开展中欧、中亚国际班列运输业务，打通货源揽收、干线运输、仓储集散、末端配送一体化物流体系。'
-      ],
-      fees: {
-        items: [
-          '运费实行包干价结算，包括从渤海西站至曹庄镇站铁路运输的各项费用（不含港杂），具体费用如下：'
-        ],
-        tables: [
-          {
-            headers: ['费用项目', '单价（元/吨）', '税率'],
-            rows: [
-              ['铁路运输包干价（渤海西站至曹庄镇站，不含港杂）', '44', '9%'],
-              ['到站装卸及服务费', '6.6', '6%']
-            ]
-          }
-        ]
-      },
-      persons: [
-        { name: '杨婉莹', role: '市场开发部', tel: '19930587087' }
-      ]
-    }
-  ];
 
   // ===== 状态 =====
   var suppliers = [];
@@ -149,27 +56,15 @@
   else document.addEventListener('navbar:loaded', setActiveNav, { once: true });
 
   // ===== 数据读写 =====
+  // 读取：boot 完成后从 HZDB 缓存同步取（未装载时为空数组兜底）
   function loadData() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        var parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.list) && parsed.__version === VERSION) {
-          suppliers = parsed.list;
-          return;
-        }
-      }
-    } catch (e) { /* 降级到种子数据 */ }
-    suppliers = JSON.parse(JSON.stringify(SEED));
-    saveData();
+    var list = HZDB.get('rails');
+    suppliers = Array.isArray(list) ? list : [];
   }
 
+  // 保存：全量写回数据库（PUT /api/rails）；失败由 HZDB toast 提示，页面内存保留可重试
   function saveData() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ __version: VERSION, list: suppliers }));
-    } catch (e) {
-      toast('⚠ 本地存储写入失败，数据仅保留在当前页面');
-    }
+    return HZDB.put('rails', suppliers);
   }
 
   function findSupplier(id) {
@@ -357,14 +252,14 @@
       openModal('编辑工商基本信息',
         '<div id="f-fact-rows">' + (s.facts || []).map(function (f) { return rowHtml('fact', f.label, f.value); }).join('') + '</div>'
         + '<button class="rs-row-add" data-addrow="fact">＋ 添加字段</button>',
-        function () {
+        async function () {
           s.facts = [].slice.call(document.querySelectorAll('#f-fact-rows .rs-row')).map(function (r) {
             var ins = r.querySelectorAll('input');
             var label = ins[0].value.trim(), value = ins[1].value.trim();
             if (!label && !value) return null;
             return { label: label || value, value: value || '—', mono: /代码|编号/.test(label) };
           }).filter(Boolean);
-          saveData(); renderDetail(); closeModal(); toast('✓ 已保存');
+          if (!await saveData()) return; renderDetail(); closeModal(); toast('✓ 已保存');
         });
     }
 
@@ -372,9 +267,9 @@
       openModal('编辑企业介绍',
         '<div class="rs-form-item"><label>介绍内容（空行分段）</label><textarea id="f-intro" style="min-height:220px">'
         + esc((s.intro || []).join('\n\n')) + '</textarea></div>',
-        function () {
+        async function () {
           s.intro = $('#f-intro').value.split(/\n\s*\n/).map(function (x) { return x.trim(); }).filter(Boolean);
-          saveData(); renderDetail(); closeModal(); toast('✓ 已保存');
+          if (!await saveData()) return; renderDetail(); closeModal(); toast('✓ 已保存');
         });
     }
 
@@ -382,7 +277,7 @@
       openModal('编辑对接人',
         '<div id="f-person-rows">' + (s.persons || []).map(function (p) { return rowHtml('person', p.name, p.role); }).join('') + '</div>'
         + '<button class="rs-row-add" data-addrow="person">＋ 添加对接人</button>',
-        function () {
+        async function () {
           s.persons = [].slice.call(document.querySelectorAll('#f-person-rows .rs-row')).map(function (r) {
             var ins = r.querySelectorAll('input');
             var name = ins[0].value.trim();
@@ -390,7 +285,7 @@
             var tel = ins[2] ? ins[2].value.trim() : (r.dataset.tel || '');
             return { name: name, role: ins[1].value.trim(), tel: tel || (r.dataset.tel || '') };
           }).filter(Boolean);
-          saveData(); renderDetail(); closeModal(); toast('✓ 已保存');
+          if (!await saveData()) return; renderDetail(); closeModal(); toast('✓ 已保存');
         });
       // 回填已有电话
       [].slice.call(document.querySelectorAll('#f-person-rows .rs-row')).forEach(function (r, i) {
@@ -409,7 +304,7 @@
         + esc((fees.items || []).join('\n')) + '</textarea></div>'
         + '<div id="f-fee-tables">' + tables.map(feeTableHtml).join('') + '</div>'
         + '<button class="rs-row-add" data-addrow="feeTable">＋ 添加表格</button>',
-        function () {
+        async function () {
           var items = $('#f-fees-items').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
           var tablesOut = [];
           document.querySelectorAll('#f-fee-tables .rs-fee-tbl').forEach(function (blk) {
@@ -427,7 +322,7 @@
             tablesOut.push(title ? { title: title, headers: hs, rows: rows } : { headers: hs, rows: rows });
           });
           s.fees = { items: items, tables: tablesOut };
-          saveData(); renderDetail(); closeModal(); toast('✓ 已保存');
+          if (!await saveData()) return; renderDetail(); closeModal(); toast('✓ 已保存');
         });
     }
   }
@@ -595,7 +490,7 @@
       '<div class="rs-form-item"><label>企业全称</label><input id="f-name" placeholder="如：XX铁路有限公司"></div>'
       + '<div class="rs-form-item"><label>企业简称</label><input id="f-short" placeholder="如：XX铁路"></div>'
       + '<div class="rs-form-item"><label>官网地址（选填）</label><input id="f-site" placeholder="https://"></div>',
-      function () {
+      async function () {
         var name = $('#f-name').value.trim();
         if (!name) { toast('⚠ 企业名称不能为空'); return false; }
         var newId = uid('rs');
@@ -605,7 +500,8 @@
           site: $('#f-site').value.trim(),
           facts: [], intro: [], persons: []
         });
-        saveData(); renderAll();
+        if (!await saveData()) return;
+        renderAll();
         locateRowPage(newId); // 新增行可能落在其他页，跳转到位
         closeModal();
         toast('✓ 已新增，点击名称进入详情补充信息');
@@ -619,22 +515,22 @@
       '<div class="rs-form-item"><label>企业全称</label><input id="f-name" value="' + esc(s.name) + '"></div>'
       + '<div class="rs-form-item"><label>企业简称</label><input id="f-short" value="' + esc(s.shortName || '') + '"></div>'
       + '<div class="rs-form-item"><label>官网地址</label><input id="f-site" value="' + esc(s.site || '') + '" placeholder="https://"></div>',
-      function () {
+      async function () {
         var name = $('#f-name').value.trim();
         if (!name) { toast('⚠ 企业名称不能为空'); return false; }
         s.name = name;
         s.shortName = $('#f-short').value.trim() || name;
         s.site = $('#f-site').value.trim();
-        saveData(); renderAll(); closeModal(); toast('✓ 已保存');
+        if (!await saveData()) return; renderAll(); closeModal(); toast('✓ 已保存');
       });
   }
 
-  function delSupplier(id) {
+  async function delSupplier(id) {
     var s = findSupplier(id);
     if (!s) return;
     if (!confirm('确定删除「' + (s.shortName || s.name) + '」吗？删除后无法恢复。')) return;
     suppliers = suppliers.filter(function (x) { return x.id !== id; });
-    saveData(); renderAll(); toast('已删除');
+    if (!await saveData()) return; renderAll(); toast('已删除');
   }
 
   // ===== 表格操作（事件委托） =====
@@ -746,24 +642,29 @@
   });
 
   // ===== 初始化 =====
-  loadData();
+  // 装载数据库缓存后再渲染（boot 遮罩失败时可点重试）
+  async function boot() {
+    await HZDB.ready();
+    loadData();
 
-  if (detailPanel) {
-    // 详情模式
-    renderDetail();
+    if (detailPanel) {
+      // 详情模式
+      renderDetail();
 
-    $('#backBtn').addEventListener('click', function () {
-      location.href = '/railway/railway.html';
-    });
-  } else {
-    // 列表模式
-    initSearch();
-    initTableActions();
-    initExport();
-    bindPager();
-    renderAll();
+      $('#backBtn').addEventListener('click', function () {
+        location.href = '/railway/railway.html';
+      });
+    } else {
+      // 列表模式
+      initSearch();
+      initTableActions();
+      initExport();
+      bindPager();
+      renderAll();
+    }
+
+    var addBtn = $('#rsAdd');
+    if (addBtn) addBtn.addEventListener('click', addSupplier);
   }
-
-  var addBtn = $('#rsAdd');
-  if (addBtn) addBtn.addEventListener('click', addSupplier);
+  boot();
 })();

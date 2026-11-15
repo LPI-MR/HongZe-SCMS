@@ -23,6 +23,9 @@ const path = require('path');
 const PORT = 8000;
 const ROOT = __dirname;
 
+// 业务数据 JSON API（localStorage → PostgreSQL 改造，路由分发器见 api/router.js）
+const { handleApi } = require('./api/router');
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -132,6 +135,23 @@ const server = http.createServer((req, res) => {
   const urlPath = qIdx === -1 ? req.url : req.url.slice(0, qIdx);
   if (urlPath === '/api/futures') {
     proxyFutures(res, new URLSearchParams(qIdx === -1 ? '' : req.url.slice(qIdx + 1)));
+    return;
+  }
+
+  // ===== 业务数据 JSON API：/api/health、/api/bootstrap、/api/dicts、/api/:res、/api/:res/:id =====
+  if (urlPath.startsWith('/api/')) {
+    handleApi(req, res, urlPath, qIdx === -1 ? '' : req.url.slice(qIdx + 1))
+      .catch(err => {
+        // handleApi 内部已全量 try/catch，此处仅为路由层兜底
+        console.error('[server] API 未捕获异常:', err && err.stack || err);
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.end(JSON.stringify({ ok: false, error: { message: '服务器内部错误', code: 'INTERNAL' } }));
+        } else {
+          res.end();
+        }
+      });
     return;
   }
 

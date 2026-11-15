@@ -9,8 +9,9 @@
    - F6 编辑 / 归类：联系人、联系方式、客户类型（归类调整）；名称/来源/非空信用代码锁定
    - F7 停用 / 启用：二次确认
    权限（4.2，TBD-01 降级）：登录体系未接入，本页以运营端身份兜底。
-   注：旧「同步控制台 + 迁移归类面板」流程已下线，遗留待归类清单由启动时
-   mergeLegacyPending 自动并入客户库（待归类状态），在列表中直接编辑归类。
+   注：旧「同步控制台 + 迁移归类面板」流程已下线，迁移期遗留的待归类存量
+   （DB 资源 customersPending）由启动时 adoptLegacyPending 一次性并入客户库
+   （待归类状态），在列表中直接编辑归类。
    ============================================================ */
 
 (function () {
@@ -82,18 +83,23 @@
     return keys.length ? errors[keys[0]] : '';
   }
 
-  /* ==================== 存量待归类清单并入 ==================== */
+  /* ==================== 存量待归类清单一次性并入（DB 资源 customersPending） ==================== */
 
-  // 旧迁移流程已下线：遗留在待归类清单（hz_customers_pending_v2）中的主体
+  // 旧迁移流程遗留：待归类存量在迁移期写入 DB 资源 customersPending，
   // 启动时一次性并入客户库（customer_type 置空 → 列表标记「待归类」），
-  // 之后在列表中通过「归类」按钮打开编辑弹窗直接设置类型。
-  function mergeLegacyPending() {
-    var pending = D.loadPending();
+  // 随后清空遗留清单；之后在列表中通过「归类」按钮打开编辑弹窗直接设置类型。
+  async function adoptLegacyPending() {
+    var pending = HZDB.get('customersPending') || [];
     if (!pending.length) return;
     var res = D.adoptPending(D.loadStore(), pending);
-    if (res.adopted) D.saveStore(res.list);
-    D.savePending([]);   // 无论是否并入成功都清空，避免每次进入页面重复处理
-    if (res.adopted) {
+    if (!res.adopted) {
+      // 无可并入主体（重名 / 重码已被查重丢弃）→ 直接清空，避免每次进入页面重复处理
+      await HZDB.put('customersPending', []);
+      return;
+    }
+    if (await HZDB.put('customers', res.list)) {
+      // 并入成功后清空遗留清单；清空失败时下次启动经查重兜底（已并入主体会被丢弃）
+      await HZDB.put('customersPending', []);
       toast('存量待归类主体已并入客户库（' + res.adopted + ' 家），可在列表中归类', 'success');
     }
   }
@@ -291,7 +297,7 @@
       if (pill) setCreateType(pill.dataset.v);
     });
 
-    $('btnCreateSave').addEventListener('click', function () {
+    $('btnCreateSave').addEventListener('click', async function () {
       var data = {
         customer_type: ctx.createType,
         name: $('createName').value,
@@ -306,7 +312,7 @@
         else toast(firstError(res.errors) || res.error, 'error');
         return;
       }
-      D.saveStore(res.list);
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
       closeMask('createMask');
       toast('已创建并生效：' + res.customer.name, 'success');
       renderAll();
@@ -349,7 +355,7 @@
       var pill = e.target.closest('.type-pill');
       if (pill) setEditType(pill.dataset.v);
     });
-    $('btnEditSave').addEventListener('click', function () {
+    $('btnEditSave').addEventListener('click', async function () {
       var patch = { contact: $('editContact').value, phone: $('editPhone').value, customer_type: ctx.editType };
       if (!$('editCodeWrap').hidden) patch.credit_code = $('editCode').value;
       var res = D.updateInfo(D.loadStore(), ctx.editId, patch, { role: 'operator' });
@@ -358,7 +364,7 @@
         toast(firstError(res.errors) || res.error, 'error');
         return;
       }
-      D.saveStore(res.list);
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
       closeMask('editMask');
       toast(res.changed.length ? '已保存：' + res.changed.join('、') : '信息未变化', 'success');
       renderAll();
@@ -400,7 +406,7 @@
       var pill = e.target.closest('.type-pill');
       if (pill) setReviewDecision(pill.dataset.v);
     });
-    $('btnReviewSave').addEventListener('click', function () {
+    $('btnReviewSave').addEventListener('click', async function () {
       var store = D.loadStore();
       var res;
       if (ctx.reviewDecision === 'approve') {
@@ -414,7 +420,7 @@
         }
       }
       if (!res.ok) { toast(res.error, 'error'); return; }
-      D.saveStore(res.list);
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
       closeMask('reviewMask');
       toast(ctx.reviewDecision === 'approve' ? '审核通过，客户已生效' : '已驳回，原因已记录', 'success');
       renderAll();
@@ -438,10 +444,10 @@
   }
 
   function bindConfirmModal() {
-    $('btnConfirmSave').addEventListener('click', function () {
+    $('btnConfirmSave').addEventListener('click', async function () {
       var res = D.setStatus(D.loadStore(), ctx.confirmId, ctx.confirmTarget);
       if (!res.ok) { toast(res.error, 'error'); return; }
-      D.saveStore(res.list);
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
       closeMask('confirmMask');
       toast(res.customer.status === '停用' ? '已停用：' + res.customer.name : '已启用：' + res.customer.name, 'success');
       renderAll();
@@ -527,9 +533,11 @@
 
   /* ==================== 启动 ==================== */
 
-  document.addEventListener('DOMContentLoaded', function () {
+  async function boot() {
+    await HZDB.ready();          // 启动遮罩 + /api/bootstrap 全量装载（失败可点重试）
+    await adoptLegacyPending();  // 一次性并入 DB 遗留待归类清单（customersPending）
     bindEvents();
-    try { mergeLegacyPending(); } catch (e) { console.error('存量待归类并入失败', e); }
     renderAll();
-  });
+  }
+  boot();
 })();

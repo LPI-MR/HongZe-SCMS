@@ -1,6 +1,6 @@
 // ===== 结算管理模块脚本 =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责结算台账的检索、渲染、新增、收付登记与删除
-// 结算数据走共享数据层（business-data.js）：订单台账 / 执行跟踪 / 结算管理共用同一份 localStorage 数据
+// 结算数据走共享数据层（business-data.js）：订单台账 / 执行跟踪 / 结算管理共用同一份 DB 数据（HZDB 基座）
 // 页面布局：收付双轨概览条 + 卡片内轻检索工具条（输入即筛）+ 结算台账表格
 (function () {
   'use strict';
@@ -45,15 +45,21 @@
   // ===== 数据对接 =====
   const biz = window.HZBusinessData;
 
-  // 订单列表：新增结算时联动选择
-  let orders = biz.loadOrders();
+  // 订单列表：新增结算时联动选择（赋值在 loadData 中完成，待数据基座就绪后装载）
+  let orders = [];
   const orderById = {};
-  orders.forEach(o => { orderById[o.id] = o; });
 
   // 结算列表：[{id, settle_code, order_id, order_code, contract_id, contract_code,
   //   customer, type, amount, received, paid, settle_date, status, remark,
   //   created_at, updated_at}]
-  let settlements = biz.loadSettlements();
+  let settlements = [];
+
+  // 装载数据：读缓存副本 + 构建订单索引
+  function loadData() {
+    orders = biz.loadOrders();
+    orders.forEach(o => { orderById[o.id] = o; });
+    settlements = biz.loadSettlements();
+  }
 
   // 状态标签类名映射（business.css 结算状态变体，已终止与订单共用）
   const STATUS_CLS = {
@@ -482,7 +488,7 @@
   }
 
   // 保存新增：校验必填项后写回数据并持久化（初始状态由金额与累计自动判定，为待结算）
-  function saveForm() {
+  async function saveForm() {
     const code = document.getElementById('fCode').value.trim();
     const orderId = document.getElementById('fOrder').value;
     const type = document.getElementById('fType').value;
@@ -529,8 +535,9 @@
     };
     settlements.push(s);
 
-    if (!biz.saveSettlements(settlements)) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+    // 写库失败（HZDB 已 toast）：回滚内存现场，保留抽屉供用户重试
+    if (!await biz.saveSettlements(settlements)) {
+      settlements.pop();
       return;
     }
 
@@ -595,7 +602,7 @@
   }
 
   // 确认登记：金额 > 0，累计超结算金额时确认提示；登记后自动联动结算状态
-  function confirmRegister() {
+  async function confirmRegister() {
     const s = byId(currentId);
     if (!s) return;
     if (s.status === '已终止') {
@@ -625,12 +632,20 @@
       return;
     }
 
+    // 改动前逐字段快照：写库失败时回滚内存现场
+    const prevKey = s[key];
+    const prevStatus = s.status;
+    const prevAt = s.updated_at;
+
     s[key] = accumulated;
     s.status = biz.calcSettleStatus(s.amount, accumulated);
     s.updated_at = Date.now();
 
-    if (!biz.saveSettlements(settlements)) {
-      alert('本地存储空间不足，本次登记未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+    // 写库失败（HZDB 已 toast）：恢复快照字段
+    if (!await biz.saveSettlements(settlements)) {
+      s[key] = prevKey;
+      s.status = prevStatus;
+      s.updated_at = prevAt;
       return;
     }
 
@@ -639,15 +654,18 @@
   }
 
   // 删除结算：确认后移除
-  function deleteSettlement(id) {
+  async function deleteSettlement(id) {
     const s = byId(id);
     if (!s) return;
     if (!confirm('确定删除结算「' + (s.settle_code || '') + '」吗？')) return;
 
     if (currentId === id) closeDrawer();
+    const prev = settlements.slice();
     settlements = settlements.filter(x => x.id !== id);
-    if (!biz.saveSettlements(settlements)) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+
+    // 写库失败（HZDB 已 toast）：回滚内存列表
+    if (!await biz.saveSettlements(settlements)) {
+      settlements = prev;
       return;
     }
 
@@ -812,12 +830,18 @@
     if (addBtn) addBtn.addEventListener('click', openFormDrawer);
   }
 
-  initSearch();
-  initAdd();
-  initTableActions();
-  initDrawer();
-  initExport();
-  initCheckAll();
-  bindPager();
-  renderAll(); // 启动时从 localStorage 恢复结算数据
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();          // 装载订单 / 结算数据并构建索引
+    initSearch();
+    initAdd();
+    initTableActions();
+    initDrawer();
+    initExport();
+    initCheckAll();
+    bindPager();
+    renderAll(); // 启动时从 DB 恢复结算数据
+  }
+  boot().catch(err => console.error('结算管理页初始化失败：', err));
 })();

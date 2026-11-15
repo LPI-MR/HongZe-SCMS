@@ -302,8 +302,11 @@
 
   <div class="toast" id="toast" role="status"></div>
 
-  <script src="/customers/data.js"></script>
   <script src="/common/fetch.js"></script>
-  <script src="/customers/customers.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
+  <script src="/customers/data.js?v=20261115a"></script>
+  <script src="/customers/customers.js?v=20261115a"></script>
 </body>
 </html>

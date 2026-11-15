@@ -54,17 +54,29 @@
   // 订单列表：[{id, order_code, contract_id, contract_code, mine_id, mine_name,
   //   voyage_id, trip_ids, customer, cargo_name, cargo_qty, amount, sign_date,
   //   plan_end_date, status, remark, created_by, created_at, updated_at}]
-  let orders = biz.loadOrders();
+  // （赋值在 loadData 中完成，待数据基座就绪后装载）
+  let orders = [];
 
   // 航次：oceanTrips 模块（海运管理）权威数据，按 id 索引回填航次号与执行进度
-  const voyages = rawArr('oceanTrips');
-  const voyageById = {};
-  voyages.forEach(v => { voyageById[v.id] = v; });
+  const voyages = [];
+  let voyageById = {};
 
   // 车次：hz-scms-trips-v2 包装 { seq, trips }（TripsStore 维护），按 id 索引
   // 注意：车次的 orderId 为运输模块自有单号，与业务订单 id 不对应，关联一律走 order.trip_ids
-  const tripById = {};
-  ((store.load() || {}).trips || []).forEach(t => { tripById[t.id] = t; });
+  let tripById = {};
+
+  // 装载数据：订单 + 航次（HZData.raw('oceanTrips')）+ 车次索引（须在 HZDB.ready 之后调用）
+  function loadData() {
+    orders = biz.loadOrders();
+
+    voyages.length = 0;
+    rawArr('oceanTrips').forEach(v => voyages.push(v));
+    voyageById = {};
+    voyages.forEach(v => { voyageById[v.id] = v; });
+
+    tripById = {};
+    ((store.load() || {}).trips || []).forEach(t => { tripById[t.id] = t; });
+  }
 
   // 下游页面跳转路径（与 common/fetch.js NAV_ROUTES 保持一致）
   const OCEAN_PAGE = '/ocean/ocean.html';
@@ -530,10 +542,15 @@
     });
   }
 
-  // ===== 初始化 =====
-  initSearch();
-  initTableActions();
-  initDrawer();
-  bindPager();
-  renderAll(); // 启动时从 localStorage 恢复订单数据并聚合进度
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();          // 装载订单 / 航次 / 车次数据（voyages 走 HZData.raw('oceanTrips')，ready 后正常）
+    initSearch();
+    initTableActions();
+    initDrawer();
+    bindPager();
+    renderAll(); // 启动时从 DB 恢复订单数据并聚合进度
+  }
+  boot().catch(err => console.error('执行跟踪页初始化失败：', err));
 })();

@@ -401,11 +401,12 @@ test('存量并入后通过编辑归类：待归类 → 集采贸易商（归类
 
 /* ==================== 11. 存储层守卫 ==================== */
 
-test('Node 环境下 localStorage 不可用时存储函数安全', () => {
-  assert.equal(D.hasStorage(), false);
+test('Node 环境下无 HZDB 基座时存储函数安全', async () => {
+  // 数据层无基座环境安全降级：读返回空数组、写返回已决 false 的 Promise（不抛错）
   assert.deepEqual(D.loadStore(), []);
-  assert.deepEqual(D.loadPending(), []);
-  assert.doesNotThrow(() => D.saveStore([{ id: 'x' }]));
+  const p = D.saveStore([{ id: 'x' }]);
+  assert.equal(typeof p.then, 'function');
+  assert.equal(await p, false);   // 已决失败 Promise，不抛错
 });
 
 test('常量定义符合 PRD（类型 / 状态 / 来源）', () => {

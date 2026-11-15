@@ -1,59 +1,42 @@
 // ===== HZData 模块化数据调用基座（全项目统一数据源注册表） =====
-// 职责：把散落在各模块 localStorage 的业务数据收拢为标准化接口，供任意模块直接调取
-//  - MODULES：15 个模块数据源注册表（storageKey + 业务标签）
-//  - unwrap：兼容 4 种存储格式（纯数组 / {__version,list} / {list} / {seq,trips}）
+// 职责：把各模块业务数据收拢为标准化接口，供任意模块直接调取
+//  - MODULES：15 个模块数据源注册表（API 资源名 + 业务标签）
+//  - unwrap：经 HZDB 内存缓存同步读取（/api/bootstrap 全量拉取，写操作走 HZDB.put）
 //  - raw / list / find / count：读接口（list 支持 where 过滤 + sort 排序 + enrich 富化）
 //  - normalize / enrich：单条归一化与跨模块富化（矿山、品质证书等关联字段注入）
-//  - dict：业务字典（卸货港 / 矿山装货港 / 现货港口 / 状态枚举）
-//  - use：后端适配器注册位——后端搭建完成后，各模块注册 adapter 即可无缝切换数据来源，
-//         前端业务代码无需改动，实现完全解耦的模块化工作流架构
-// 使用约定：各模块 localStorage 结构不变（本层只读不改写），业务代码统一经 HZData 调取
+//  - dict：业务字典（卸货港 / 矿山装货港 / 现货港口 / 状态枚举；DB 字典优先，静态值兜底）
+// 使用约定：页面入口先 await HZDB.ready() 完成缓存装载，再经 HZData 同步读取
 window.HZData = (function () {
   'use strict';
 
   // ===== 模块数据源注册表 =====
-  // storageKey 为各模块权威 localStorage 键；label 为左侧菜单对应的模块名（统一数据来源）
+  // api 为后端 API 资源名（/api/:res），label 为左侧菜单对应的模块名
   const MODULES = {
-    mines:       { storageKey: 'hz_mines',                  label: '矿山管理' },
-    ports:       { storageKey: 'hz_ports_data',             label: '港口码头' },
-    transfer:    { storageKey: 'hz_transfer_stations',      label: '中转节点' },
-    warehouse:   { storageKey: 'hz_warehouse_suppliers_v1', label: '仓储管理' },
-    railway:     { storageKey: 'hz_railway_suppliers',      label: '铁路运输' },
-    fleet:       { storageKey: 'hzwl_fleets_v2',            label: '汽运车队' },
-    steel:       { storageKey: 'hzwl_steels_v2',            label: '钢厂管理' },
-    trips:       { storageKey: 'hz-scms-trips-v2',          label: '汽运车次' },
-    oceanTrips:  { storageKey: 'hz_ocean_voyages',          label: '海运航次' },
-    oceanSpots:  { storageKey: 'hz_ocean_spots',            label: '港口现货' },
-    oceanCoas:   { storageKey: 'hz_ocean_coas',             label: '品质证书' },
-    contracts:   { storageKey: 'hz_contracts',              label: '合同管理' },
-    orders:      { storageKey: 'hz_orders',                 label: '订单台账' },
-    settlements: { storageKey: 'hz_settlements',            label: '结算管理' },
-    orderLogs:   { storageKey: 'hz_order_logs',             label: '订单日志' }
+    mines:       { api: 'mines',       label: '矿山管理' },
+    ports:       { api: 'ports',       label: '港口码头' },
+    transfer:    { api: 'stations',    label: '中转节点' },
+    warehouse:   { api: 'warehouses',  label: '仓储管理' },
+    railway:     { api: 'rails',       label: '铁路运输' },
+    fleet:       { api: 'fleets',      label: '汽运车队' },
+    steel:       { api: 'steels',      label: '钢厂管理' },
+    trips:       { api: 'trips',       label: '汽运车次' },
+    oceanTrips:  { api: 'voyages',     label: '海运航次' },
+    oceanSpots:  { api: 'spots',       label: '港口现货' },
+    oceanCoas:   { api: 'coas',        label: '品质证书' },
+    contracts:   { api: 'contracts',   label: '合同管理' },
+    orders:      { api: 'ledger',      label: '订单台账' },
+    settlements: { api: 'settlements', label: '结算管理' },
+    orderLogs:   { api: 'ledgerLogs',  label: '订单日志' }
   };
 
-  // ===== 后端适配器注册表（adapter 须实现 raw() 返回原始数组；传 null 注销） =====
-  const adapters = {};
-
-  // ===== 存储解包：兼容 4 种历史格式 =====
-  // 1) 纯数组 [item, ...]
-  // 2) { __version: 'vN', list: [...] }（带种子版本号包装）
-  // 3) { list: [...] }（简单列表包装）
-  // 4) { seq: N, trips: [...] }（transport 车次包装）
+  // ===== 缓存解包：经 HZDB 同步读取（boot 后可用；未 boot 返回空数组兜底） =====
   function unwrap(key) {
     const mod = MODULES[key];
     if (!mod) return [];
-
-    if (adapters[key]) {
-      try { return adapters[key].raw() || []; } catch (e) { return []; }
-    }
-
-    let v = null;
-    try { v = JSON.parse(localStorage.getItem(mod.storageKey)); } catch (e) { v = null; }
-    if (v == null) return [];
-    if (Array.isArray(v)) return v;
-    if (Array.isArray(v.list)) return v.list;
-    if (Array.isArray(v.trips)) return v.trips;
-    return [];
+    const HZDB = window.HZDB;
+    if (!HZDB || typeof HZDB.get !== 'function') return [];
+    const arr = HZDB.get(mod.api);
+    return Array.isArray(arr) ? arr : [];
   }
 
   // ===== 归一化工具 =====
@@ -101,6 +84,7 @@ window.HZData = (function () {
   };
 
   // ===== 业务字典 =====
+  // DB 字典（meta.dict_entry，经 HZDB.dicts() 缓存）优先；下列静态值为 DB 缺失时的兜底
   // dischargePorts：中国主要铁矿石接卸港（9 港）；mineLoadPorts：矿山 → 推荐装货港
   const DICTS = {
     dischargePorts: [
@@ -135,6 +119,37 @@ window.HZData = (function () {
     }
   };
 
+  // dict(name) → DB 字典 scope 对照
+  const SCOPE_NAMES = {
+    dischargePorts: 'discharge_ports',
+    mineLoadPorts: 'mine_load_ports',
+    orderStatus: 'order_status',
+    settleTypes: 'settle_type',
+    voyageStatus: 'voyage_status',
+    spotMeta: 'spot_meta'
+  };
+
+  // DB 字典 scope → dict(name) 各键的映射取值器（HZDB.dicts() 形状：{ scope: [entries] }）
+  const DICT_SCOPES = {
+    dischargePorts: function (es) {
+      return es.map(e => ({ name: e.label || e.code, country: (e.payload && e.payload.country) || '中国' }));
+    },
+    mineLoadPorts: function (es) {
+      return es.map(e => Object.assign({ mine: e.label, port: e.label }, e.payload || {}));
+    },
+    orderStatus: function (es) { return es.map(e => e.label || e.code); },
+    settleTypes: function (es) { return es.map(e => e.label || e.code); },
+    voyageStatus: function (es) {
+      const m = {};
+      es.forEach(e => { m[e.code] = e.label || e.code; });
+      return m;
+    },
+    spotMeta: function (es) {
+      const e = es.find(x => x.code === 'default') || es[0];
+      return (e && e.payload) || DICTS.spotMeta;
+    }
+  };
+
   function dict(name) {
     if (name === 'spotPorts') {
       // 现货港口：从现货数据去重计算（数据驱动，不写死）
@@ -145,6 +160,13 @@ window.HZData = (function () {
         if (p && !seen[p]) { seen[p] = true; ports.push({ name: p }); }
       });
       return ports;
+    }
+    // DB 字典优先（boot 后可用），静态值兜底（boot 前或 scope 缺失）
+    const HZDB = window.HZDB;
+    const take = DICT_SCOPES[name];
+    if (HZDB && typeof HZDB.dicts === 'function' && take) {
+      const entries = HZDB.dicts()[SCOPE_NAMES[name]];
+      if (Array.isArray(entries) && entries.length) return take(entries);
     }
     return DICTS[name] || null;
   }
@@ -196,30 +218,14 @@ window.HZData = (function () {
     if (!mod) return null;
     return {
       key: key,
-      storageKey: mod.storageKey,
+      api: mod.api,
       label: mod.label,
-      count: count(key),
-      backend: !!adapters[key]
+      count: count(key)
     };
   }
 
   function metaAll() {
     return Object.keys(MODULES).map(meta);
-  }
-
-  // ===== 后端适配器注册 =====
-  // use(key, adapter)：adapter 须有 raw() 返回原始数组；传 null 注销回退 localStorage
-  // 后端搭建完成后：HZData.use('mines', { raw: () => fetch('/api/mines').then(r => r.json()) })
-  function use(key, adapter) {
-    if (!MODULES[key]) throw new Error('HZData.use: 未知模块「' + key + '」');
-    if (adapter === null) {
-      delete adapters[key];
-      return;
-    }
-    if (!adapter || typeof adapter.raw !== 'function') {
-      throw new Error('HZData.use: adapter 必须实现 raw() 方法');
-    }
-    adapters[key] = adapter;
   }
 
   // ===== 对外暴露 =====
@@ -236,7 +242,6 @@ window.HZData = (function () {
     metaAll: metaAll,
     normalize: normalize,
     enrich: enrich,
-    dict: dict,
-    use: use
+    dict: dict
   };
 })();

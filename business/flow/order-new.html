@@ -294,21 +294,24 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 基础数据层（矿山 / 港口 / 字典） -->
   <script src="/common/hz-data.js"></script>
   <!-- 单位换算（吨 → 万吨，海运航次同步） -->
   <script src="/common/units.js"></script>
   <!-- flow 模块共享数据层（订单落库 / 港口 / 运力 / 航次联动） -->
-  <script src="/business/flow/flow-data.js"></script>
+  <script src="/business/flow/flow-data.js?v=20261115a"></script>
   <!-- 订单管理新建订单数据层（登录主体 / 校验 / 智能方案 / 组装） -->
-  <script src="/business/flow/order-new-data.js"></script>
+  <script src="/business/flow/order-new-data.js?v=20261115a"></script>
   <!-- Apple 风格日期时间选择器（到港/发运时间） -->
   <script src="/business/flow/date-picker.js"></script>
   <!-- 业务数据层（订单台账同步） -->
-  <script src="/business/business-data.js"></script>
+  <script src="/business/business-data.js?v=20261115a"></script>
   <!-- 客户数据层（BR-O11 客户库状态联动） -->
   <script src="/customers/data.js"></script>
   <!-- 本页交互逻辑 -->
-  <script src="/business/flow/order-new.js"></script>
+  <script src="/business/flow/order-new.js?v=20261115a"></script>
 </body>
 </html>

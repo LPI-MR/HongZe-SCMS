@@ -5,14 +5,12 @@
 //   · 价格指数：指数 = 当期价 / 基期价 × 100（基期取数据集最早一天）
 //   · 依据来源：聊天截图/报价单/合同扫描件等图片，自动压缩存储（每条记录最多 9 张）
 //   · 历史上传记录全部保留，可筛选查看，删除需确认
-//   · 内置数据整体同步自 LPI-MR 原项目写死数据（31 条生产记录 + 真实依据截图，
-//     截图位于 price-index/assets/seed/）；浏览器中的旧测试数据按版本号自动替换
+//   · 内置数据整体同步自 LPI-MR 原项目写死数据（31 条生产记录 + 真实依据截图），
+//     已迁移至数据库：报价记录 → truckPrices 资源，地点/货品字典 → truckDict 字典
 // 登录环节按需求省略：无登录页、无权限校验，运营方（管理员）视角直接进入
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'hz_truck_price_index';
-  var VERSION = 'v4';              // 种子版本：v4 = LPI-MR 写死数据整体同步（31 条生产记录 + 真实截图）
   var TAX_RATE = 1.09;             // 含税换算系数
   var BASE_DATE = '2026-06-15';    // 价格指数基期（数据集最早一天 2026-06-15 = 100）
   var MAX_EVIDENCES = 9;           // 每条记录依据来源图片上限
@@ -83,79 +81,50 @@
   // 价格记录：与 LPI-MR 原项目 src/data/seed-records.ts 完全一致（31 条生产记录，
   // 2026-06-15 ~ 2026-09-18，全部为黄骅港→武安），依据截图同步自 src/assets/seed/
   // → price-index/assets/seed/；上传时间为原系统北京时间。
-  var SEED_EV = 'assets/seed/';
-  var SEED_RECORDS = [
-    { id: 'pr-mtji3mce-v16wl', dataDate: '2026-06-15', goods: '钢铁', from: '黄骅港', to: '武安', price: 74.41, remark: '', evidences: [SEED_EV + 'pr-mtji3mce-v16wl-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 10:52' },
-    { id: 'pr-mtkz3j0y-2287x', dataDate: '2026-07-08', goods: '铁矿石', from: '黄骅港', to: '武安', price: 77.68, remark: '万合报价', evidences: [SEED_EV + 'pr-mtkz3j0y-2287x-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 11:36' },
-    { id: 'pr-mtjj8ara-efc3m', dataDate: '2026-08-17', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260817普阳报价（罗伊山MB粉）', evidences: [SEED_EV + 'pr-mtjj8ara-efc3m-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:24' },
-    { id: 'pr-seed-3', dataDate: '2026-08-20', goods: '铁矿石', from: '黄骅港', to: '武安', price: 72.48, remark: '', evidences: [SEED_EV + 'pr-seed-3.png'], uploader: '系统管理员', uploadedAt: '2026-08-30 15:46' },
-    { id: 'pr-mtkz5llw-ks9c0', dataDate: '2026-08-20', goods: '铁矿石', from: '黄骅港', to: '武安', price: 72.48, remark: '黄骅港系统价格（澳粉-麦克粉）', evidences: [SEED_EV + 'pr-mtkz5llw-ks9c0-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 11:37' },
-    { id: 'pr-mtjjb92l-yjl5p', dataDate: '2026-08-21', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260821普阳报价（PMI粉）', evidences: [SEED_EV + 'pr-mtjjb92l-yjl5p-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:26' },
-    { id: 'pr-mtjjc5ei-aschq', dataDate: '2026-08-21', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260821普阳报价（罗伊山MB粉）', evidences: [SEED_EV + 'pr-mtjjc5ei-aschq-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:27' },
-    { id: 'pr-mtjjdaul-rw563', dataDate: '2026-08-21', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260821普阳报价（印度粉）', evidences: [SEED_EV + 'pr-mtjjdaul-rw563-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:28' },
-    { id: 'pr-mtkza02o-36o7l', dataDate: '2026-08-22', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.92, remark: '金布巴粉（黄骅港系统2026135-11）', evidences: [SEED_EV + 'pr-mtkza02o-36o7l-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 11:41' },
-    { id: 'pr-mtkzaxst-5ujhl', dataDate: '2026-08-22', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.92, remark: '金布巴粉（黄骅港系统2025190-80）', evidences: [SEED_EV + 'pr-mtkzaxst-5ujhl-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 11:41' },
-    { id: 'pr-mtkzc5it-6zxgq', dataDate: '2026-08-22', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.92, remark: '金布巴粉（黄骅港系统2026080-59）', evidences: [SEED_EV + 'pr-mtkzc5it-6zxgq-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 11:42' },
-    { id: 'pr-mtjjff5r-xuzxo', dataDate: '2026-08-24', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260824普阳报价（罗伊山MB粉）', evidences: [SEED_EV + 'pr-mtjjff5r-xuzxo-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:29' },
-    { id: 'pr-seed-4', dataDate: '2026-08-27', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '', evidences: [SEED_EV + 'pr-seed-4.png'], uploader: '系统管理员', uploadedAt: '2026-08-30 15:48' },
-    { id: 'pr-mtjjkhcu-te8wy', dataDate: '2026-08-29', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260829普阳报价（混合粉）', evidences: [SEED_EV + 'pr-mtjjkhcu-te8wy-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:33' },
-    { id: 'pr-mtl8lu9w-8v34s', dataDate: '2026-08-29', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价（南非粉）', evidences: [SEED_EV + 'pr-mtl8lu9w-8v34s-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 16:02' },
-    { id: 'pr-mtl8orca-1w0as', dataDate: '2026-08-29', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港报价（澳粉-麦克粉）', evidences: [SEED_EV + 'pr-mtl8orca-1w0as-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 16:04' },
-    { id: 'pr-mtl8q7i5-if9bs', dataDate: '2026-08-29', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价（澳粉-麦克粉）', evidences: [SEED_EV + 'pr-mtl8q7i5-if9bs-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 16:05' },
-    { id: 'pr-mtl6a6kf-8wn3d', dataDate: '2026-08-30', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '普阳报价（卡拉拉精粉）', evidences: [SEED_EV + 'pr-mtl6a6kf-8wn3d-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 14:57' },
-    { id: 'pr-mtjjtide-fcogt', dataDate: '2026-09-01', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73, remark: '20260901普阳报价（铁矿粉）', evidences: [SEED_EV + 'pr-mtjjtide-fcogt-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-02 11:40' },
-    { id: 'pr-mtl8s774-qx2r1', dataDate: '2026-09-02', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港报价（南非粉）', evidences: [SEED_EV + 'pr-mtl8s774-qx2r1-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-03 16:07' },
-    { id: 'pr-mtsc9ezt-0y4v4', dataDate: '2026-09-06', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价', evidences: [SEED_EV + 'pr-mtsc9ezt-0y4v4-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-08 15:19' },
-    { id: 'pr-mtsceh1v-93sv1', dataDate: '2026-09-06', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-澳粉（麦克粉）', evidences: [SEED_EV + 'pr-mtsceh1v-93sv1-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-08 15:23' },
-    { id: 'pr-mtscf2oq-6ca7z', dataDate: '2026-09-07', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-南非粉', evidences: [SEED_EV + 'pr-mtscf2oq-6ca7z-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-08 15:23' },
-    { id: 'pr-mu0xdfp4-1hik8', dataDate: '2026-09-11', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-南非粉', evidences: [SEED_EV + 'pr-mu0xdfp4-1hik8-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-14 15:32' },
-    { id: 'pr-mu0xdxdo-8t9j2', dataDate: '2026-09-13', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-澳粉', evidences: [SEED_EV + 'pr-mu0xdxdo-8t9j2-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-14 15:32' },
-    { id: 'pr-mu0xeewy-0ln1b', dataDate: '2026-09-13', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-澳粉', evidences: [SEED_EV + 'pr-mu0xeewy-0ln1b-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-14 15:33' },
-    { id: 'pr-mu0xeumx-srntv', dataDate: '2026-09-14', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-南非粉', evidences: [SEED_EV + 'pr-mu0xeumx-srntv-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-14 15:33' },
-    { id: 'pr-muapcowh-oshca', dataDate: '2026-09-16', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-南非粉', evidences: [SEED_EV + 'pr-muapcowh-oshca-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-21 11:45' },
-    { id: 'pr-muapdeld-kq0ji', dataDate: '2026-09-17', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-澳粉（麦克粉）', evidences: [SEED_EV + 'pr-muapdeld-kq0ji-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-21 11:45' },
-    { id: 'pr-muapdy58-5n1b6', dataDate: '2026-09-17', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-南非粉', evidences: [SEED_EV + 'pr-muapdy58-5n1b6-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-21 11:46' },
-    { id: 'pr-muapehxk-sf9jn', dataDate: '2026-09-18', goods: '铁矿石', from: '黄骅港', to: '武安', price: 73.91, remark: '黄骅港系统报价-南非粉', evidences: [SEED_EV + 'pr-muapehxk-sf9jn-1.png'], uploader: '系统管理员', uploadedAt: '2026-09-21 11:46' }
-  ];
+  // 报价记录（31 条种子数据）已迁移至数据库 truckPrices 表，JS 内不再保留种子；
+  // 报价记录经 HZDB 缓存基座从数据库装载
 
-  function buildSeed() {
-    return {
-      __version: VERSION,
-      places: JSON.parse(JSON.stringify(SEED_PLACES)),
-      goods: JSON.parse(JSON.stringify(SEED_GOODS)),
-      records: JSON.parse(JSON.stringify(SEED_RECORDS))
-    };
+  // ===== 数据读写（PostgreSQL，经 HZDB 缓存基座） =====
+  var db = null;   // 内存形状 { places, goods, records }：字典 + 报价记录，渲染逻辑依赖此形状
+
+  // 字典 → dicts scope 'truckDict' 的 entry 数组（PUT /api/dicts/truckDict 提交形状）
+  function dictToEntries() {
+    return [
+      { code: 'places', label: '汽运地点字典', payload: db.places },
+      { code: 'goods', label: '汽运货品字典', payload: db.goods },
+    ];
   }
 
-  // 记录的凭证图片列表（真实上传与内置截图统一走这里）
+  // 字典落库；失败 toast 由 HZDB 提示，调用方按返回值回滚内存
+  function persistDict() {
+    return HZDB.putDict('truckDict', dictToEntries());
+  }
+
+  // 报价记录落库（PUT /api/truckPrices 全量替换）；失败 toast 由 HZDB 提示，
+  // 页面内存保留供重试，调用方按返回值决定是否回滚
+  function persist() {
+    return HZDB.put('truckPrices', db.records);
+  }
+
+  // 依据来源截图列表（记录可能无 evidences 字段）
   function evidencesOf(rec) {
     return (rec.evidences && rec.evidences.length) ? rec.evidences : [];
   }
 
-  // ===== 数据读写（localStorage，与各模块约定一致） =====
-  var db = null;
-
+  // 内存装载：报价记录 ← truckPrices 资源；地点/货品字典 ← dicts scope 'truckDict'
+  // （字典缺失时先用种子兜底，boot 中再异步落库）
   function loadDB() {
-    if (db) return db;
-    try {
-      var v = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (v && v.__version === VERSION && v.places && v.goods && Array.isArray(v.records)) {
-        db = v;
-        return db;
-      }
-    } catch (e) { /* 解析失败则重建种子 */ }
-    // 版本不匹配（含旧版测试数据）：用最新内置数据整体替换
-    db = buildSeed();
-    persist();
-    return db;
-  }
-
-  function persist() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-    } catch (e) {
-      toast('本地存储空间不足，最新数据可能未完整保存');
-    }
+    var recs = HZDB.get('truckPrices');
+    db = {
+      records: Array.isArray(recs) ? recs : [],
+      places: JSON.parse(JSON.stringify(SEED_PLACES)),
+      goods: JSON.parse(JSON.stringify(SEED_GOODS))
+    };
+    var entries = HZDB.dicts().truckDict;
+    (entries || []).forEach(function (e) {
+      if (e.code === 'places' && e.payload) db.places = e.payload;
+      if (e.code === 'goods' && e.payload) db.goods = e.payload;
+    });
   }
 
   // ===== 派生数据 =====
@@ -867,7 +836,7 @@
     reader.onload = function () {
       var img = new Image();
       img.onload = function () {
-        // 最长边压缩至 1400px 内，转 JPEG 存储（节省 localStorage 空间）
+        // 最长边压缩至 1400px 内，转 JPEG 存储（减小数据库存储体积）
         var scale = Math.min(1, 1400 / Math.max(img.width, img.height));
         var canvas = document.createElement('canvas');
         canvas.width = Math.round(img.width * scale);
@@ -900,7 +869,7 @@
     });
   }
 
-  function saveRecord() {
+  async function saveRecord() {
     var dataDate = $('#entryDate').value;
     var goods = $('#entryGoods').value.trim();
     var routeSel = $('#entryRoute').value;
@@ -935,7 +904,7 @@
       uploadedAt: fmtDate(now) + ' ' + pad2(now.getHours()) + ':' + pad2(now.getMinutes())
     };
     db.records.push(rec);
-    persist();
+    if (!await persist()) { db.records.pop(); return; }
 
     renderEntryOptions();
     resetEntryForm();
@@ -1012,9 +981,10 @@
         openConfirm('删除该条上传记录？',
           esc(rec.dataDate) + ' · ' + esc(rec.from + '→' + rec.to) + ' · ' + esc(rec.goods) +
           ' · ' + rec.price.toFixed(2) + ' 元/吨（上传人：' + esc(rec.uploader) + '）',
-          function () {
+          async function () {
+            var prevRecords = db.records.slice();
             db.records = db.records.filter(function (x) { return x.id !== rec.id; });
-            persist();
+            if (!await persist()) { db.records = prevRecords; return; }
             renderHistory();
             renderOverview();
             toast('记录已删除');
@@ -1139,21 +1109,28 @@
     renderEntryOptions();
   }
 
-  function removePlace(group, name) {
+  async function removePlace(group, name) {
     var used = db.records.some(function (r) { return r.from === name || r.to === name; });
     if (used) { toast('该地点已被报价记录使用，无法删除'); return; }
+    var prevGroup = db.places[group].slice();
     db.places[group] = db.places[group].filter(function (p) { return p !== name; });
-    persist();
+    if (!await persistDict()) { db.places[group] = prevGroup; return; }
     renderBase();
     toast('已删除地点：' + name);
   }
 
-  function removeGoods(name) {
+  async function removeGoods(name) {
     var used = db.records.some(function (r) { return r.goods === name; });
     if (used) { toast('该货物种类已被报价记录使用，无法删除'); return; }
+    var prevHot = db.goods.hot.slice();
+    var prevAll = db.goods.all.slice();
     db.goods.hot = db.goods.hot.filter(function (g) { return g !== name; });
     db.goods.all = db.goods.all.filter(function (g) { return g !== name; });
-    persist();
+    if (!await persistDict()) {
+      db.goods.hot = prevHot;
+      db.goods.all = prevAll;
+      return;
+    }
     renderBase();
     toast('已删除货物种类：' + name);
   }
@@ -1229,23 +1206,23 @@
     $('#btnHisReset').addEventListener('click', resetHistoryFilters);
 
     // 基础数据
-    $('#btnAddPlace').addEventListener('click', function () {
+    $('#btnAddPlace').addEventListener('click', async function () {
       var g = $('#placeGroupSel').value;
       var name = $('#placeAddInput').value.trim();
       if (!name) { toast('请输入地点名称'); return; }
       if (allPlaces().indexOf(name) !== -1) { toast('该地点已存在'); return; }
       db.places[g].push(name);
-      persist();
+      if (!await persistDict()) { db.places[g].pop(); return; }
       $('#placeAddInput').value = '';
       renderBase();
       toast('地点已添加：' + name);
     });
-    $('#btnAddGoods').addEventListener('click', function () {
+    $('#btnAddGoods').addEventListener('click', async function () {
       var name = $('#goodsAddInput').value.trim();
       if (!name) { toast('请输入货物种类名称'); return; }
       if (allGoodsOptions().indexOf(name) !== -1) { toast('该货物种类已存在'); return; }
       db.goods.all.push(name);
-      persist();
+      if (!await persistDict()) { db.goods.all.pop(); return; }
       $('#goodsAddInput').value = '';
       renderBase();
       toast('货物种类已添加：' + name);
@@ -1288,9 +1265,14 @@
     if (group) group.classList.add('open');
   }
 
-  // ===== 初始化 =====
-  function init() {
+  // ===== 初始化（数据从 PostgreSQL 装载） =====
+  async function boot() {
+    await HZDB.ready();
     loadDB();
+    // 首启：地点/货品字典尚未落库时，以种子字典初始化 truckDict
+    if (!(HZDB.dicts().truckDict && HZDB.dicts().truckDict.length)) {
+      await HZDB.putDict('truckDict', dictToEntries());
+    }
     renderEntryOptions();
     resetEntryForm();
     renderHistoryFilterOptions();
@@ -1303,8 +1285,8 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    init();
+    boot();
   }
 })();

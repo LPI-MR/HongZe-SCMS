@@ -141,13 +141,16 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 模块化数据基座：航次等跨模块字段统一经 HZData 调取各模块权威数据源 -->
   <script src="/common/hz-data.js"></script>
   <!-- 业务共享数据层：订单 / 流转日志读取 -->
-  <script src="business-data.js"></script>
+  <script src="business-data.js?v=20261115a"></script>
   <!-- 车次共享数据层：车次节点进度读取 -->
   <script src="/transport/trips-store.js"></script>
   <!-- 模块脚本 -->
-  <script src="tracking.js"></script>
+  <script src="tracking.js?v=20261115a"></script>
 </body>
 </html>
