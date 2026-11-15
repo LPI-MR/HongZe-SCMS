@@ -26,8 +26,8 @@
       <div class="flow-panel" id="missing" hidden>
         <div class="empty-box">
           <div class="empty-title">订单不存在</div>
-          <div class="empty-desc">该订单可能已被删除，请返回工作台确认。</div>
-          <a class="btn-primary" href="../business.html">返回工作台</a>
+          <div class="empty-desc">该订单可能已被删除，请返回订单台账确认。</div>
+          <a class="btn-primary" href="../orders.html">返回订单台账</a>
         </div>
       </div>
 
@@ -131,13 +131,16 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 基础数据调用基座：港口管理联动数据源 -->
   <script src="/common/hz-data.js"></script>
   <!-- 业务流程共享数据层 -->
-  <script src="flow-data.js"></script>
+  <script src="flow-data.js?v=20261115a"></script>
   <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
-  <script src="../business-data.js"></script>
+  <script src="../business-data.js?v=20261115a"></script>
   <!-- 港口录入脚本 -->
-  <script src="order-port.js"></script>
+  <script src="order-port.js?v=20261115a"></script>
 </body>
 </html>

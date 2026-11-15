@@ -1,19 +1,14 @@
 // ===== 业务管理板块共享数据层 =====
 // 订单台账（orders.js）、执行跟踪（tracking.js）、结算管理（settlement.js）共用：
-//  - 订单数据（hz_orders，包装格式 { __version, list }）
-//  - 结算数据（hz_settlements，包装格式 { __version, list }）
-//  - 订单流转日志（hz_order_logs，纯数组，最新在前）
-// 合同（hz_contracts）、矿山（hz_mines）、航次（hz_ocean_voyages）、车次（hz-scms-trips-v2）
-// 为其他模块权威数据，本层与其只读对接；后续接入后端时，仅需替换本文件的 load/save 实现。
+//  - 订单数据（DB 资源 ledger）
+//  - 结算数据（DB 资源 settlements）
+//  - 订单流转日志（DB 资源 ledgerLogs）
+// 合同（contracts）、矿山（mines）、航次（voyages）、车次（trips）
+// 为其他模块权威数据，本层与其只读对接（均经 HZDB 缓存读取）。
+// 数据基座：common/hz-db.js（HZDB）—— bootstrap 全量缓存 + PUT 全量替换；
+// 种子数据由后端数据库预置，前端不再内置种子。
 (function () {
   'use strict';
-
-  const LS_ORDERS = 'hz_orders';             // 订单数据
-  const LS_SETTLEMENTS = 'hz_settlements';   // 结算数据
-  const LS_LOGS = 'hz_order_logs';           // 订单流转日志
-
-  // 种子版本号：种子内容变更时递增，浏览器检测到不匹配自动丢弃旧缓存、加载最新种子
-  const SEED_VERSION = 'v3';
 
   // ===== 状态机定义（迁移 hongze_demo 状态机规则，中文化适配） =====
   // 订单正向单向推进、禁止跳级；「已终止」为终态，任意状态可转入
@@ -53,15 +48,6 @@
   }
 
   // ===== 工具 =====
-  function loadJSON(key, fallback) {
-    try {
-      const v = JSON.parse(localStorage.getItem(key));
-      return v == null ? fallback : v;
-    } catch (e) {
-      return fallback;
-    }
-  }
-
   function fmtDate(ts) {
     const d = new Date(ts);
     const p = n => String(n).padStart(2, '0');
@@ -94,273 +80,48 @@
     return prefix + String(maxSeq + 1).padStart(3, '0');
   }
 
-  // ===== 订单种子 =====
-  // 引用现有合同种子（c-seed-001 / 002 / 004 履行中合同）；矿山（hz_mines）与航次
-  // （hz_ocean_voyages）按简称 / 航次号回填 id，对应模块未初始化时退化为空关联（仅展示）
-  // 编号规则迁移 hongze_demo：HZ + yyyyMMdd + 4位流水，同一签订日内流水递增
-  // 列：[合同种子id, 矿山简称, 航次号, 车次号数组, 客户, 货物, 货量(吨), 金额(元), 签订(天前), 计划完成(天后), 状态, 备注]
-  // 货量统一「吨」口径（R2 单位基座）：17.5 万吨 = 175000 吨，跨模块引用不再错位
-  function buildOrders() {
-    const DAY = 24 * 60 * 60 * 1000;
-    const base = Date.now();
-
-    // 货源矿山：按简称回填 mine_id（矿山数据缺失时退化为空关联）
-    const mines = loadJSON('hz_mines', []);
-    const mineByName = {};
-    (Array.isArray(mines) ? mines : []).forEach(m => {
-      mineByName[m.short_name || m.mine_name || ''] = m;
-    });
-
-    // 海运航次：按航次号回填 voyage_id（航次数据缺失时退化为空关联）
-    const voyages = loadJSON('hz_ocean_voyages', []);
-    const voyageByCode = {};
-    (Array.isArray(voyages) ? voyages : []).forEach(v => {
-      voyageByCode[v.voyage_code || ''] = v;
-    });
-
-    const seedDef = [
-      ['c-seed-001', '福斯特库', 'S-004', [], '武安市鑫源矿业有限公司', '超特粉', 175000, 10850000, 90, -5, '已完成', '已交付完毕，客户验收通过'],
-      ['c-seed-001', '力拓', 'S-001', ['YS1013-004', 'YS1012-018'], '武安市鑫源矿业有限公司', 'PB粉', 170000, 10540000, 75, 30, '已发运', '澳矿进口，港口直发武安'],
-      ['c-seed-001', '必和必拓', 'S-002', [], '武安市鑫源矿业有限公司', '纽曼粉', 180000, 11160000, 60, 45, '执行中', '待装船，疏港计划已排定'],
-      ['c-seed-001', '淡水河谷', 'S-003', ['YS1013-006'], '武安市鑫源矿业有限公司', '卡拉加斯粉', 300000, 19500000, 60, 50, '执行中', '巴西矿进口，青岛港卸货'],
-      ['c-seed-002', '', '', ['YS1013-008', 'YS1013-009'], '河北新金钢铁有限公司', '钢坯', 35000, 8400000, 30, 40, '执行中', '汽运分批配送'],
-      ['c-seed-002', '', '', [], '河北新金钢铁有限公司', '钢坯', 40000, 9600000, 30, 60, '已确认', '华北区域销售，分批交货'],
-      ['c-seed-004', '', '', [], '河北陆港保税物流有限公司', '港口仓储服务', 50000, 1520000, 30, 120, '待确认', '中转仓储服务框架订单'],
-      ['c-seed-002', '西芒杜', '', [], '河北新金钢铁有限公司', '高品位块矿', 15000, 4200000, 15, 30, '已终止', '客户需求变更，双方协商终止'],
-      ['c-seed-002', '', '', [], '河北新金钢铁有限公司', '钢坯', 20000, 4800000, 3, 90, '待确认', '新增补库需求，待评审确认']
-    ];
-
-    // 合同种子静态可靠：订单的合同号冗余直接取合同 code
-    // hz_contracts 为包装格式 { __version, list }（contracts-data.js 维护），兼容解析；
-    // 本地无合同数据时按种子合同 id 兜底编号，保证种子订单合同号完整
-    const FALLBACK_CODES = {
-      'c-seed-001': 'HZ-2026-001',
-      'c-seed-002': 'HZ-2026-002',
-      'c-seed-003': 'HZ-2026-003',
-      'c-seed-004': 'HZ-2026-004',
-      'c-seed-005': 'HZ-2026-005'
-    };
-    const rawContracts = loadJSON('hz_contracts', null);
-    const contracts = rawContracts && Array.isArray(rawContracts.list)
-      ? rawContracts.list
-      : (Array.isArray(rawContracts) ? rawContracts : []);
-    const contractById = {};
-    contracts.forEach(c => { contractById[c.id] = c; });
-
-    // 同一签订日内流水递增（与 hongze_demo 同日扫描 maxSeq + 1 的规则一致）
-    const seqByDay = {};
-
-    return seedDef.map((s, i) => {
-      const signTs = base - s[8] * DAY;
-      const dayKey = fmtDate(signTs).replace(/-/g, '');
-      const seq = (seqByDay[dayKey] || 0) + 1;
-      seqByDay[dayKey] = seq;
-
-      const mine = mineByName[s[1]] || {};
-      const voyage = voyageByCode[s[2]] || {};
-      const contract = contractById[s[0]] || {};
-
-      // 已完成订单把更新时间前推至近两日（本月完成的演示口径）
-      const updatedAt = s[10] === '已完成' ? base - 2 * DAY : signTs;
-
-      return {
-        id: 'o-seed-' + String(i + 1).padStart(3, '0'),
-        order_code: 'HZ' + dayKey + String(seq).padStart(4, '0'),
-        contract_id: s[0],
-        contract_code: contract.code || FALLBACK_CODES[s[0]] || '',
-        mine_id: mine.id || '',
-        mine_name: s[1] || '',
-        voyage_id: voyage.id || '',
-        trip_ids: s[3].slice(),
-        customer: s[4],
-        cargo_name: s[5],
-        cargo_qty: s[6],
-        amount: s[7],
-        sign_date: fmtDate(signTs),
-        plan_end_date: fmtDate(base + s[9] * DAY),
-        status: s[10],
-        remark: s[11],
-        created_by: '系统预置',
-        created_at: signTs,
-        updated_at: updatedAt
-      };
-    });
-  }
-
-  // ===== 结算种子 =====
-  // 按订单维度记录应收 / 应付结算台账，覆盖四状态组合；金额单位与合同台账一致（元）
-  // 列：[订单种子下标(从 1 计), 类型, 金额(元), 已收付(元), 创建(天前), 结算日期(天后), 状态, 备注]
-  function buildSettlements(orders) {
-    const DAY = 24 * 60 * 60 * 1000;
-    const base = Date.now();
-    const seqByDay = {};
-
-    const seedDef = [
-      [2, '应收', 10540000, 5000000, 65, 20, '部分结算', '澳矿货款，已收预付部分'],
-      [3, '应收', 11160000, 0, 55, 45, '待结算', '待装船后开票结算'],
-      [4, '应收', 19500000, 19500000, 50, 30, '已结算', '巴西矿货款，全额收讫'],
-      [5, '应收', 8400000, 3000000, 25, 25, '部分结算', '钢坯货款，分批收款中'],
-      [2, '应付', 8200000, 8200000, 60, 20, '已结算', '采购与运费成本，已付清'],
-      [3, '应付', 9800000, 2000000, 50, 45, '部分结算', '矿款预付部分'],
-      [9, '应付', 4500000, 0, 10, 80, '待结算', '补库订单成本，待排款'],
-      [8, '应收', 4200000, 0, 12, 25, '已终止', '订单终止，结算同步关闭']
-    ];
-
-    return seedDef.map((s, i) => {
-      const o = orders[s[0] - 1] || {};
-      const createTs = base - s[4] * DAY;
-      const dayKey = fmtDate(createTs).replace(/-/g, '');
-      const seq = (seqByDay[dayKey] || 0) + 1;
-      seqByDay[dayKey] = seq;
-
-      // 应收单据累计记 received，应付单据累计记 paid
-      const record = {
-        id: 's-seed-' + String(i + 1).padStart(3, '0'),
-        settle_code: 'SK' + dayKey + String(seq).padStart(3, '0'),
-        order_id: o.id || '',
-        order_code: o.order_code || '',
-        contract_id: o.contract_id || '',
-        contract_code: o.contract_code || '',
-        customer: o.customer || '',
-        type: s[1],
-        amount: s[2],
-        received: 0,
-        paid: 0,
-        settle_date: fmtDate(base + s[5] * DAY),
-        status: s[6],
-        remark: s[7],
-        created_at: createTs,
-        updated_at: createTs
-      };
-      if (s[1] === '应付') record.paid = s[3];
-      else record.received = s[3];
-      return record;
-    });
-  }
-
-  // ===== 订单流转日志种子 =====
-  // 按订单当前状态自动生成对应流转链（待确认逐级推进至当前状态），保证日志与状态一致
-  function buildLogs(orders) {
-    const DAY = 24 * 60 * 60 * 1000;
-    const base = Date.now();
-    const logs = [];
-    let n = 0;
-
-    orders.forEach(o => {
-      // 已终止订单的流转链：待确认 → 已确认 → 已终止；其余按正向链推进至当前状态
-      let chain;
-      if (o.status === ORDER_TERMINAL) {
-        chain = [ORDER_FLOW[0], ORDER_FLOW[1], ORDER_TERMINAL];
-      } else {
-        const fi = ORDER_FLOW.indexOf(o.status);
-        chain = fi > -1 ? ORDER_FLOW.slice(0, fi + 1) : [];
-      }
-
-      const startTs = o.created_at || base;
-      chain.forEach((to, i) => {
-        n += 1;
-        logs.push({
-          id: 'log-seed-' + String(n).padStart(3, '0'),
-          order_id: o.id,
-          from_status: i === 0 ? '' : chain[i - 1],
-          to_status: to,
-          operator: '系统预置',
-          time: startTs + i * 2 * DAY,
-          remark: ''
-        });
-      });
-    });
-
-    // 最新在前，与运行时写入规则一致
-    return logs.sort((a, b) => b.time - a.time);
-  }
-
-  // ===== 订单数据读写 =====
+  // ===== 订单数据读写（DB 资源 ledger） =====
+  // 读：HZDB 同步读缓存，返回副本避免页面原地改动污染缓存；
+  // 写：async 全量替换（失败 HZDB 已 toast，返回 false 由调用方回滚现场）
   function loadOrders() {
-    try {
-      const data = JSON.parse(localStorage.getItem(LS_ORDERS));
-      if (data && data.__version === SEED_VERSION && Array.isArray(data.list)) {
-        return data.list;
-      }
-      return seedOrders();
-    } catch (e) {
-      return seedOrders();
-    }
+    const v = window.HZDB ? window.HZDB.get('ledger') : undefined;
+    return Array.isArray(v) ? v.slice() : [];
   }
 
-  function seedOrders() {
-    const list = buildOrders();
-    saveOrders(list);
-    return list;
+  async function saveOrders(list) {
+    if (!window.HZDB || !Array.isArray(list)) return false;
+    return window.HZDB.put('ledger', list.slice());
   }
 
-  function saveOrders(list) {
-    try {
-      localStorage.setItem(LS_ORDERS, JSON.stringify({ __version: SEED_VERSION, list: list }));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // ===== 结算数据读写 =====
+  // ===== 结算数据读写（DB 资源 settlements） =====
   function loadSettlements() {
-    try {
-      const data = JSON.parse(localStorage.getItem(LS_SETTLEMENTS));
-      if (data && data.__version === SEED_VERSION && Array.isArray(data.list)) {
-        return data.list;
-      }
-      return seedSettlements();
-    } catch (e) {
-      return seedSettlements();
-    }
+    const v = window.HZDB ? window.HZDB.get('settlements') : undefined;
+    return Array.isArray(v) ? v.slice() : [];
   }
 
-  function seedSettlements() {
-    const list = buildSettlements(loadOrders());
-    saveSettlements(list);
-    return list;
+  async function saveSettlements(list) {
+    if (!window.HZDB || !Array.isArray(list)) return false;
+    return window.HZDB.put('settlements', list.slice());
   }
 
-  function saveSettlements(list) {
-    try {
-      localStorage.setItem(LS_SETTLEMENTS, JSON.stringify({ __version: SEED_VERSION, list: list }));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // ===== 流转日志读写（纯数组，最新在前） =====
+  // ===== 流转日志读写（DB 资源 ledgerLogs，纯数组，最新在前） =====
   function loadLogs() {
-    const logs = loadJSON(LS_LOGS, null);
-    if (Array.isArray(logs)) return logs;
-    return seedLogs();
+    const v = window.HZDB ? window.HZDB.get('ledgerLogs') : undefined;
+    return Array.isArray(v) ? v.slice() : [];
   }
 
-  function seedLogs() {
-    const logs = buildLogs(loadOrders());
-    saveLogs(logs);
-    return logs;
-  }
-
-  function saveLogs(logs) {
-    try {
-      localStorage.setItem(LS_LOGS, JSON.stringify(logs));
-      return true;
-    } catch (e) {
-      return false;
-    }
+  async function saveLogs(logs) {
+    if (!window.HZDB || !Array.isArray(logs)) return false;
+    return window.HZDB.put('ledgerLogs', logs.slice());
   }
 
   // 新增流转日志：插到最前（时间戳倒序由插入方式保证）
-  function pushLog(entry) {
-    const logs = loadLogs();
-    logs.unshift(entry);
-    return saveLogs(logs);
+  async function pushLog(entry) {
+    const next = [entry].concat(loadLogs());
+    return saveLogs(next);
   }
 
-  // ===== 流程订单 → 订单台账自动同步（业务总览 → 订单台账链路） =====
+  // ===== 流程订单 → 订单台账自动同步（订单管理流程页 → 订单台账链路） =====
   // 状态映射唯一出处：流程九态 → 台账订单状态；录入中/待港口/待运力/待方案未达同步点，不进台账
   const FLOW_TO_LEDGER_STATUS = {
     draft: null, port: null, capacity: null, plan: null,
@@ -373,7 +134,7 @@
 
   // 单条流程订单同步：按 from_flow + flow_id 识别既有记录覆盖更新，不产生重复；
   // 首次同步若流程订单号与台账既有编号撞号，改用台账下一可用编号，绝不覆盖人工数据
-  function syncFlowOrder(flowOrder) {
+  async function syncFlowOrder(flowOrder) {
     if (!flowOrder || !flowOrder.id) return false;
     const status = FLOW_TO_LEDGER_STATUS[flowOrder.status];
     const list = loadOrders();
@@ -381,32 +142,32 @@
     // 未达同步点：无痕（台账内不应有记录，兜底清理）
     if (!status) {
       const filtered = list.filter(o => !(o.from_flow && o.flow_id === flowOrder.id));
-      if (filtered.length !== list.length) saveOrders(filtered);
+      if (filtered.length !== list.length) return saveOrders(filtered);
       return false;
     }
 
     const now = Date.now();
-    let rec = list.find(o => o.from_flow && o.flow_id === flowOrder.id);
+    const existing = list.find(o => o.from_flow && o.flow_id === flowOrder.id);
+    // 既有记录复制后改字段，避免污染 HZDB 缓存中的原数组
+    const rec = existing ? Object.assign({}, existing) : {};
 
-    if (!rec) {
+    if (!existing) {
       // 首次同步：流程订单号被台账人工数据占用时换台账新编号
       let orderCode = flowOrder.id;
       if (list.some(o => o.order_code === orderCode)) orderCode = nextOrderCode(list, now);
-      rec = {
-        id: 'o-flow-' + flowOrder.id,
-        order_code: orderCode,
-        contract_id: '',
-        contract_code: '',
-        mine_id: '',
-        voyage_id: flowOrder.vessel || '',
-        trip_ids: [],
-        remark: '来自业务流程',
-        from_flow: true,
-        flow_id: flowOrder.id,
-        created_by: '业务流程',
-        sign_date: fmtDate(flowOrder.createdAt || now),
-        created_at: now
-      };
+      rec.id = 'o-flow-' + flowOrder.id;
+      rec.order_code = orderCode;
+      rec.contract_id = '';
+      rec.contract_code = '';
+      rec.mine_id = '';
+      rec.voyage_id = flowOrder.vessel || '';
+      rec.trip_ids = [];
+      rec.remark = '来自业务流程';
+      rec.from_flow = true;
+      rec.flow_id = flowOrder.id;
+      rec.created_by = '业务流程';
+      rec.sign_date = fmtDate(flowOrder.createdAt || now);
+      rec.created_at = now;
     }
 
     // 字段映射：客户←贸易商；货量←吨（全系统统一「吨」口径，R2）；金额←总量×单价（元）；矿山←来源矿山；状态←状态映射
@@ -418,13 +179,15 @@
     rec.status = status;
     rec.updated_at = now;
 
-    const idx = list.findIndex(o => o.id === rec.id);
-    if (idx >= 0) list[idx] = rec; else list.push(rec);
-    return saveOrders(list);
+    // 复制写回（map/concat 产新数组，put 失败时缓存保持原样）
+    const next = existing
+      ? list.map(o => (o.id === rec.id ? rec : o))
+      : list.concat([rec]);
+    return saveOrders(next);
   }
 
   // 流程订单删除联动：已同步进台账的记录一并删除；未达同步点删除无痕
-  function removeFlowOrder(flowId) {
+  async function removeFlowOrder(flowId) {
     if (!flowId) return false;
     const list = loadOrders();
     const filtered = list.filter(o => !(o.from_flow && o.flow_id === flowId));
@@ -434,8 +197,6 @@
 
   // ===== 挂到 window，供订单台账 / 执行跟踪 / 结算管理使用 =====
   window.HZBusinessData = {
-    LS_ORDERS: LS_ORDERS, LS_SETTLEMENTS: LS_SETTLEMENTS, LS_LOGS: LS_LOGS,
-    SEED_VERSION: SEED_VERSION,
     ORDER_FLOW: ORDER_FLOW, ORDER_TERMINAL: ORDER_TERMINAL, SETTLE_TYPES: SETTLE_TYPES,
     canTransitionOrder: canTransitionOrder, nextOrderStatuses: nextOrderStatuses,
     calcSettleStatus: calcSettleStatus,

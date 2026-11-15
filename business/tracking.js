@@ -54,17 +54,29 @@
   // 订单列表：[{id, order_code, contract_id, contract_code, mine_id, mine_name,
   //   voyage_id, trip_ids, customer, cargo_name, cargo_qty, amount, sign_date,
   //   plan_end_date, status, remark, created_by, created_at, updated_at}]
-  let orders = biz.loadOrders();
+  // （赋值在 loadData 中完成，待数据基座就绪后装载）
+  let orders = [];
 
   // 航次：oceanTrips 模块（海运管理）权威数据，按 id 索引回填航次号与执行进度
-  const voyages = rawArr('oceanTrips');
-  const voyageById = {};
-  voyages.forEach(v => { voyageById[v.id] = v; });
+  const voyages = [];
+  let voyageById = {};
 
   // 车次：hz-scms-trips-v2 包装 { seq, trips }（TripsStore 维护），按 id 索引
   // 注意：车次的 orderId 为运输模块自有单号，与业务订单 id 不对应，关联一律走 order.trip_ids
-  const tripById = {};
-  ((store.load() || {}).trips || []).forEach(t => { tripById[t.id] = t; });
+  let tripById = {};
+
+  // 装载数据：订单 + 航次（HZData.raw('oceanTrips')）+ 车次索引（须在 HZDB.ready 之后调用）
+  function loadData() {
+    orders = biz.loadOrders();
+
+    voyages.length = 0;
+    rawArr('oceanTrips').forEach(v => voyages.push(v));
+    voyageById = {};
+    voyages.forEach(v => { voyageById[v.id] = v; });
+
+    tripById = {};
+    ((store.load() || {}).trips || []).forEach(t => { tripById[t.id] = t; });
+  }
 
   // 下游页面跳转路径（与 common/fetch.js NAV_ROUTES 保持一致）
   const OCEAN_PAGE = '/ocean/ocean.html';
@@ -149,7 +161,9 @@
     const endInput = document.getElementById('searchDateEnd');
 
     // 按当前检索条件过滤进度卡片；无匹配时显示空状态提示
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       const status = statusSelect.value;
       const start = startInput.value;
       const end = endInput.value;
@@ -179,22 +193,22 @@
       renderPage();
     };
 
-    // 关键词输入 / 状态切换 / 日期变更即筛（免点击查询按钮）
-    nameInput.addEventListener('input', () => applyFilter());
-    statusSelect.addEventListener('change', () => applyFilter());
-    startInput.addEventListener('change', () => applyFilter());
-    endInput.addEventListener('change', () => applyFilter());
+    // 关键词输入 / 状态切换 / 日期变更即筛（免点击查询按钮，回到第 1 页）
+    nameInput.addEventListener('input', () => applyFilter(true));
+    statusSelect.addEventListener('change', () => applyFilter(true));
+    startInput.addEventListener('change', () => applyFilter(true));
+    endInput.addEventListener('change', () => applyFilter(true));
 
-    // 提交：阻止表单默认提交（保留回车触发过滤）
+    // 提交：阻止表单默认提交（保留回车触发过滤，回到第 1 页）
     form.addEventListener('submit', e => {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
-    // 重置：清空条件后恢复显示全部卡片
+    // 重置：清空条件后恢复显示全部卡片（回到第 1 页）
     form.addEventListener('reset', () => {
       // 等浏览器完成原生 reset 后再过滤
-      requestAnimationFrame(() => applyFilter());
+      requestAnimationFrame(() => applyFilter(true));
     });
   }
 
@@ -224,8 +238,9 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     cards.forEach((c, i) => {
-      c.hidden = i < start || i >= start + pageSize;
+      c.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     // 同步分页控件状态
@@ -527,10 +542,15 @@
     });
   }
 
-  // ===== 初始化 =====
-  initSearch();
-  initTableActions();
-  initDrawer();
-  bindPager();
-  renderAll(); // 启动时从 localStorage 恢复订单数据并聚合进度
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();          // 装载订单 / 航次 / 车次数据（voyages 走 HZData.raw('oceanTrips')，ready 后正常）
+    initSearch();
+    initTableActions();
+    initDrawer();
+    bindPager();
+    renderAll(); // 启动时从 DB 恢复订单数据并聚合进度
+  }
+  boot().catch(err => console.error('执行跟踪页初始化失败：', err));
 })();

@@ -715,6 +715,20 @@
 
 .prod-group-title { min-width: 0; }
 
+/* 组头右侧操作区：新增产品按钮 + 总产能 */
+.prod-group-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.prod-add-btn {
+  padding: 4px 12px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
 .prod-group-name {
   margin: 0;
   font-size: 18px;
@@ -1092,6 +1106,14 @@
   padding-left: var(--space-md);
 }
 
+/* 弹层底部操作区（编辑产品入口） */
+.pm-actions {
+  margin-top: var(--space-lg);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
 /* 空状态 */
 .tab-empty {
   padding: var(--space-xl) 0;
@@ -1175,7 +1197,7 @@
 }
 
 /* ============================================================
-   产品详情 · 价格参考与合作伙伴（v11 新增模块）
+   产品详情 · 合作伙伴（v12：价格参考模块已移除，与价格指数管理内容重合）
    ============================================================ */
 
 /* 模块头（两模块共用） */
@@ -1203,103 +1225,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* —— 价格卡片栅格 —— */
-.price-cards {
-  display: grid;
-  margin-top: var(--space-sm);
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: var(--space-md);
-}
-
-.price-card {
-  position: relative;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--gray-100);
-  border-radius: 12px;
-  box-shadow: var(--shadow-card);
-  transition: transform 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
-              box-shadow 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.price-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(29, 33, 41, 0.12);
-}
-
-.price-card-top {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding-right: 22px;   /* 给右上角 ⓘ 让位 */
-}
-
-.price-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--gray-800);
-  line-height: 1.35;
-}
-
-.price-tag {
-  flex-shrink: 0;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.price-product {
-  margin-top: 2px;
-  font-size: 12px;
-  color: var(--gray-500);
-}
-
-.price-value {
-  margin-top: var(--space-sm);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--gray-800);
-  font-variant-numeric: tabular-nums;
-}
-
-.price-value i {
-  margin-left: 4px;
-  font-size: 12px;
-  font-weight: 400;
-  font-style: normal;
-  color: var(--gray-500);
-}
-
-/* 涨跌行：红涨绿跌惯例（FR-02） */
-.price-delta {
-  margin-top: 4px;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-}
-
-.price-delta.ref-up { color: var(--color-danger); }
-.price-delta.ref-down { color: var(--color-success); }
-.price-delta.ref-flat { color: var(--gray-500); }
-
-.price-updated {
-  margin-top: var(--space-sm);
-  font-size: 12px;
-  color: var(--gray-500);
-}
-
-/* —— 来源/备注 hover 气泡（价格 ⓘ 与伙伴备注共用，FR-03） ——
+/* —— 来源/备注 hover 气泡（伙伴备注共用，FR-03） ——
    以图标右缘为锚点向左上展开：右缘与图标右缘对齐，避免最右侧卡片向视口外溢出（E5） */
 .ref-tip { position: relative; display: inline-flex; }
-
-/* 价格卡内 ⓘ 绝对定位右上角（tipHtml 为 article 首子元素，行内会占独立行） */
-.price-card .ref-tip {
-  position: absolute;
-  top: 12px;
-  right: 14px;
-}
 
 .ref-tip > i {
   margin-left: 4px;
@@ -1430,24 +1358,20 @@
 .partner-status.spot { background: var(--assist-bg-green); color: var(--color-success); }
 .partner-status.strategic { background: #F1EAFF; color: #722ED1; }
 
-/* 窄视口（E6）：价格卡降为更小列；合作伙伴表横向滚动 */
+/* 窄视口（E6）：合作伙伴表横向滚动 */
 @media (max-width: 900px) {
-  .price-cards { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
   .partner-wrap { overflow-x: auto; }
 }
 
 @media (max-width: 768px) {
   .prod-sec-head { flex-wrap: wrap; row-gap: 2px; }
   .prod-sec-extra { margin-left: 0; width: 100%; }
-  .price-card { padding: var(--space-md); }
 }
 
 /* 动效降级（E8） */
 @media (prefers-reduced-motion: reduce) {
-  .price-card,
   .ref-tip > i,
   .ref-tip-bubble,
   .partner-table tbody tr { transition: none !important; }
-  .price-card:hover { transform: none; box-shadow: var(--shadow-card); }
   .ref-tip-bubble { transform: none; }
 }

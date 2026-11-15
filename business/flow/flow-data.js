@@ -1,67 +1,41 @@
-// ===== flow 模块共享数据层（业务总览 · 全流程业务操作）=====
+// ===== flow 模块共享数据层（订单管理 · 全流程业务操作）=====
 // 复刻自本地演示项目 hongze_demo 的业务流程数据模型：
 // 订单 → 港口信息 → 运力方案 → 运输方案 → 财务确认 → 发运/仓储 → 货物动态/时间轴。
-// 数据存储于 localStorage 独立键空间（hz_flow_*，9 张表），
-// 不与现有模块数据键交叉；后续接入后端时仅需替换本文件的读写实现。
+// 数据基座：common/hz-db.js（HZDB）—— 9 张表存于后端数据库
+// （flowOrders / flowPorts / flowCapacities / flowPlans / flowChannelDetails /
+//   flowFinancials / flowShippings / flowMilestones / flowLogs），
+// bootstrap 全量缓存 + PUT 全量替换；读为同步（缓存），写为 async（失败返回 false）。
+// 跨模块联动：台账（ledger）经 HZBusinessData、海运航次（voyages）与矿山（mines）直读 HZDB。
+// 种子数据由后端数据库预置，前端不再内置种子。
 (function () {
   'use strict';
 
-  /* ==================== 存储键（hz_flow_* 独立键空间） ==================== */
+  /* ==================== 存储键（API 资源名） ==================== */
 
   const KEYS = {
-    orders: 'hz_flow_orders',             // 订单
-    ports: 'hz_flow_ports',               // 港口信息
-    capacities: 'hz_flow_capacities',     // 运力通道
-    plans: 'hz_flow_plans',               // 运输方案批次
-    channelDetails: 'hz_flow_channel_details', // 公铁联运中转详情
-    financials: 'hz_flow_financials',     // 财务信息
-    shippings: 'hz_flow_shippings',       // 通道发运信息
-    milestones: 'hz_flow_milestones',     // 货物动态节点
-    logs: 'hz_flow_logs',                 // 操作日志
+    orders: 'flowOrders',                 // 订单
+    ports: 'flowPorts',                   // 港口信息
+    capacities: 'flowCapacities',         // 运力通道
+    plans: 'flowPlans',                   // 运输方案批次
+    channelDetails: 'flowChannelDetails', // 公铁联运中转详情
+    financials: 'flowFinancials',         // 财务信息
+    shippings: 'flowShippings',           // 通道发运信息
+    milestones: 'flowMilestones',         // 货物动态节点
+    logs: 'flowLogs',                     // 操作日志
   };
 
   /* ==================== 基础读写与 ID ==================== */
 
-  /* ==================== 后端数据适配器（预留对接接口） ==================== */
-
-  // 各表可注册后端适配器：use('orders', { raw: () => window.__serverCache__.flowOrders })
-  // raw() 需同步返回数组（异步拉取请先缓存到内存再返回）；异常或非法返回时自动回退 localStorage；
-  // 传 null 注销适配器，恢复纯本地读写。注册后该表读操作由适配器接管，写仍落本地（可作离线缓存层）。
-  const adapters = {};    // 模块表名 -> 适配器实例
-  const KEY_TO_NAME = {}; // localStorage 键 -> 模块表名（反向索引）
-  Object.keys(KEYS).forEach(name => { KEY_TO_NAME[KEYS[name]] = name; });
-
-  // 注册/注销数据适配器：name 取 KEYS 中的模块表名（orders/ports/capacities/...）
-  function use(name, adapter) {
-    if (!Object.prototype.hasOwnProperty.call(KEYS, name)) return false;
-    if (adapter) {
-      if (typeof adapter.raw !== 'function') return false;
-      adapters[name] = adapter;
-    } else {
-      delete adapters[name];
-    }
-    return true;
-  }
-
+  // 同步读缓存（须在 await HZDB.ready() 之后调用；缺失/异常返回空数组）
   function read(key) {
-    // 优先走已注册的后端适配器（同步返回数组才接管），否则回退 localStorage
-    const adapter = KEY_TO_NAME[key] ? adapters[KEY_TO_NAME[key]] : null;
-    if (adapter) {
-      try {
-        const v = adapter.raw();
-        if (Array.isArray(v)) return v;
-      } catch (e) { /* 适配器异常：回退本地数据 */ }
-    }
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
+    const v = window.HZDB ? window.HZDB.get(key) : undefined;
+    return Array.isArray(v) ? v : [];
   }
 
-  function write(key, data) {
-    localStorage.setItem(key, JSON.stringify(data));
+  // 全量替换写（PUT /api/:res）：成功 true；失败 HZDB 已 toast、缓存不动，返回 false
+  async function write(key, data) {
+    if (!window.HZDB) return false;
+    return window.HZDB.put(key, data);
   }
 
   // 通用 ID：前缀_时间戳36进制_随机串
@@ -312,33 +286,35 @@
     return read(KEYS.orders).map(migrateOrder).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }
 
-  // 旧数据迁移：steelMill/saleQty → customers 数组，'done' 状态迁移
+  // 旧数据迁移（纯函数，不改动缓存对象）：steelMill/saleQty → customers 数组，'done' 状态迁移
   function migrateOrder(o) {
-    if (!Array.isArray(o.customers)) {
-      const names = String(o.steelMill || '').split('\n').map(s => s.trim()).filter(Boolean);
-      const totalQty = Number(o.saleQty) || 0;
-      o.customers = names.map((name, i) => ({
+    if (Array.isArray(o.customers) && o.status !== 'done') return o;
+    const c = Object.assign({}, o);
+    if (!Array.isArray(c.customers)) {
+      const names = String(c.steelMill || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const totalQty = Number(c.saleQty) || 0;
+      c.customers = names.map((name, i) => ({
         id: 'cust_legacy_' + i,
         name: name,
         qty: i === 0 ? totalQty : 0,
       }));
-      delete o.steelMill;
-      delete o.saleQty;
+      delete c.steelMill;
+      delete c.saleQty;
     }
-    o.status = migrateStatus(o.status);
-    return o;
+    c.status = migrateStatus(c.status);
+    return c;
   }
 
   function getOrder(id) {
-    const found = read(KEYS.orders).map(migrateOrder);
+    const found = read(KEYS.orders);
     for (let i = 0; i < found.length; i++) {
-      if (found[i].id === id) return found[i];
+      if (found[i].id === id) return migrateOrder(Object.assign({}, found[i]));
     }
     return undefined;
   }
 
   // 新建订单（含创建日志，返回完整订单对象）
-  function createOrder(order, operator, role) {
+  async function createOrder(order, operator, role) {
     const now = new Date().toISOString();
     const full = Object.assign({
       trader: '', traderContact: '', traderContactInfo: '',
@@ -347,69 +323,96 @@
       customers: [],
       createdAt: now, updatedAt: now, status: 'draft',
     }, order);
-    upsertOrder(full);
-    addOperationLog(full.id, operator || '系统', role || 'sales', '创建订单', { remark: '订单创建，状态：录入中' });
+    await upsertOrder(full);
+    await addOperationLog(full.id, operator || '系统', role || 'sales', '创建订单', { remark: '订单创建，状态：录入中' });
     return full;
   }
 
-  function upsertOrder(order) {
+  // 新增/更新订单（复制写回，put 失败时缓存保持原样）；成功后联动台账与海运
+  async function upsertOrder(order) {
     const list = read(KEYS.orders);
-    const idx = list.findIndex(o => o.id === order.id);
-    if (idx >= 0) list[idx] = order;
-    else list.push(order);
-    write(KEYS.orders, list);
+    const exists = list.some(o => o.id === order.id);
+    const next = exists ? list.map(o => (o.id === order.id ? order : o)) : list.concat([order]);
+    const ok = await write(KEYS.orders, next);
+    if (!ok) return false;
     // 订单台账联动：流程订单达同步点（待确认及之后）自动同步进台账（FR-03）
     if (window.HZBusinessData && typeof window.HZBusinessData.syncFlowOrder === 'function') {
-      try { window.HZBusinessData.syncFlowOrder(order); } catch (e) { /* 同步失败不阻断流程 */ }
+      try { await window.HZBusinessData.syncFlowOrder(order); } catch (e) { console.warn('订单台账联动失败：', e); /* 同步失败不阻断流程 */ }
     }
     // 海运管理联动：航运信息（船舶/货量）录入后自动新增同步生成航次（R1）
-    try { syncVoyageToOcean(order); } catch (e) { /* 同步失败不阻断流程 */ }
+    try { await syncVoyageToOcean(order); } catch (e) { console.warn('海运航次联动失败：', e); /* 同步失败不阻断流程 */ }
+    return true;
   }
 
   // 保存订单（自动刷新更新时间）
-  function saveOrder(order) {
+  async function saveOrder(order) {
     order.updatedAt = new Date().toISOString();
-    upsertOrder(order);
+    return upsertOrder(order);
   }
 
   // 删除订单：级联清空关联的 8 张关联表
-  function deleteOrder(id) {
-    write(KEYS.orders, read(KEYS.orders).filter(o => o.id !== id));
-    write(KEYS.ports, read(KEYS.ports).filter(p => p.orderId !== id));
-    write(KEYS.capacities, read(KEYS.capacities).filter(c => c.orderId !== id));
-    write(KEYS.plans, read(KEYS.plans).filter(p => p.orderId !== id));
-    write(KEYS.channelDetails, read(KEYS.channelDetails).filter(d => d.orderId !== id));
-    write(KEYS.financials, read(KEYS.financials).filter(f => f.orderId !== id));
-    write(KEYS.shippings, read(KEYS.shippings).filter(s => s.orderId !== id));
-    write(KEYS.milestones, read(KEYS.milestones).filter(m => m.orderId !== id));
-    write(KEYS.logs, read(KEYS.logs).filter(l => l.orderId !== id));
+  // 九表快照 → 逐表过滤删除 → 失败即停并 best-effort 恢复已删除表
+  async function deleteOrder(id) {
+    const TABLES = ['orders', 'ports', 'capacities', 'plans', 'channelDetails', 'financials', 'shippings', 'milestones', 'logs'];
+    const FILTERS = {
+      orders: o => o.id !== id,
+      ports: p => p.orderId !== id,
+      capacities: c => c.orderId !== id,
+      plans: p => p.orderId !== id,
+      channelDetails: d => d.orderId !== id,
+      financials: f => f.orderId !== id,
+      shippings: s => s.orderId !== id,
+      milestones: m => m.orderId !== id,
+      logs: l => l.orderId !== id,
+    };
+    const snaps = {};
+    TABLES.forEach(name => { snaps[name] = read(KEYS[name]); });
+
+    const done = [];
+    for (let i = 0; i < TABLES.length; i++) {
+      const name = TABLES[i];
+      const kept = snaps[name].filter(FILTERS[name]);
+      const ok = await write(KEYS[name], kept);
+      if (!ok) {
+        // 写失败：恢复已删除的表（best-effort），返回 false 由页面保持现场
+        for (let j = done.length - 1; j >= 0; j--) {
+          try { await write(KEYS[done[j]], snaps[done[j]]); } catch (e) { console.warn('回滚失败：', done[j], e); }
+        }
+        return false;
+      }
+      done.push(name);
+    }
+
     // 订单台账联动：已同步进台账的流程订单一并删除（FR-03）
     if (window.HZBusinessData && typeof window.HZBusinessData.removeFlowOrder === 'function') {
-      try { window.HZBusinessData.removeFlowOrder(id); } catch (e) { /* 联动失败不阻断删除 */ }
+      try { await window.HZBusinessData.removeFlowOrder(id); } catch (e) { console.warn('台账删除联动失败：', e); /* 联动失败不阻断删除 */ }
     }
     // 海运管理联动：清理由本订单同步生成的航次（R1）
-    try { removeVoyageByFlowRef(id); } catch (e) { /* 联动失败不阻断删除 */ }
+    try { await removeVoyageByFlowRef(id); } catch (e) { console.warn('航次删除联动失败：', e); /* 联动失败不阻断删除 */ }
+    return true;
   }
 
-  // 仅更新订单状态
-  function updateOrderStatus(id, status) {
-    const o = getOrder(id);
-    if (o) {
-      o.status = status;
-      o.updatedAt = new Date().toISOString();
-      upsertOrder(o);
-    }
+  // 仅更新订单状态（复制写回）
+  async function updateOrderStatus(id, status) {
+    const list = read(KEYS.orders);
+    const idx = list.findIndex(o => o.id === id);
+    if (idx < 0) return false;
+    const rec = Object.assign({}, list[idx], { status: status, updatedAt: new Date().toISOString() });
+    const next = list.slice();
+    next[idx] = rec;
+    return write(KEYS.orders, next);
   }
 
-  // 执行状态流转：校验 STATUS_FLOW 规则，更新状态并写日志；非法流转返回 false
-  function transitionStatus(orderId, to, operator, role, remark) {
+  // 执行状态流转：校验 STATUS_FLOW 规则，更新状态并写日志；非法流转或写失败返回 false
+  async function transitionStatus(orderId, to, operator, role, remark) {
     const order = getOrder(orderId);
     if (!order) return false;
     const from = migrateStatus(order.status);
     if (!canTransition(from, to, role === 'admin')) return false;
     const labelOf = s => (s ? (STATUS_META[s] ? STATUS_META[s].label : s) : '初始');
-    updateOrderStatus(orderId, to);
-    addOperationLog(orderId, operator, role, '状态变更：' + labelOf(from) + ' → ' + labelOf(to), {
+    const ok = await updateOrderStatus(orderId, to);
+    if (!ok) return false;
+    await addOperationLog(orderId, operator, role, '状态变更：' + labelOf(from) + ' → ' + labelOf(to), {
       fromStatus: from, toStatus: to, remark: remark || '',
     });
     return true;
@@ -417,41 +420,35 @@
 
   /* ==================== 海运管理联动（R1：航运信息新增同步） ==================== */
 
-  // 读取海运航次（hz_ocean_voyages 纯数组，海运管理模块权威数据；本层只做新增/更新同步，不改海运侧字段）
+  // 读取海运航次（DB 资源 voyages，海运管理模块权威数据；本层只做新增/更新同步，不改海运侧字段）
   function readOceanVoyages() {
-    try {
-      const v = JSON.parse(localStorage.getItem('hz_ocean_voyages'));
-      return Array.isArray(v) ? v : [];
-    } catch (e) {
-      return [];
-    }
+    const v = window.HZDB ? window.HZDB.get('voyages') : undefined;
+    return Array.isArray(v) ? v : [];
   }
 
   // 航运信息新增同步：订单录入船舶 + 货量后，自动在海运管理生成/更新对应航次（幂等，flow_ref 关联流程订单）
   // 单位经 HZUnits 转换（业务侧吨 → 海运侧万吨），非法/零值不落库；仅覆盖业务侧字段，
   // 海运侧 status / freight_rate / load_port / remark 等由海运模块维护
-  function syncVoyageToOcean(order) {
+  async function syncVoyageToOcean(order) {
     const U = window.HZUnits;
-    if (!order || !order.id || !U) return false;
+    if (!order || !order.id || !U || !window.HZDB) return false;
     const vessel = String(order.vessel || '').trim();
     const wanTon = U.normalizeTo(order.cargoTotal, 'ton', 'wanTon'); // 吨 → 万吨，非法/0 返回 null
     if (!vessel || wanTon == null) return false; // 航运信息（船名/货量）未录入完整：不同步
 
     const voyages = readOceanVoyages();
     const now = Date.now();
-    let rec = null;
+    let idx = -1;
     for (let i = 0; i < voyages.length; i++) {
-      if (voyages[i].flow_ref === order.id) { rec = voyages[i]; break; }
+      if (voyages[i].flow_ref === order.id) { idx = i; break; }
     }
+    // 既有航次复制后改字段，避免污染 HZDB 缓存中的原数组
+    let rec = idx >= 0 ? Object.assign({}, voyages[idx]) : null;
 
-    // 矿山 id 回填：按简称/全称匹配矿山主数据（hz_mines，矿山模块权威数据）
+    // 矿山 id 回填：按简称/全称匹配矿山主数据（DB 资源 mines，矿山模块权威数据）
     let mineId = '';
     if (order.mine) {
-      let mines = [];
-      try {
-        const m = JSON.parse(localStorage.getItem('hz_mines'));
-        if (Array.isArray(m)) mines = m;
-      } catch (e) { /* 矿山数据缺失时退化为空关联 */ }
+      const mines = readOceanMines();
       for (let i = 0; i < mines.length; i++) {
         if ((mines[i].short_name || mines[i].mine_name) === order.mine) { mineId = mines[i].id || ''; break; }
       }
@@ -475,7 +472,6 @@
         created_at: now,
         created_by: '业务管理',
       };
-      voyages.push(rec);
     }
 
     // 仅覆盖业务侧字段，海运侧字段（status/freight_rate/load_port/remark）保留
@@ -488,27 +484,29 @@
     rec.sail_date = order.departure ? String(order.departure).slice(0, 10) : '';
     rec.freight_total = Math.round(wanTon * 10000 * (Number(rec.freight_rate) || 0));
     rec.updated_at = now;
-
-    try {
-      localStorage.setItem('hz_ocean_voyages', JSON.stringify(voyages));
-      return true;
-    } catch (e) {
-      return false;
+    // 船舶静态信息（订单管理 F5④）：随订单同步至航次记录（vessel_info 9 项一致，AC-O09）
+    if (order.vesselInfo && typeof order.vesselInfo === 'object') {
+      rec.vessel_info = Object.assign({}, order.vesselInfo);
     }
+
+    // 复制写回（map/concat 产新数组，put 失败时缓存保持原样）
+    const next = idx >= 0 ? voyages.map((v, i) => (i === idx ? rec : v)) : voyages.concat([rec]);
+    return window.HZDB.put('voyages', next);
+  }
+
+  // 读取矿山主数据（DB 资源 mines，矿山模块权威数据）
+  function readOceanMines() {
+    const m = window.HZDB ? window.HZDB.get('mines') : undefined;
+    return Array.isArray(m) ? m : [];
   }
 
   // 清理由指定流程订单同步生成的航次（流程订单删除时级联，仅删 flow_ref 命中的记录）
-  function removeVoyageByFlowRef(flowRef) {
-    if (!flowRef) return false;
+  async function removeVoyageByFlowRef(flowRef) {
+    if (!flowRef || !window.HZDB) return false;
     const voyages = readOceanVoyages();
     const kept = voyages.filter(v => v.flow_ref !== flowRef);
     if (kept.length === voyages.length) return false;
-    try {
-      localStorage.setItem('hz_ocean_voyages', JSON.stringify(kept));
-      return true;
-    } catch (e) {
-      return false;
-    }
+    return window.HZDB.put('voyages', kept);
   }
 
   /* ==================== 港口信息 ==================== */
@@ -516,17 +514,16 @@
   function getPort(orderId) {
     const list = read(KEYS.ports);
     for (let i = 0; i < list.length; i++) {
-      if (list[i].orderId === orderId) return list[i];
+      if (list[i].orderId === orderId) return Object.assign({}, list[i]);
     }
     return undefined;
   }
 
-  function upsertPort(port) {
+  async function upsertPort(port) {
     const list = read(KEYS.ports);
-    const idx = list.findIndex(p => p.orderId === port.orderId);
-    if (idx >= 0) list[idx] = port;
-    else list.push(port);
-    write(KEYS.ports, list);
+    const exists = list.some(p => p.orderId === port.orderId);
+    const next = exists ? list.map(p => (p.orderId === port.orderId ? port : p)) : list.concat([port]);
+    return write(KEYS.ports, next);
   }
 
   /* ==================== 运力通道 ==================== */
@@ -536,9 +533,9 @@
   }
 
   // 整体替换订单的运力通道
-  function upsertCapacities(orderId, items) {
-    const all = read(KEYS.capacities).filter(c => c.orderId !== orderId);
-    write(KEYS.capacities, all.concat(items));
+  async function upsertCapacities(orderId, items) {
+    const kept = read(KEYS.capacities).filter(c => c.orderId !== orderId);
+    return write(KEYS.capacities, kept.concat(items));
   }
 
   function genCapacityId() {
@@ -560,7 +557,7 @@
   function getChannelDetail(orderId, channelType) {
     const list = read(KEYS.channelDetails);
     for (let i = 0; i < list.length; i++) {
-      if (list[i].orderId === orderId && list[i].channelType === channelType) return list[i];
+      if (list[i].orderId === orderId && list[i].channelType === channelType) return Object.assign({}, list[i]);
     }
     return undefined;
   }
@@ -570,9 +567,9 @@
   }
 
   // 整体替换订单的通道详情
-  function upsertChannelDetails(orderId, items) {
-    const all = read(KEYS.channelDetails).filter(d => d.orderId !== orderId);
-    write(KEYS.channelDetails, all.concat(items));
+  async function upsertChannelDetails(orderId, items) {
+    const kept = read(KEYS.channelDetails).filter(d => d.orderId !== orderId);
+    return write(KEYS.channelDetails, kept.concat(items));
   }
 
   // 构建空的通道详情
@@ -591,17 +588,16 @@
   function getPlan(orderId) {
     const list = read(KEYS.plans);
     for (let i = 0; i < list.length; i++) {
-      if (list[i].orderId === orderId) return list[i];
+      if (list[i].orderId === orderId) return Object.assign({}, list[i]);
     }
     return undefined;
   }
 
-  function upsertPlan(plan) {
+  async function upsertPlan(plan) {
     const list = read(KEYS.plans);
-    const idx = list.findIndex(p => p.orderId === plan.orderId);
-    if (idx >= 0) list[idx] = plan;
-    else list.push(plan);
-    write(KEYS.plans, list);
+    const exists = list.some(p => p.orderId === plan.orderId);
+    const next = exists ? list.map(p => (p.orderId === plan.orderId ? plan : p)) : list.concat([plan]);
+    return write(KEYS.plans, next);
   }
 
   /* ==================== 财务信息 ==================== */
@@ -623,18 +619,17 @@
   function getFinancial(orderId) {
     const list = read(KEYS.financials);
     for (let i = 0; i < list.length; i++) {
-      if (list[i].orderId === orderId) return list[i];
+      if (list[i].orderId === orderId) return Object.assign({}, list[i]);
     }
     return undefined;
   }
 
-  function upsertFinancial(info) {
+  async function upsertFinancial(info) {
     info.updatedAt = new Date().toISOString();
     const list = read(KEYS.financials);
-    const idx = list.findIndex(f => f.orderId === info.orderId);
-    if (idx >= 0) list[idx] = info;
-    else list.push(info);
-    write(KEYS.financials, list);
+    const exists = list.some(f => f.orderId === info.orderId);
+    const next = exists ? list.map(f => (f.orderId === info.orderId ? info : f)) : list.concat([info]);
+    return write(KEYS.financials, next);
   }
 
   /* ==================== 发运信息 ==================== */
@@ -643,18 +638,19 @@
     return read(KEYS.shippings).filter(s => s.orderId === orderId);
   }
 
-  function upsertShippings(orderId, items) {
-    const all = read(KEYS.shippings).filter(s => s.orderId !== orderId);
-    write(KEYS.shippings, all.concat(items));
+  async function upsertShippings(orderId, items) {
+    const kept = read(KEYS.shippings).filter(s => s.orderId !== orderId);
+    return write(KEYS.shippings, kept.concat(items));
   }
 
   // 根据运力通道初始化发运信息（缺失则补建，旧数据补全字段）
-  function ensureShippings(orderId, capacities) {
+  // 返回行列表（无论落库成功与否，页面先按返回行渲染；失败时下次保存重试）
+  async function ensureShippings(orderId, capacities) {
     const existing = listShippings(orderId);
     const result = capacities.map(c => {
       let found = null;
       for (let i = 0; i < existing.length; i++) {
-        if (existing[i].capacityId === c.id) { found = existing[i]; break; }
+        if (existing[i].capacityId === c.id) { found = Object.assign({}, existing[i]); break; }
       }
       if (found) {
         found.storedQty = found.storedQty || 0;
@@ -677,7 +673,7 @@
         updatedAt: new Date().toISOString(),
       };
     });
-    upsertShippings(orderId, result);
+    await upsertShippings(orderId, result);
     return result;
   }
 
@@ -689,9 +685,9 @@
       .sort((a, b) => (a.plannedTime < b.plannedTime ? -1 : 1));
   }
 
-  function upsertMilestones(orderId, items) {
-    const all = read(KEYS.milestones).filter(m => m.orderId !== orderId);
-    write(KEYS.milestones, all.concat(items));
+  async function upsertMilestones(orderId, items) {
+    const kept = read(KEYS.milestones).filter(m => m.orderId !== orderId);
+    return write(KEYS.milestones, kept.concat(items));
   }
 
   function genMilestoneId() {
@@ -707,7 +703,7 @@
       .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
   }
 
-  function addOperationLog(orderId, operator, role, action, opts) {
+  async function addOperationLog(orderId, operator, role, action, opts) {
     opts = opts || {};
     const log = {
       id: genId('log'),
@@ -721,13 +717,12 @@
       createdAt: new Date().toISOString(),
     };
     const list = read(KEYS.logs);
-    list.push(log);
-    write(KEYS.logs, list);
+    return write(KEYS.logs, list.concat([log]));
   }
 
   /* ==================== 凭证管理 ==================== */
 
-  // 向目标对象（财务信息 / 发运信息）追加凭证
+  // 向目标对象（财务信息 / 发运信息）追加凭证（内存操作，持久化由调用方经 upsertXxx 落库）
   function addVoucher(target, voucher) {
     target.vouchers.push(Object.assign({}, voucher, {
       id: 'vch_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
@@ -735,7 +730,7 @@
     }));
   }
 
-  // 从目标对象移除凭证
+  // 从目标对象移除凭证（内存操作，持久化由调用方经 upsertXxx 落库）
   function removeVoucher(target, id) {
     const idx = target.vouchers.findIndex(v => v.id === id);
     if (idx >= 0) target.vouchers.splice(idx, 1);
@@ -745,7 +740,6 @@
 
   window.HZFlowData = {
     KEYS: KEYS,
-    use: use,
     STATUS_META: STATUS_META,
     STATUS_ORDER: STATUS_ORDER,
     STATUS_FLOW: STATUS_FLOW,

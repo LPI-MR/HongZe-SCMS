@@ -7,8 +7,6 @@
 (function () {
   'use strict';
 
-  var STORAGE_KEY = 'hz_rail_price_index';
-  var VERSION = 'v4';              // 内置数据版本：v4 = 线路行情卡并排展示，新增黄骅港站→曹庄镇站线路
   var TAX_RATE = 1.09;             // 含税换算系数
 
   // ===== 工具 =====
@@ -67,58 +65,21 @@
     '煤炭及焦炭': ['焦炭']
   };
 
-  // 预置报价记录（固定值手写数据，非随机生成）
-  var SEED_RECORDS = [
-    { id: 'rl-demo-01', dataDate: '2026-10-13', goods: '铁矿石', from: '黄骅港站', to: '武安', price: 51.80, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-13 15:05' },
-    { id: 'rl-demo-02', dataDate: '2026-10-14', goods: '铁矿石', from: '黄骅港站', to: '邢台南站', price: 45.00, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-14 15:12' },
-    { id: 'rl-demo-03', dataDate: '2026-10-15', goods: '钢坯', from: '天津港站', to: '武安', price: 60.50, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-15 15:08' },
-    { id: 'rl-demo-04', dataDate: '2026-10-16', goods: '铁矿石', from: '黄骅港站', to: '武安', price: 51.80, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-16 15:03' },
-    { id: 'rl-demo-05', dataDate: '2026-10-18', goods: '铁矿石', from: '黄骅港站', to: '邢台南站', price: 45.20, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-18 15:16' },
-    { id: 'rl-demo-06', dataDate: '2026-10-20', goods: '铁矿石', from: '黄骅港站', to: '武安', price: 52.10, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-20 15:09' },
-    { id: 'rl-demo-07', dataDate: '2026-10-21', goods: '钢坯', from: '天津港站', to: '武安', price: 60.00, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-21 15:14' },
-    { id: 'rl-demo-08', dataDate: '2026-10-23', goods: '铁矿石', from: '黄骅港站', to: '邢台南站', price: 45.00, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-23 15:07' },
-    { id: 'rl-demo-09', dataDate: '2026-10-24', goods: '铁矿石', from: '黄骅港站', to: '武安', price: 52.35, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-24 15:11' },
-    { id: 'rl-demo-10', dataDate: '2026-10-25', goods: '钢坯', from: '天津港站', to: '武安', price: 60.40, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-25 15:06' },
-    { id: 'rl-demo-11', dataDate: '2026-10-14', goods: '铁矿石', from: '黄骅港站', to: '曹庄镇站', price: 47.60, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-14 15:10' },
-    { id: 'rl-demo-12', dataDate: '2026-10-16', goods: '铁矿石', from: '黄骅港站', to: '曹庄镇站', price: 47.60, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-16 15:04' },
-    { id: 'rl-demo-13', dataDate: '2026-10-18', goods: '铁矿石', from: '黄骅港站', to: '曹庄镇站', price: 47.80, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-18 15:13' },
-    { id: 'rl-demo-14', dataDate: '2026-10-20', goods: '铁矿石', from: '黄骅港站', to: '曹庄镇站', price: 47.80, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-20 15:07' },
-    { id: 'rl-demo-15', dataDate: '2026-10-22', goods: '铁矿石', from: '黄骅港站', to: '曹庄镇站', price: 47.95, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-22 15:12' },
-    { id: 'rl-demo-16', dataDate: '2026-10-25', goods: '铁矿石', from: '黄骅港站', to: '曹庄镇站', price: 47.95, remark: '', evidences: [], uploader: '系统管理员', uploadedAt: '2026-10-25 15:09' }
-  ];
+  // 预置报价记录（16 条，2026-10-13 ~ 2026-10-25）已迁移至数据库 railPrices 资源，
+  // JS 内不再保留种子；本页为纯查询页（无录入/删除入口），报价记录经 HZDB 缓存基座
+  // 从数据库装载；站点/货物种类库为只读字典，保留 JS 内置数据兜底
 
-  function buildSeed() {
-    return {
-      __version: VERSION,
-      stations: JSON.parse(JSON.stringify(SEED_STATIONS)),
-      goods: JSON.parse(JSON.stringify(SEED_GOODS)),
-      records: JSON.parse(JSON.stringify(SEED_RECORDS))
-    };
-  }
-
-  // ===== 数据读写（localStorage） =====
-  var db = null;
+  // ===== 数据读写（PostgreSQL，经 HZDB 缓存基座） =====
+  var db = null;   // 内存形状 { stations, goods, records }
 
   function loadDB() {
-    if (db) return db;
-    try {
-      var v = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (v && v.__version === VERSION && v.stations && v.goods && Array.isArray(v.records)) {
-        db = v;
-        return db;
-      }
-    } catch (e) { /* 解析失败则重建种子 */ }
-    db = buildSeed();
-    persist();
+    var recs = HZDB.get('railPrices');
+    db = {
+      stations: JSON.parse(JSON.stringify(SEED_STATIONS)),
+      goods: JSON.parse(JSON.stringify(SEED_GOODS)),
+      records: Array.isArray(recs) ? recs : []
+    };
     return db;
-  }
-
-  function persist() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-    } catch (e) {
-      toast('本地存储空间不足，最新数据可能未完整保存');
-    }
   }
 
   // ===== 派生数据 =====
@@ -416,8 +377,9 @@
     $('#btnQueryReset').addEventListener('click', clearQuery);
   }
 
-  // ===== 初始化 =====
-  function init() {
+  // ===== 初始化（数据从 PostgreSQL 装载） =====
+  async function boot() {
+    await HZDB.ready();
     loadDB();
     initQueryOptions();
     switchGoodsMode();
@@ -429,8 +391,8 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    init();
+    boot();
   }
 })();

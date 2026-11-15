@@ -1,6 +1,6 @@
 // ===== warehouse 模块脚本（仓储管理）=====
-// 公共导航栏由 /common/fetch.js 加载；供应商数据存 localStorage，
-// 后续接入后端时替换 load/save 实现即可
+// 公共导航栏由 /common/fetch.js 加载；数据持久化到 PostgreSQL：
+// 读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/warehouses 等全量替换
 (function () {
   'use strict';
 
@@ -31,187 +31,8 @@
 
   /* ==================== 数据层 ==================== */
 
-  const STORE_KEY = 'hz_warehouse_suppliers_v1';
-
-  // 合作类型定义（key → 徽标样式类）
-  const TYPES = {
-    '保税物流': 'bonded',
-    '中转仓储': 'transit',
-    '普通仓储': 'normal',
-    '运输接驳': 'shuttle'
-  };
-
-  // 供应商公开资料（来源：河北新闻网、邯郸市政府网、武安市政府网、启信宝等公开报道与工商信息）
-  const LEGACY_HBLG_INTRO = '河北陆港保税物流有限公司立足河北、服务京津冀，依托陆港口岸与保税政策优势，开展保税仓储、中转配送、通关协办等一体化物流服务，为客户提供大宗商品存储与供应链运转支撑。';
-
-  const HBLG_PROFILE = {
-    address: '河北省邯郸市武安市（武安保税物流中心）',
-    throughput: '设计年货物处理量3000万吨',
-    area: '规划占地1600亩',
-    // 仓库规模与矿石分垛（垛位为示例初始化数据，可在编辑抽屉中调整）
-    scale: '50000㎡',
-    stacks: [
-      { name: '1号垛', ore: 'PB粉', tonnage: '2.5万吨', note: '' },
-      { name: '2号垛', ore: '纽曼粉', tonnage: '1.8万吨', note: '' },
-      { name: '3号垛', ore: '巴西混合粉', tonnage: '1.5万吨', note: '' },
-      { name: '4号垛', ore: 'PB块', tonnage: '1.2万吨', note: '' },
-      { name: '5号垛', ore: '超特粉', tonnage: '1.0万吨', note: '' },
-      { name: '6号垛', ore: '金布巴粉', tonnage: '0.8万吨', note: '' }
-    ],
-    intro: '河北港口集团旗下核心物流载体，运营河北省首家B型保税物流中心——武安保税物流中心，业务涵盖保税物流、铁路运输、钢材交易、再生钢铁、混矿加工、供应链金融、跨境电商、仓储交割八大板块。"河北陆港—天津等港口"铁水联运线路入选国家级典型案例，2024年完成联运量21.6万标箱，2021—2024年累计74.97万标箱，货源以武安地区钢厂原料等大宗货物为主。',
-    facilities: '中心依托万利丰铁路专用线建设，设海关监管区、内贸物流区、综合服务区、行政商业区四大功能区，具备保税存储、出口退税、国际贸易与转口贸易等功能；铁水联运通道连通天津港、曹妃甸港、山东港口，提供集装箱短驳进站、装箱调偏、报关清关、预约提箱、跨境电商通关等配套服务。'
-  };
-
-  const NYYS_PROFILE = {
-    address: '河北省邯郸市武安市南环东路1001号',
-    contact: '李勇旺',
-    phone: '0310-6287117',
-    throughput: '300万吨级智慧物流园（规划）',
-    area: '约146亩（仓储用地）',
-    // 仓库规模与矿石分垛（垛位为示例初始化数据，可在编辑抽屉中调整）
-    scale: '5000㎡',
-    stacks: [
-      { name: '1号垛', ore: 'PB粉', tonnage: '0.6万吨', note: '' },
-      { name: '2号垛', ore: '混合粉', tonnage: '0.4万吨', note: '' },
-      { name: '3号垛', ore: '磁铁精粉', tonnage: '0.3万吨', note: '邯邢本地矿' },
-      { name: '4号垛', ore: '巴西混合粉', tonnage: '0.3万吨', note: '' },
-      { name: '5号垛', ore: 'FMG混合粉', tonnage: '0.2万吨', note: '' },
-      { name: '6号垛', ore: '罗布河混合粉', tonnage: '0.2万吨', note: '' }
-    ],
-    intro: '成立于2011年6月，注册资本5250万元，注册地位于邯郸武安市南环东路1001号。主营道路货物运输（普通、罐车、冷藏、大件、集装箱）、货运站场经营、铁路货物运输服务与汽车维修等，投资建设南洋（移山）智慧物流园，旗下全资持有武安市南洋石油销售有限公司。',
-    facilities: '仓储地块位于武安东环路东侧、邯武快速路南侧（仓储用地约146亩）；运营南洋物流园，承担武安市区邮政快件分拨（15公里直封直投），园区配套货运站场、汽车维修及成品油补给等服务。'
-  };
-
-  const PUBLIC_PROFILES = {
-    '河北陆港保税物流有限公司': HBLG_PROFILE,
-    '河北南洋移山物流有限公司': NYYS_PROFILE
-  };
-
-  const SEED_SUPPLIERS = [
-    {
-      id: 'sup-001',
-      name: '河北陆港保税物流有限公司',
-      type: '保税物流',
-      contact: '',
-      phone: '',
-      address: HBLG_PROFILE.address,
-      throughput: HBLG_PROFILE.throughput,
-      storage: '',
-      area: HBLG_PROFILE.area,
-      intro: HBLG_PROFILE.intro,
-      facilities: HBLG_PROFILE.facilities,
-      remark: '',
-      createdAt: Date.now()
-    },
-    {
-      id: 'sup-002',
-      name: '河北南洋移山物流有限公司',
-      type: '运输接驳',
-      contact: NYYS_PROFILE.contact,
-      phone: NYYS_PROFILE.phone,
-      address: NYYS_PROFILE.address,
-      throughput: NYYS_PROFILE.throughput,
-      storage: '',
-      area: NYYS_PROFILE.area,
-      intro: NYYS_PROFILE.intro,
-      facilities: NYYS_PROFILE.facilities,
-      remark: '',
-      createdAt: Date.now()
-    }
-  ];
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return migrate(seed());
-      const data = JSON.parse(raw);
-      if (!data || !Array.isArray(data.list)) return seed();
-      return migrate(data.list);
-    } catch (e) {
-      return seed();
-    }
-  }
-
-  // 旧版示例指标值（migrate 时视为占位，需替换为真实资料）
-  const LEGACY_CAPS = ['500万吨/年', '静态仓容60万吨', '约1500亩'];
-
-  // 一次性数据补丁：南洋移山追加混合粉类垛位 + 品名库补齐（老数据浏览器生效，按品类名幂等）
-  function patchStacks(list) {
-    let changed = false;
-    try {
-      if (!localStorage.getItem('hz_warehouse_stack_patch_v1')) {
-        list.forEach(s => {
-          if (s.name !== '河北南洋移山物流有限公司') return;
-          s.stacks = Array.isArray(s.stacks) ? s.stacks : [];
-          [
-            { name: '4号垛', ore: '巴西混合粉', tonnage: '0.3万吨', note: '' },
-            { name: '5号垛', ore: 'FMG混合粉', tonnage: '0.2万吨', note: '' },
-            { name: '6号垛', ore: '罗布河混合粉', tonnage: '0.2万吨', note: '' }
-          ].forEach(t => {
-            if (!s.stacks.some(x => (x.ore || '').trim() === t.ore)) {
-              s.stacks.push(Object.assign({}, t));
-              changed = true;
-            }
-          });
-        });
-        // 品名库同步补齐新品名（老浏览器品名库已存在时追加）
-        const rawOre = localStorage.getItem('hz_warehouse_ores_v1');
-        const dataOre = rawOre ? JSON.parse(rawOre) : null;
-        if (dataOre && Array.isArray(dataOre.list)) {
-          ['FMG混合粉', '罗布河混合粉'].forEach(n => {
-            if (!dataOre.list.includes(n)) dataOre.list.push(n);
-          });
-          localStorage.setItem('hz_warehouse_ores_v1', JSON.stringify(dataOre));
-        }
-        localStorage.setItem('hz_warehouse_stack_patch_v1', '1');
-      }
-    } catch (e) { /* 忽略 */ }
-    return changed;
-  }
-
-  // 数据迁移：为已有记录按公司名补充公开资料（不覆盖用户已填写的内容）
-  function migrate(list) {
-    let changed = false;
-    list.forEach(s => {
-      const p = PUBLIC_PROFILES[s.name];
-      if (!p) return;
-      Object.keys(p).forEach(k => {
-        if (k === 'intro') {
-          if (!s.intro || s.intro === LEGACY_HBLG_INTRO) { s.intro = p.intro; changed = true; }
-        } else if (k === 'stacks') {
-          // 分垛明细：旧数据无垛位（或为空数组）时补种子垛位，已有垛位不覆盖
-          if (!Array.isArray(s.stacks) || !s.stacks.length) {
-            s.stacks = p.stacks.map(t => Object.assign({}, t));
-            changed = true;
-          }
-        } else if (!s[k] || LEGACY_CAPS.includes(s[k])) { s[k] = p[k]; changed = true; }
-      });
-    });
-    if (patchStacks(list)) changed = true;
-    if (changed) save(list);
-    return list;
-  }
-
-  // 首次使用写入初始数据（stacks 深拷贝，避免编辑时改动共享种子数组）
-  function seed() {
-    const initial = SEED_SUPPLIERS.map(s => Object.assign({}, s, {
-      stacks: (s.stacks || []).map(t => Object.assign({}, t))
-    }));
-    save(initial);
-    return initial;
-  }
-
-  function save(list) {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ list }));
-    } catch (e) { /* 存储不可用时忽略 */ }
-  }
-
-  function genId() {
-    return 'sup-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  }
-
-  let suppliers = load();
+  // 仓库主数据（供应商）：boot 时经 HZDB.ready() 从数据库装载
+  let suppliers = [];
 
   /* ==================== 渲染 ==================== */
 
@@ -432,43 +253,13 @@
 
   /* ==================== 进销存台账（入库 / 出库 / 每日盘点） ==================== */
 
-  const IO_KEY = 'hz_warehouse_io_v1';
-
-  function loadIo() {
-    try {
-      const raw = localStorage.getItem(IO_KEY);
-      const data = raw ? JSON.parse(raw) : null;
-      if (data && Array.isArray(data.list)) return data.list;
-    } catch (e) { /* 存储不可用时忽略 */ }
-    return [];
-  }
-
-  function saveIo(list) {
-    try { localStorage.setItem(IO_KEY, JSON.stringify({ list })); } catch (e) { /* 忽略 */ }
-  }
-
-  let ioRecords = loadIo();
+  // 出入库流水（与进销存台账子模块共享数据表）：boot 时从数据库装载
+  let ioRecords = [];
 
   /* ---- 矿石品名库（品类联想输入 + 自定义维护） ---- */
 
-  const ORE_KEY = 'hz_warehouse_ores_v1';
-  const ORE_SEED = ['PB粉', 'PB块', '纽曼粉', '纽曼块', '麦克粉', '巴西混合粉', 'FMG混合粉', '罗布河混合粉', '超特粉', '金布巴粉', '混合粉', '磁铁精粉', '罗布河粉', '扬迪粉'];
-
-  function loadOres() {
-    try {
-      const data = JSON.parse(localStorage.getItem(ORE_KEY));
-      if (data && Array.isArray(data.list)) return data.list;
-    } catch (e) { /* 忽略 */ }
-    const seed = ORE_SEED.slice();
-    saveOres(seed);
-    return seed;
-  }
-
-  function saveOres(list) {
-    try { localStorage.setItem(ORE_KEY, JSON.stringify({ list })); } catch (e) { /* 忽略 */ }
-  }
-
-  let oreCatalog = loadOres();
+  // 品名库：boot 时从数据库装载（/api/ore-catalog）
+  let oreCatalog = [];
 
   function todayStr() { return fmtTime(Date.now()); }
 
@@ -591,7 +382,7 @@
     document.getElementById(id).addEventListener('change', updateIoHint);
   });
 
-  ioForm.addEventListener('submit', e => {
+  ioForm.addEventListener('submit', async e => {
     e.preventDefault();
     const sup = suppliers.find(x => x.id === document.getElementById('io-sup').value);
     const ore = document.getElementById('io-ore').value.trim();
@@ -614,17 +405,24 @@
       }
     }
 
+    // 回滚快照：流水与垛位库存分两次落库，任一失败则恢复内存现场，弹窗保留供重试
+    const stacksSnapshot = JSON.stringify(sup.stacks || []);
+    const ioCount = ioRecords.length;
     if (!applyIoToStacks(sup, ore, tons, ioType)) {
       alert(`出库失败：「${ore}」当前库存仅 ${fmtTon(oreStock(sup, ore))}，不足 ${fmtTon(tons)}`);
       return;
     }
 
     ioRecords.push({
-      id: genId(), supId: sup.id, date, type: ioType, ore,
+      supId: sup.id, date, type: ioType, ore,
       tons: Math.round(tons * 10) / 10, order, steel, note, createdAt: Date.now()
     });
-    saveIo(ioRecords);
-    save(suppliers);
+    if (!await HZDB.put('ioRecords', ioRecords) || !await HZDB.put('warehouses', suppliers)) {
+      ioRecords.length = ioCount;
+      sup.stacks = JSON.parse(stacksSnapshot);
+      renderAll();
+      return;
+    }
     renderAll();
     closeIoModal();
   });
@@ -674,14 +472,17 @@
     box.innerHTML = html || '<div class="io-empty">暂无品名，先在上方添加</div>';
   }
 
-  function addOre() {
+  async function addOre() {
     const input = document.getElementById('ore-new');
     const name = input.value.trim();
     if (!name) { input.focus(); return; }
     if (!oreCatalog.includes(name)) {
       oreCatalog.push(name);
-      saveOres(oreCatalog);
       renderOreCatalog();
+      if (!await HZDB.put('oreCatalog', oreCatalog)) {
+        oreCatalog.pop();        // 保存失败回滚
+        renderOreCatalog();
+      }
     }
     input.value = '';
     input.focus();
@@ -693,28 +494,22 @@
   document.getElementById('ore-new').addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); addOre(); }
   });
-  document.getElementById('ore-catalog').addEventListener('click', e => {
+  document.getElementById('ore-catalog').addEventListener('click', async e => {
     const del = e.target.closest('.ore-item-del');
     if (!del) return;
+    const prev = oreCatalog.slice();
     oreCatalog = oreCatalog.filter(o => o !== del.getAttribute('data-ore'));
-    saveOres(oreCatalog);
     renderOreCatalog();
+    if (!await HZDB.put('oreCatalog', oreCatalog)) {
+      oreCatalog = prev;         // 保存失败回滚
+      renderOreCatalog();
+    }
   });
 
   /* ==================== 保税报关节点（保税物流仓库专用） ==================== */
 
-  const CD_KEY = 'hz_warehouse_customs_v1';
-
-  function loadCd() {
-    try {
-      const raw = localStorage.getItem(CD_KEY);
-      const data = raw ? JSON.parse(raw) : null;
-      if (data && Array.isArray(data.list)) return data.list;
-    } catch (e) { /* 忽略 */ }
-    return [];
-  }
-
-  let cdRecords = loadCd();
+  // 报关记录（与保税报关子模块共享数据表，本页只读）：boot 时从数据库装载
+  let cdRecords = [];
 
   // 保税仓库分品类报关台账：
   // stock 在库 / declared 已报关累计 / exported 报关出库（出库只允许从已报关出）
@@ -784,23 +579,16 @@
     else if (!oreModal.hidden) closeOreModal();
   });
 
-  // 其他子模块（台账 / 报关 / 供应商）修改数据后，本页自动同步刷新
-  window.addEventListener('storage', e => {
-    try {
-      if (e.key === STORE_KEY) {
-        const data = JSON.parse(e.newValue);
-        if (data && Array.isArray(data.list)) { suppliers = data.list; renderAll(); }
-      } else if (e.key === IO_KEY) {
-        const data = JSON.parse(e.newValue);
-        if (data && Array.isArray(data.list)) { ioRecords = data.list; renderAll(); }
-      } else if (e.key === CD_KEY) {
-        const data = JSON.parse(e.newValue);
-        if (data && Array.isArray(data.list)) { cdRecords = data.list; renderAll(); }
-      }
-    } catch (err) { /* 忽略 */ }
-  });
-
   /* ==================== 初始化 ==================== */
 
-  renderAll();
+  async function boot() {
+    await HZDB.ready();
+    suppliers = HZDB.get('warehouses') || [];
+    ioRecords = HZDB.get('ioRecords') || [];
+    oreCatalog = HZDB.get('oreCatalog') || [];
+    cdRecords = HZDB.get('customsRecords') || [];
+    renderAll();
+  }
+
+  boot();
 })();

@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <!-- 链路总览区：业务工作流九态管道可视化（对接业务总览工作流链路，R4） -->
+        <!-- 链路总览区：业务工作流九态管道可视化（订单管理全流程工作流链路，R4） -->
         <div class="flow-pipeline-wrap">
           <div class="flow-pipeline" id="flowPipeline">
             <!-- 由 orders-flow.js 渲染：创建 → 履约 → 完成 九态管道 + 已终止侧挂 -->
@@ -219,15 +219,18 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 模块化数据基座：跨模块字段（合同 / 矿山 / 航次等）统一经 HZData 调取各模块权威数据源 -->
   <script src="/common/hz-data.js"></script>
   <!-- 业务共享数据层：订单 / 结算 / 流转日志读写 -->
-  <script src="business-data.js"></script>
-  <!-- 履约流程数据层：业务总览 / 订单流转子页共用（hz_flow_* 键空间） -->
-  <script src="flow/flow-data.js"></script>
+  <script src="business-data.js?v=20261115a"></script>
+  <!-- 履约流程数据层：订单管理流程页 / 订单台账共用（flowOrders 九表资源） -->
+  <script src="flow/flow-data.js?v=20261115a"></script>
   <!-- 模块脚本 -->
-  <script src="orders.js"></script>
+  <script src="orders.js?v=20261115a"></script>
   <!-- 全链路层脚本：九态管道可视化 + 创建阶段订单合并注入（R4） -->
-  <script src="orders-flow.js"></script>
+  <script src="orders-flow.js?v=20261115a"></script>
 </body>
 </html>

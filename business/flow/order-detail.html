@@ -26,8 +26,8 @@
       <div class="flow-panel" id="missing" hidden>
         <div class="empty-box">
           <div class="empty-title">订单不存在</div>
-          <div class="empty-desc">该订单可能已被删除，请返回工作台确认。</div>
-          <a class="btn-primary" href="../business.html">返回工作台</a>
+          <div class="empty-desc">该订单可能已被删除，请返回订单台账确认。</div>
+          <a class="btn-primary" href="../orders.html">返回订单台账</a>
         </div>
       </div>
 
@@ -38,6 +38,7 @@
           <div class="form-sub">订单 <span id="head-mono" style="font-family:monospace">—</span> · <span id="head-status">—</span> · 创建于 <span id="head-created">—</span> · 更新于 <span id="head-updated">—</span></div>
         </div>
         <div class="form-head-ops">
+          <a class="btn-ghost" id="btn-goto-plan">运输方案</a>
           <select class="field-input" id="role-select">
             <option value="finance">财务人员视角</option>
             <option value="transport">运输人员视角</option>
@@ -451,11 +452,14 @@
 
   <!-- 公共导航栏加载脚本 -->
   <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
   <!-- 业务流程共享数据层 -->
-  <script src="flow-data.js"></script>
+  <script src="flow-data.js?v=20261115a"></script>
   <!-- 订单台账数据层：流程订单达同步点后自动同步进台账（FR-03） -->
-  <script src="../business-data.js"></script>
+  <script src="../business-data.js?v=20261115a"></script>
   <!-- 订单详情脚本 -->
-  <script src="order-detail.js"></script>
+  <script src="order-detail.js?v=20261115a"></script>
 </body>
 </html>

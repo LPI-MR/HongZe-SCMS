@@ -1,14 +1,47 @@
-// ===== 客户管理统一库页面脚本 =====
-// 依赖：common/fetch.js（导航栏）、customers/sync-engine.js（统一库只读接口）
-// 职责：读取统一库、双视图切换、行业/来源/关键词筛选、分页、详情抽屉与溯源跳转
-// 说明：本页对统一库只读；数据由 sync.html 的一次性同步脚本写入
+/* ============================================================
+   客户管理模块 · 运营端管理页逻辑（新版三类客户模型）
+   ------------------------------------------------------------
+   功能（依据《PRD-客户管理模块》）：
+   - F1 客户列表：类型 Tab + 搜索（名称/信用代码）+ 状态筛选 + 分页 + 操作列
+   - F2 客户详情：白名单字段 + 资质凭证 + 状态变更记录
+   - F3 平台代注册：三类客户直接录入，保存即生效
+   - F5 注册审核：通过 / 驳回（原因必填）
+   - F6 编辑 / 归类：联系人、联系方式、客户类型（归类调整）；名称/来源/非空信用代码锁定
+   - F7 停用 / 启用：二次确认
+   权限（4.2，TBD-01 降级）：登录体系未接入，本页以运营端身份兜底。
+   注：旧「同步控制台 + 迁移归类面板」流程已下线，迁移期遗留的待归类存量
+   （DB 资源 customersPending）由启动时 adoptLegacyPending 一次性并入客户库
+   （待归类状态），在列表中直接编辑归类。
+   ============================================================ */
+
 (function () {
   'use strict';
 
-  var S = window.HZCustomerSync;
-  var NAV_PATH = '客户管理';
+  var D = window.HZCustomerData;
 
-  /* ==================== 工具 ==================== */
+  /* ==================== 视图状态 ==================== */
+
+  var state = {
+    type: '全部',
+    status: '全部',
+    keyword: '',
+    page: 1,
+    pageSize: 10
+  };
+
+  // 弹窗上下文
+  var ctx = {
+    createType: '集采贸易商',
+    reviewId: null,
+    reviewDecision: 'approve',
+    confirmId: null,
+    confirmTarget: '停用',
+    editId: null,
+    editType: '',
+    currentDetail: null
+  };
+
+  /* ==================== 基础工具 ==================== */
 
   function $(id) { return document.getElementById(id); }
 
@@ -18,404 +51,493 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  function fmtTime(ts) {
-    var d = new Date(ts);
-    var p = function (n) { return String(n).padStart(2, '0'); };
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
-      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
-  }
-
   var toastTimer = null;
   function toast(msg, type) {
     var t = $('toast');
     t.textContent = msg;
-    t.className = 'toast show' + (type ? ' ' + type : '');
+    t.className = 'toast show ' + (type || '');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { t.className = 'toast'; }, 2800);
+    toastTimer = setTimeout(function () { t.className = 'toast ' + (type || ''); }, 2600);
   }
 
-  // 数据来源 → 标签配色类（与 customers.css 中 s-* 变体一一对应）
-  var SRC_CLASS = {
-    '铁路供应商管理': 's-railway',
-    '港口管理': 's-ports',
-    '中转站点管理': 's-transfer',
-    '仓储管理': 's-warehouse',
-    '汽运车队管理': 's-fleet',
-    '钢厂管理': 's-steel',
-    '矿石贸易商名录': 's-trader'
-  };
-  function srcTag(label) {
-    return '<span class="c-tag src ' + (SRC_CLASS[label] || '') + '">' + esc(label) + '</span>';
-  }
-  function roleTag(r) {
-    return '<span class="c-tag role' + (r === S.VIEW_CUSTOMER_ROLE ? ' r-cust' : '') + '">' + esc(r) + '</span>';
-  }
-  function indTag(i) {
-    return '<span class="c-tag ind">' + esc(i) + '</span>';
+  function openMask(id) { var m = $(id); m.hidden = false; requestAnimationFrame(function () { m.classList.add('show'); }); }
+  function closeMask(id) {
+    var m = $(id);
+    m.classList.remove('show');
+    setTimeout(function () { m.hidden = true; }, 200);
   }
 
-  /* ==================== 导航选中态 ==================== */
-
-  function setActiveNav() {
-    var navbar = document.getElementById('navbar');
-    if (!navbar) return;
-    navbar.querySelectorAll('.active').forEach(function (el) { el.classList.remove('active'); });
-    var item = navbar.querySelector('[data-path="' + NAV_PATH + '"]');
-    if (item) item.classList.add('active');
-  }
-  var navbar = document.getElementById('navbar');
-  if (navbar && navbar.children.length) setActiveNav();
-  else document.addEventListener('navbar:loaded', setActiveNav, { once: true });
-
-  /* ==================== 状态 ==================== */
-
-  var all = [];                 // 统一库全量主体
-  var view = 'all';             // all | customer | resource
-  var custType = 'all';         // 客户视图类型细分：all | steel | trader
-  var kw = '';                  // 关键词
-  var selIndustries = [];       // 选中的行业标签（多选，命中任一即可）
-  var selSource = '';           // 选中的数据来源（单选）
-  var page = 1;
-  var pageSize = 10;
-
-  /* ==================== 数据加载 ==================== */
-
-  function load() {
-    var w = S.readUnified();
-    all = (w.list || []).slice();
-    renderChips();
-    renderSourceSelect();
-    renderKpis();
-    renderTable();
+  function clearErrors(scopeEl) {
+    scopeEl.querySelectorAll('.req-err').forEach(function (el) { el.textContent = ''; });
   }
 
-  /* ==================== 视图归属判定（与引擎口径一致） ==================== */
-
-  function isCustomer(e) {
-    return (e.roles || []).indexOf(S.VIEW_CUSTOMER_ROLE) >= 0;
-  }
-  function isResource(e) {
-    return (e.roles || []).some(function (r) { return S.VIEW_RESOURCE_ROLES.indexOf(r) >= 0; });
-  }
-  // 客户视图两类客户（角色定位均为我方付费客户，而非货物供应商）：钢铁企业、矿石贸易商
-  // 贸易商按行业优先归类：两类主体均带付费客户角色，需防止贸易商被并入钢铁企业
-  function isTrader(e) {
-    return (e.industries || []).indexOf('矿石贸易商') >= 0;
-  }
-  function isSteel(e) {
-    if (isTrader(e)) return false;
-    return (e.industries || []).indexOf('钢铁生产企业') >= 0 || isCustomer(e);
-  }
-  function isCustomerViewEntity(e) {
-    return isSteel(e) || isTrader(e);
+  function showErrors(scopeEl, errors) {
+    Object.keys(errors || {}).forEach(function (k) {
+      var el = scopeEl.querySelector('[data-err="' + k + '"]');
+      if (el) el.textContent = errors[k];
+    });
   }
 
-  /* ==================== 筛选 ==================== */
+  function firstError(errors) {
+    var keys = Object.keys(errors || {});
+    return keys.length ? errors[keys[0]] : '';
+  }
 
-  function filtered() {
-    var tokens = kw.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    return all.filter(function (e) {
-      if (view === 'resource' && !isResource(e)) return false;
-      if (view === 'customer') {
-        if (!isCustomerViewEntity(e)) return false;
-        if (custType === 'steel' && !isSteel(e)) return false;
-        if (custType === 'trader' && !isTrader(e)) return false;
-      }
-      if (selIndustries.length) {
-        var hit = (e.industries || []).some(function (i) { return selIndustries.indexOf(i) >= 0; });
+  /* ==================== 存量待归类清单一次性并入（DB 资源 customersPending） ==================== */
+
+  // 旧迁移流程遗留：待归类存量在迁移期写入 DB 资源 customersPending，
+  // 启动时一次性并入客户库（customer_type 置空 → 列表标记「待归类」），
+  // 随后清空遗留清单；之后在列表中通过「归类」按钮打开编辑弹窗直接设置类型。
+  async function adoptLegacyPending() {
+    var pending = HZDB.get('customersPending') || [];
+    if (!pending.length) return;
+    var res = D.adoptPending(D.loadStore(), pending);
+    if (!res.adopted) {
+      // 无可并入主体（重名 / 重码已被查重丢弃）→ 直接清空，避免每次进入页面重复处理
+      await HZDB.put('customersPending', []);
+      return;
+    }
+    if (await HZDB.put('customers', res.list)) {
+      // 并入成功后清空遗留清单；清空失败时下次启动经查重兜底（已并入主体会被丢弃）
+      await HZDB.put('customersPending', []);
+      toast('存量待归类主体已并入客户库（' + res.adopted + ' 家），可在列表中归类', 'success');
+    }
+  }
+
+  /* ==================== 渲染：KPI / Tabs ==================== */
+
+  function renderKpi(list) {
+    $('kpiTotal').textContent = list.length;
+    $('kpiActive').textContent = D.listActive(list).length;
+    $('kpiType1').textContent = countBy(list, '集采贸易商');
+    $('kpiType2').textContent = countBy(list, '现货贸易商');
+    $('kpiType3').textContent = countBy(list, '下游客户');
+    $('kpiPendingReview').textContent = countBy(list, null, '待审核');
+  }
+
+  function countBy(list, type, status) {
+    return list.filter(function (c) {
+      return (type ? c.customer_type === type : true) && (status ? c.status === status : true);
+    }).length;
+  }
+
+  function renderTabs(list) {
+    $('cntAll').textContent = list.length;
+    $('cntT1').textContent = countBy(list, '集采贸易商');
+    $('cntT2').textContent = countBy(list, '现货贸易商');
+    $('cntT3').textContent = countBy(list, '下游客户');
+  }
+
+  /* ==================== 渲染：列表 ==================== */
+
+  function filteredList() {
+    var list = D.loadStore();
+    var kw = D.trimStr(state.keyword).toLowerCase();
+    return list.filter(function (c) {
+      if (state.type !== '全部' && c.customer_type !== state.type) return false;
+      if (state.status !== '全部' && c.status !== state.status) return false;
+      if (kw) {
+        var hit = D.nameKeyOf(c.name).toLowerCase().indexOf(kw) >= 0
+          || D.trimStr(c.credit_code).toLowerCase().indexOf(kw) >= 0;
         if (!hit) return false;
-      }
-      if (selSource && (e.sources || []).indexOf(selSource) < 0) return false;
-      if (tokens.length) {
-        var hay = [e.name, (e.profile && e.profile['企业简称']) || '', e.creditCode || '']
-          .join(' ').toLowerCase();
-        for (var i = 0; i < tokens.length; i++) {
-          if (hay.indexOf(tokens[i]) < 0) return false;
-        }
       }
       return true;
     });
   }
 
-  /* ==================== 渲染：KPI / 徽标 / 筛选项 ==================== */
+  var STATUS_CLASS = { '待审核': 's-review', '正常': 's-normal', '停用': 's-disabled', '已驳回': 's-rejected' };
 
-  function renderKpis() {
-    var steel = all.filter(isSteel).length;
-    var trader = all.filter(isTrader).length;
-    var cust = all.filter(isCustomerViewEntity).length;
-    var res = all.filter(isResource).length;
-    var code = all.filter(function (e) { return !!e.creditCode; }).length;
-    $('kpiTotal').textContent = all.length;
-    $('kpiTotalNote').textContent = all.length
-      ? '最近同步：' + fmtTime(all[0].synced_at || Date.now())
-      : '—';
-    $('kpiCust').textContent = cust;
-    $('kpiSteel').textContent = steel;
-    $('kpiTrader').textContent = trader;
-    $('kpiRes').textContent = res;
-    $('kpiCode').textContent = code;
-    $('badgeAll').textContent = all.length;
-    $('badgeCust').textContent = cust;
-    $('badgeRes').textContent = res;
-    $('typeBadgeAll').textContent = cust;
-    $('typeBadgeSteel').textContent = steel;
-    $('typeBadgeTrader').textContent = trader;
+  function statusTag(status) {
+    return '<span class="c-st ' + (STATUS_CLASS[status] || '') + '">' + esc(status) + '</span>';
   }
 
-  // 行业标签胶囊（含计数，多选筛选）
-  function renderChips() {
-    var indCount = {};
-    all.forEach(function (e) {
-      (e.industries || []).forEach(function (i) { indCount[i] = (indCount[i] || 0) + 1; });
-    });
-    var industries = S.INDUSTRIES_ALL.filter(function (i) { return indCount[i]; });
-
-    var html = industries.map(function (i) {
-      var act = selIndustries.indexOf(i) >= 0 ? ' active' : '';
-      return '<button class="chip' + act + '" type="button" data-ind="' + esc(i) + '">' +
-        esc(i) + ' <span class="chip-count">' + indCount[i] + '</span></button>';
-    }).join('');
-    $('industryChips').innerHTML = html;
-
-    $('industryChips').querySelectorAll('.chip').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var ind = btn.getAttribute('data-ind');
-        var idx = selIndustries.indexOf(ind);
-        if (idx >= 0) selIndustries.splice(idx, 1);
-        else selIndustries.push(ind);
-        btn.classList.toggle('active');
-        page = 1;
-        renderTable();
-      });
-    });
+  function typeTag(c) {
+    if (!c.customer_type) return '<span class="c-tag src">待归类</span>';
+    return '<span class="c-type t-' + esc(c.customer_type) + '">' + esc(c.customer_type) + '</span>'
+      + '<span class="c-tag src" style="margin-left:6px;">' + esc(D.deriveTag(c.customer_type)) + '</span>';
   }
-
-  // 数据来源下拉（含计数）
-  function renderSourceSelect() {
-    var srcCount = {};
-    all.forEach(function (e) {
-      (e.sources || []).forEach(function (s) { srcCount[s] = (srcCount[s] || 0) + 1; });
-    });
-    var sel = $('sourceSelect');
-    sel.innerHTML = '<option value="">全部来源</option>' + S.sources
-      .filter(function (s) { return srcCount[s.label]; })
-      .map(function (s) {
-        return '<option value="' + esc(s.label) + '">' + esc(s.label) + '（' + srcCount[s.label] + '）</option>';
-      }).join('');
-    sel.value = selSource;
-  }
-
-  /* ==================== 渲染：列表 ==================== */
 
   function renderTable() {
-    var list = filtered();
-    var pages = Math.max(1, Math.ceil(list.length / pageSize));
-    if (page > pages) page = pages;
-    var start = (page - 1) * pageSize;
-    var rows = list.slice(start, start + pageSize);
+    var list = filteredList();
+    var total = list.length;
+    var pages = Math.max(1, Math.ceil(total / state.pageSize));
+    if (state.page > pages) state.page = pages;
+    var rows = list.slice((state.page - 1) * state.pageSize, state.page * state.pageSize);
 
-    $('custCount').textContent = all.length;
-    $('custHit').textContent = list.length;
-    $('pagerTotal').textContent = list.length;
-    $('pgPages').textContent = pages;
-    $('pgInput').value = page;
-    $('pgInput').max = pages;
-    $('pgFirst').disabled = $('pgPrev').disabled = page <= 1;
-    $('pgNext').disabled = $('pgLast').disabled = page >= pages;
+    $('pagerTotal').textContent = total;
+    $('pagerNow').textContent = state.page + ' / ' + pages;
+    $('btnPrev').disabled = state.page <= 1;
+    $('btnNext').disabled = state.page >= pages;
+    $('tableEmpty').hidden = total > 0;
 
-    var tbody = $('custTbody');
-    if (!list.length) {
-      tbody.innerHTML = all.length
-        ? '<tr class="empty-row"><td colspan="7">当前筛选条件下暂无数据，请调整筛选</td></tr>'
-        : '<tr><td colspan="7">' + emptyGuide() + '</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = rows.map(function (e, i) {
-      var alias = (e.profile && e.profile['企业简称']) || '';
-      return '<tr>' +
-        '<td class="col-index">' + (start + i + 1) + '</td>' +
-        '<td><div class="cust-name" data-id="' + esc(e.id) + '">' + esc(e.name) + '</div>' +
-          (alias ? '<div class="cust-alias">' + esc(alias) + '</div>' : '') + '</td>' +
-        '<td class="col-code">' + (e.creditCode ? esc(e.creditCode) : '<span style="color:var(--gray-400)">待补录</span>') + '</td>' +
-        '<td class="col-roles"><div class="tag-row">' + (e.roles || []).map(roleTag).join('') + '</div></td>' +
-        '<td class="col-industry"><div class="tag-row">' + (e.industries || []).map(indTag).join('') + '</div></td>' +
-        '<td class="col-source"><div class="tag-row">' + (e.sources || []).map(srcTag).join('') + '</div></td>' +
-        '<td class="col-op"><button class="btn btn-ghost btn-sm" data-detail="' + esc(e.id) + '" type="button">详情</button></td>' +
-        '</tr>';
+    $('custTbody').innerHTML = rows.map(function (c) {
+      var ops = [];
+      ops.push('<button class="btn btn-sm btn-ghost" data-act="detail" data-id="' + c.id + '" type="button">详情</button>');
+      if (c.status === '待审核') {
+        ops.push('<button class="btn btn-sm btn-primary" data-act="review" data-id="' + c.id + '" type="button">审核</button>');
+      } else {
+        // 无类型客户视为待归类，操作按钮文案为「归类」（打开编辑弹窗设置类型）
+        ops.push('<button class="btn btn-sm btn-ghost" data-act="edit" data-id="' + c.id + '" type="button">' + (c.customer_type ? '编辑' : '归类') + '</button>');
+        if (c.status === '正常') {
+          ops.push('<button class="btn btn-sm btn-ghost" data-act="toggle" data-id="' + c.id + '" type="button">停用</button>');
+        } else if (c.status === '停用') {
+          ops.push('<button class="btn btn-sm btn-primary" data-act="toggle" data-id="' + c.id + '" type="button">启用</button>');
+        }
+      }
+      return '<tr>'
+        + '<td><span class="cust-name" data-act="detail" data-id="' + c.id + '">' + esc(c.name) + '</span></td>'
+        + '<td>' + typeTag(c) + '</td>'
+        + '<td>' + esc(c.contact || '—') + '</td>'
+        + '<td>' + esc(c.phone || '—') + '</td>'
+        + '<td>' + statusTag(c.status) + '</td>'
+        + '<td>' + esc(c.source) + '</td>'
+        + '<td>' + esc(c.updated_at) + '</td>'
+        + '<td style="text-align:right; white-space:nowrap;">' + ops.join('') + '</td>'
+        + '</tr>';
     }).join('');
-
-    tbody.querySelectorAll('.cust-name').forEach(function (el) {
-      el.addEventListener('click', function () { openDetail(el.getAttribute('data-id')); });
-    });
-    tbody.querySelectorAll('[data-detail]').forEach(function (el) {
-      el.addEventListener('click', function () { openDetail(el.getAttribute('data-detail')); });
-    });
   }
 
-  function emptyGuide() {
-    return '<div class="empty-guide">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
-      '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/>' +
-      '<path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>' +
-      '<div class="eg-title">客户管理统一库暂无数据</div>' +
-      '<div class="eg-desc">请前往「同步控制台」执行一次性数据同步，将六个存量模块的合规企业主体同步至本库</div>' +
-      '<a class="btn btn-primary" href="/customers/sync.html">前往同步控制台</a>' +
-      '</div>';
+  function renderAll() {
+    var list = D.loadStore();
+    renderKpi(list);
+    renderTabs(list);
+    renderTable();
   }
 
-  /* ==================== 详情抽屉 ==================== */
+  /* ==================== 详情抽屉（F2） ==================== */
 
-  function openDetail(id) {
-    var e = null;
-    for (var i = 0; i < all.length; i++) {
-      if (all[i].id === id) { e = all[i]; break; }
+  function findCustomer(id) {
+    return D.loadStore().filter(function (c) { return c.id === id; })[0] || null;
+  }
+
+  function openDrawer(id) {
+    var c = findCustomer(id);
+    if (!c) return;
+    ctx.currentDetail = c;
+    $('drawerTitle').textContent = c.name;
+
+    var html = '<div class="drawer-section"><div class="section-title">基本信息</div><div class="kv-grid">'
+      + kvItem('客户名称', c.name)
+      + kvItem('客户类型', c.customer_type
+          ? esc(c.customer_type) + '（' + esc(D.deriveTag(c.customer_type)) + '）'
+          : '<span class="c-tag src">待归类</span>')
+      + kvItem('联系人', c.contact)
+      + kvItem('联系方式', c.phone)
+      + kvItem('统一社会信用代码', c.credit_code || '待补录')
+      + kvItem('客户来源', c.source)
+      + kvItem('状态', '<span class="c-st ' + (STATUS_CLASS[c.status] || '') + '">' + esc(c.status) + '</span>')
+      + kvItem('创建时间', c.created_at)
+      + kvItem('更新时间', c.updated_at)
+      + '</div></div>';
+
+    if (c.customer_type === '现货贸易商') {
+      var files = (c.credentials || []);
+      html += '<div class="drawer-section"><div class="section-title">资质凭证（' + files.length + '）</div>';
+      html += files.length
+        ? '<div class="ref-list">' + files.map(function (f) {
+            return '<div class="ref-item">' + esc(f.name) + '<span style="color:#86868b;font-size:12px;margin-left:8px;">'
+              + esc(fmtSize(f.size)) + (f.type ? ' · ' + esc(f.type) : '') + '</span></div>';
+          }).join('') + '</div>'
+        : '<div class="modal-note">未上传凭证</div>';
+      html += '</div>';
     }
-    if (!e) return;
 
-    $('drawerTitle').textContent = '主体详情 · ' + e.name;
-
-    var html = '';
-
-    // 基本信息
-    html += '<div class="drawer-section"><div class="section-title">基本信息</div><div class="kv-grid">' +
-      kvItem('企业名称', e.name) +
-      kvItem('企业简称', (e.profile && e.profile['企业简称']) || '—') +
-      kvItem('统一社会信用代码', e.creditCode || '待补录') +
-      kvItem('同步批次', e.sync_batch || '—') +
-      '</div></div>';
-
-    // 标签体系
-    html += '<div class="drawer-section"><div class="section-title">标签体系</div>' +
-      '<div class="kv-grid">' +
-      kvMulti('业务角色', (e.roles || []).map(roleTag).join('')) +
-      kvMulti('行业标签', (e.industries || []).map(indTag).join('')) +
-      kvMulti('数据来源', (e.sources || []).map(srcTag).join('')) +
-      '</div></div>';
-
-    // 补充信息（profile 其余字段）
-    var extra = Object.keys(e.profile || {}).filter(function (k) {
-      return k !== '企业简称' && e.profile[k];
-    });
-    if (extra.length) {
-      html += '<div class="drawer-section"><div class="section-title">补充信息</div><div class="kv-grid">' +
-        extra.map(function (k) { return kvItem(k, e.profile[k]); }).join('') +
-        '</div></div>';
+    if (c.status === '已驳回' && c.reject_reason) {
+      html += '<div class="drawer-section"><div class="section-title">驳回原因</div>'
+        + '<div class="reject-box">' + esc(c.reject_reason) + '</div></div>';
     }
 
-    // 数据溯源（一键跳回老模块原始详情页）
-    html += '<div class="drawer-section"><div class="section-title">数据溯源（' +
-      (e.source_refs || []).length + ' 条映射）</div><div class="ref-list">' +
-      (e.source_refs || []).map(function (r) {
-        return '<div class="ref-item">' +
-          '<div class="ref-info">' +
-          '<div class="ref-name">' + srcTag(r.module_label) + ' ' + esc(r.source_name || r.source_id) + '</div>' +
-          '<div class="ref-meta">提取途径：' + esc(r.via || '记录主体') + ' · 同步于 ' + fmtTime(r.synced_at || e.synced_at) + '</div>' +
-          '</div>' +
-          (r.detail_url
-            ? '<a class="btn btn-ghost btn-sm" href="' + esc(r.detail_url) + '" target="_blank" rel="noopener">查看原始详情</a>'
-            : '<span class="test-note">无链接</span>') +
-          '</div>';
-      }).join('') + '</div></div>';
+    var logs = (c.history || []);
+    html += '<div class="drawer-section"><div class="section-title">操作记录</div><div class="log-list">'
+      + logs.slice().reverse().map(function (h) {
+        return '<div class="log-item"><div class="log-head"><b>' + esc(h.action) + '</b><span>' + esc(h.ts) + ' · ' + esc(h.operator) + '</span></div>'
+          + (h.detail ? '<div class="log-detail">' + esc(h.detail) + '</div>' : '') + '</div>';
+      }).join('')
+      + '</div></div>';
 
     $('drawerBody').innerHTML = html;
     $('drawerMask').hidden = false;
+    $('custDrawer').hidden = false;
+    requestAnimationFrame(function () {
+      $('custDrawer').classList.add('open');
+      $('drawerMask').classList.add('show');
+    });
   }
 
   function kvItem(label, value) {
-    return '<div class="kv-item"><div class="kv-label">' + esc(label) + '</div>' +
-      '<div class="kv-value">' + esc(value) + '</div></div>';
+    return '<div class="kv-item"><div class="kv-label">' + label + '</div><div class="kv-value">' + (value == null ? '—' : value) + '</div></div>';
   }
-  function kvMulti(label, tagHtml) {
-    return '<div class="kv-item"><div class="kv-label">' + esc(label) + '</div>' +
-      '<div class="kv-value"><div class="tag-row">' + (tagHtml || '—') + '</div></div></div>';
+
+  function fmtSize(n) {
+    n = Number(n) || 0;
+    return n >= 1024 * 1024 ? (n / 1024 / 1024).toFixed(1) + ' MB'
+      : n >= 1024 ? (n / 1024).toFixed(0) + ' KB' : n + ' B';
+  }
+
+  function closeDrawer() {
+    $('custDrawer').classList.remove('open');
+    $('drawerMask').classList.remove('show');
+    setTimeout(function () { $('custDrawer').hidden = true; $('drawerMask').hidden = true; }, 260);
+  }
+
+  /* ==================== 代注册（F3） ==================== */
+
+  function bindCreateModal() {
+    $('btnCreate').addEventListener('click', function () {
+      $('createName').value = ''; $('createCode').value = '';
+      $('createContact').value = ''; $('createPhone').value = '';
+      clearErrors($('createMask'));
+      setCreateType('集采贸易商');
+      openMask('createMask');
+    });
+    $('btnCreateEmpty').addEventListener('click', function () { $('btnCreate').click(); });
+
+    $('createTypePills').addEventListener('click', function (e) {
+      var pill = e.target.closest('.type-pill');
+      if (pill) setCreateType(pill.dataset.v);
+    });
+
+    $('btnCreateSave').addEventListener('click', async function () {
+      var data = {
+        customer_type: ctx.createType,
+        name: $('createName').value,
+        credit_code: $('createCode').value,
+        contact: $('createContact').value,
+        phone: $('createPhone').value
+      };
+      var res = D.createByOperator(D.loadStore(), data);
+      if (!res.ok) {
+        showErrors($('createMask'), res.errors || {});
+        if (res.code === 'DUP') toast(res.error, 'error');
+        else toast(firstError(res.errors) || res.error, 'error');
+        return;
+      }
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
+      closeMask('createMask');
+      toast('已创建并生效：' + res.customer.name, 'success');
+      renderAll();
+    });
+  }
+
+  function setCreateType(t) {
+    ctx.createType = t;
+    $('createTypePills').querySelectorAll('.type-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.v === t);
+    });
+  }
+
+  /* ==================== 编辑（F6） ==================== */
+
+  function openEditModal(id) {
+    var c = findCustomer(id);
+    if (!c) return;
+    ctx.editId = id;
+    $('editModalTitle').textContent = c.customer_type ? '编辑客户信息' : '客户归类';
+    $('editName').value = c.name;
+    setEditType(c.customer_type || '');
+    $('editContact').value = c.contact;
+    $('editPhone').value = c.phone;
+    $('editCodeWrap').hidden = !!c.credit_code;
+    $('editCode').value = '';
+    clearErrors($('editMask'));
+    openMask('editMask');
+  }
+
+  function setEditType(t) {
+    ctx.editType = t;
+    $('editTypePills').querySelectorAll('.type-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.v === t);
+    });
+  }
+
+  function bindEditModal() {
+    $('editTypePills').addEventListener('click', function (e) {
+      var pill = e.target.closest('.type-pill');
+      if (pill) setEditType(pill.dataset.v);
+    });
+    $('btnEditSave').addEventListener('click', async function () {
+      var patch = { contact: $('editContact').value, phone: $('editPhone').value, customer_type: ctx.editType };
+      if (!$('editCodeWrap').hidden) patch.credit_code = $('editCode').value;
+      var res = D.updateInfo(D.loadStore(), ctx.editId, patch, { role: 'operator' });
+      if (!res.ok) {
+        showErrors($('editMask'), res.errors || {});
+        toast(firstError(res.errors) || res.error, 'error');
+        return;
+      }
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
+      closeMask('editMask');
+      toast(res.changed.length ? '已保存：' + res.changed.join('、') : '信息未变化', 'success');
+      renderAll();
+    });
+  }
+
+  /* ==================== 审核（F5） ==================== */
+
+  function openReviewModal(id) {
+    var c = findCustomer(id);
+    if (!c) return;
+    ctx.reviewId = id;
+    ctx.reviewDecision = 'approve';
+    $('reviewInfo').innerHTML = kvItem('客户名称', esc(c.name))
+      + kvItem('客户类型', esc(c.customer_type))
+      + kvItem('联系人', esc(c.contact))
+      + kvItem('联系方式', esc(c.phone))
+      + kvItem('统一社会信用代码', esc(c.credit_code))
+      + kvItem('注册时间', esc(c.created_at))
+      + '<div class="kv-item" style="grid-column: 1 / -1;"><div class="kv-label">资质凭证（' + (c.credentials || []).length + '）</div><div class="kv-value">'
+      + ((c.credentials || []).map(function (f) { return esc(f.name); }).join('；') || '未上传')
+      + '</div></div>';
+    $('rejectReason').value = '';
+    clearErrors($('reviewMask'));
+    setReviewDecision('approve');
+    openMask('reviewMask');
+  }
+
+  function setReviewDecision(d) {
+    ctx.reviewDecision = d;
+    $('reviewDecision').querySelectorAll('.type-pill').forEach(function (p) {
+      p.classList.toggle('active', p.dataset.v === d);
+    });
+    $('rejectReasonWrap').hidden = d !== 'reject';
+  }
+
+  function bindReviewModal() {
+    $('reviewDecision').addEventListener('click', function (e) {
+      var pill = e.target.closest('.type-pill');
+      if (pill) setReviewDecision(pill.dataset.v);
+    });
+    $('btnReviewSave').addEventListener('click', async function () {
+      var store = D.loadStore();
+      var res;
+      if (ctx.reviewDecision === 'approve') {
+        res = D.reviewApprove(store, ctx.reviewId);
+      } else {
+        res = D.reviewReject(store, ctx.reviewId, $('rejectReason').value);
+        if (!res.ok && res.errors && res.errors.reject_reason) {
+          showErrors($('reviewMask'), res.errors);
+          toast(res.errors.reject_reason, 'error');
+          return;
+        }
+      }
+      if (!res.ok) { toast(res.error, 'error'); return; }
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
+      closeMask('reviewMask');
+      toast(ctx.reviewDecision === 'approve' ? '审核通过，客户已生效' : '已驳回，原因已记录', 'success');
+      renderAll();
+    });
+  }
+
+  /* ==================== 停用 / 启用（F7） ==================== */
+
+  function openConfirmToggle(id) {
+    var c = findCustomer(id);
+    if (!c) return;
+    ctx.confirmId = id;
+    ctx.confirmTarget = c.status === '正常' ? '停用' : '正常';
+    var disabling = ctx.confirmTarget === '停用';
+    $('confirmTitle').textContent = disabling ? '停用客户' : '启用客户';
+    $('btnConfirmSave').textContent = disabling ? '确认停用' : '确认启用';
+    $('confirmText').innerHTML = disabling
+      ? '确认停用「<b>' + esc(c.name) + '</b>」？<div class="modal-note" style="margin-top:8px;">停用后该客户不可被新建订单等业务引用，存量业务数据不受影响；可随时重新启用</div>'
+      : '确认启用「<b>' + esc(c.name) + '</b>」？<div class="modal-note" style="margin-top:8px;">启用后恢复为正常状态，可被业务引用</div>';
+    openMask('confirmMask');
+  }
+
+  function bindConfirmModal() {
+    $('btnConfirmSave').addEventListener('click', async function () {
+      var res = D.setStatus(D.loadStore(), ctx.confirmId, ctx.confirmTarget);
+      if (!res.ok) { toast(res.error, 'error'); return; }
+      if (!await D.saveStore(res.list)) return;   // 保存失败：toast 已提示，弹窗保留现场可重试
+      closeMask('confirmMask');
+      toast(res.customer.status === '停用' ? '已停用：' + res.customer.name : '已启用：' + res.customer.name, 'success');
+      renderAll();
+    });
   }
 
   /* ==================== 事件绑定 ==================== */
 
-  // 视图切换（类型细分控件仅客户视图内可见）
-  $('viewTabs').querySelectorAll('.view-tab').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      view = btn.getAttribute('data-view');
-      $('viewTabs').querySelectorAll('.view-tab').forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      $('typeTabs').hidden = view !== 'customer';
-      page = 1;
+  function bindEvents() {
+    // 类型 Tab
+    $('typeTabs').addEventListener('click', function (e) {
+      var tab = e.target.closest('.view-tab');
+      if (!tab) return;
+      state.type = tab.dataset.type;
+      state.page = 1;
+      $('typeTabs').querySelectorAll('.view-tab').forEach(function (t) { t.classList.toggle('active', t === tab); });
       renderTable();
     });
-  });
 
-  // 客户类型细分（钢铁企业 / 矿石贸易商，仅客户视图内生效）
-  $('typeTabs').querySelectorAll('.view-tab').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      custType = btn.getAttribute('data-type');
-      $('typeTabs').querySelectorAll('.view-tab').forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      page = 1;
+    // 搜索 / 状态筛选
+    var searchTimer = null;
+    $('searchInput').addEventListener('input', function () {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(function () {
+        state.keyword = $('searchInput').value;
+        state.page = 1;
+        renderTable();
+      }, 200);
+    });
+    $('statusSelect').addEventListener('change', function () {
+      state.status = this.value;
+      state.page = 1;
       renderTable();
     });
-  });
-
-  // 关键词检索（输入即筛）
-  var kwTimer = null;
-  $('searchKeyword').addEventListener('input', function () {
-    clearTimeout(kwTimer);
-    kwTimer = setTimeout(function () {
-      kw = $('searchKeyword').value;
-      page = 1;
+    $('btnReset').addEventListener('click', function () {
+      state.type = '全部'; state.status = '全部'; state.keyword = ''; state.page = 1;
+      $('searchInput').value = ''; $('statusSelect').value = '全部';
+      $('typeTabs').querySelectorAll('.view-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.type === '全部'); });
       renderTable();
-    }, 200);
-  });
-
-  // 数据来源筛选
-  $('sourceSelect').addEventListener('change', function () {
-    selSource = this.value;
-    page = 1;
-    renderTable();
-  });
-
-  // 重置筛选
-  $('btnReset').addEventListener('click', function () {
-    kw = ''; selIndustries = []; selSource = ''; custType = 'all'; page = 1;
-    $('searchKeyword').value = '';
-    $('sourceSelect').value = '';
-    $('industryChips').querySelectorAll('.chip').forEach(function (b) { b.classList.remove('active'); });
-    $('typeTabs').querySelectorAll('.view-tab').forEach(function (b) {
-      b.classList.toggle('active', b.getAttribute('data-type') === 'all');
     });
-    renderTable();
-  });
 
-  // 刷新数据（同步控制台执行完成后回到本页可一键刷新）
-  $('btnRefresh').addEventListener('click', function () {
-    load();
-    toast('统一库数据已刷新：共 ' + all.length + ' 家主体', 'success');
-  });
+    // 分页
+    $('btnPrev').addEventListener('click', function () { if (state.page > 1) { state.page--; renderTable(); } });
+    $('btnNext').addEventListener('click', function () { state.page++; renderTable(); });
 
-  // 分页
-  $('pageSize').addEventListener('change', function () {
-    pageSize = parseInt(this.value, 10) || 10;
-    page = 1;
-    renderTable();
-  });
-  $('pgFirst').addEventListener('click', function () { page = 1; renderTable(); });
-  $('pgPrev').addEventListener('click', function () { page--; renderTable(); });
-  $('pgNext').addEventListener('click', function () { page++; renderTable(); });
-  $('pgLast').addEventListener('click', function () { page = Math.max(1, Math.ceil(filtered().length / pageSize)); renderTable(); });
-  $('pgInput').addEventListener('change', function () {
-    var p = parseInt(this.value, 10);
-    if (isNaN(p)) { renderTable(); return; }
-    page = Math.min(Math.max(1, p), Math.max(1, Math.ceil(filtered().length / pageSize)));
-    renderTable();
-  });
+    // 表格操作（事件委托）
+    document.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-act]');
+      if (!el) return;
+      var act = el.dataset.act;
+      var id = el.dataset.id;
+      if (act === 'detail') openDrawer(id);
+      else if (act === 'edit') openEditModal(id);
+      else if (act === 'review') openReviewModal(id);
+      else if (act === 'toggle') openConfirmToggle(id);
+    });
 
-  // 抽屉关闭
-  $('drawerClose').addEventListener('click', function () { $('drawerMask').hidden = true; });
-  $('drawerMask').addEventListener('click', function (e) {
-    if (e.target === $('drawerMask')) $('drawerMask').hidden = true;
-  });
+    // 关闭类按钮
+    document.querySelectorAll('[data-close]').forEach(function (btn) {
+      btn.addEventListener('click', function () { closeMask(btn.dataset.close); });
+    });
+    $('drawerClose').addEventListener('click', closeDrawer);
+    $('drawerMask').addEventListener('click', closeDrawer);
+    ['createMask', 'editMask', 'reviewMask', 'confirmMask'].forEach(function (id) {
+      $(id).addEventListener('click', function (e) { if (e.target === this) closeMask(id); });
+    });
 
-  /* ==================== 初始化 ==================== */
+    // Esc 关闭
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if (!$('custDrawer').hidden) closeDrawer();
+        ['createMask', 'editMask', 'reviewMask', 'confirmMask'].forEach(function (id) {
+          if (!$(id).hidden) closeMask(id);
+        });
+      }
+    });
 
-  load();
+    bindCreateModal();
+    bindEditModal();
+    bindReviewModal();
+    bindConfirmModal();
+  }
+
+  /* ==================== 启动 ==================== */
+
+  async function boot() {
+    await HZDB.ready();          // 启动遮罩 + /api/bootstrap 全量装载（失败可点重试）
+    await adoptLegacyPending();  // 一次性并入 DB 遗留待归类清单（customersPending）
+    bindEvents();
+    renderAll();
+  }
+  boot();
 })();

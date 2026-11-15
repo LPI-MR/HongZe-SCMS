@@ -1,6 +1,7 @@
 // ===== transport 模块脚本（调度看板）=====
-// 公共导航栏由 /common/fetch.js 加载；车次数据由 trips-store.js 共享，
-// 信息录入页（transport-entry.html）提交后本页自动同步显示
+// 公共导航栏由 /common/fetch.js 加载；车次数据由 trips-store.js 共享
+// （PostgreSQL 持久化），信息录入页（transport-entry.html）提交后本页
+// 每 5 秒直接拉取 /api/trips 最新数据自动同步显示
 (function () {
   'use strict';
 
@@ -48,8 +49,8 @@
 
   // ===== 工具 =====
 
-  // 共享车次数据（人工维护模式：定时重新 load，同步信息录入页的修改）
-  let state = store.load();
+  // 共享车次数据（boot 时经 HZDB 缓存基座从数据库装载；定时刷新直拉 /api/trips）
+  let state = { seq: 0, trips: [] };
 
   // 页面状态
   let filterMode = 'all';
@@ -301,12 +302,24 @@
     renderList();
   });
 
-  // ===== 数据同步（人工维护模式）：定期重载共享数据，不做任何自动推进 =====
-  setInterval(() => {
+  // ===== 数据同步（人工维护模式）：每 5 秒直拉最新车次数据，不做任何自动推进 =====
+  // 拉取失败保持当前画面（HZAPI 已 toast 提示），下一轮继续重试
+  async function refreshData() {
+    try {
+      const data = await HZAPI.get('/api/trips');  // {seq, trips}
+      if (data && Array.isArray(data.trips)) {
+        state = { seq: data.seq || 0, trips: data.trips };
+        renderAll();
+      }
+    } catch (e) { /* 保持当前画面 */ }
+  }
+
+  // 启动：等 HZDB 缓存基座就绪后装载车次数据，再初始化定时同步与渲染
+  async function boot() {
+    await HZDB.ready();
     state = store.load();
     renderAll();
-  }, 5000);
-
-  // 初始渲染
-  renderAll();
+    setInterval(refreshData, 5000);
+  }
+  boot();
 })();

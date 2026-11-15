@@ -5,7 +5,8 @@
 //      + portal-features 规划能力区 + portal-note 建设说明
 //   3. 引入本脚本：<script src="/common/portal.js"></script>
 // 样式由 /css/common.css 门户组件段提供，门户页无需独立 css。
-// 统计卡口径：读取全站共享数据（合同 / 矿山 / 航次），只读聚合、不写入。
+// 统计卡口径：读取 HZDB 数据基座（合同 / 矿山 / 航次），只读聚合、不写入。
+// 页面须注入 /common/hz-api.js + /common/hz-db.js 并在 ready() 后渲染。
 (function () {
   'use strict';
 
@@ -153,16 +154,6 @@
     }
   }
 
-  // localStorage 安全读取（与各模块约定一致）
-  function loadJSON(key, fallback) {
-    try {
-      const v = JSON.parse(localStorage.getItem(key));
-      return v == null ? fallback : v;
-    } catch (e) {
-      return fallback;
-    }
-  }
-
   // XSS 防护：动态文案统一转义
   function esc(s) {
     return String(s == null ? '' : s)
@@ -185,16 +176,15 @@
     ).join('');
   }
 
-  // 渲染系统数据概览（真实聚合，只读）
+  // 渲染系统数据概览（HZDB 缓存真实聚合，只读）
   function renderStats() {
     const box = document.getElementById('portalStats');
     if (!box) return;
 
-    // 共享数据键为 { __version, list } 包装结构，统一解包取 list（裸数组兼容）
-    const unwrap = v => Array.isArray(v) ? v : (v && Array.isArray(v.list) ? v.list : []);
-    const contracts = unwrap(loadJSON('hz_contracts', []));
-    const mines = unwrap(loadJSON('hz_mines', []));
-    const voyages = unwrap(loadJSON('hz_ocean_voyages', []));
+    const unwrap = v => Array.isArray(v) ? v : [];
+    const contracts = unwrap(window.HZDB && window.HZDB.get('contracts'));
+    const mines = unwrap(window.HZDB && window.HZDB.get('mines'));
+    const voyages = unwrap(window.HZDB && window.HZDB.get('voyages'));
 
     const stats = [
       { label: '在管合同', value: contracts.length + ' 份' },
@@ -211,18 +201,18 @@
     ).join('');
   }
 
-  function init() {
+  // 异步启动：待数据基座就绪后渲染（门户统计依赖合同/矿山/航次缓存）
+  async function init() {
     const key = document.body.dataset.portal;
     const cfg = PORTALS[key];
     if (!cfg) return;   // 未配置模块键的页面保持静态骨架
+    if (window.HZDB) {
+      try { await window.HZDB.ready(); } catch (e) { return; } // 失败遮罩已给出重试入口
+    }
     renderFeatures(cfg.features);
     renderStats();
     bindNavHighlight();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  init();
 })();

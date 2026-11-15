@@ -1,5 +1,5 @@
 /* ============================================================
-   flow 模块样式（业务总览 · 全流程业务操作）
+   flow 模块样式（订单管理 · 全流程业务操作）
    业务工作台 / 订单录入 / 港口录入 / 运力方案 / 运输方案 / 订单详情
    公共变量 / 布局 / 导航 / 按钮 / 输入框由 /css/common.css 统一提供
    ============================================================ */
@@ -41,16 +41,6 @@
 .btn-ghost:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
-}
-
-/* ===== 页面页头：扁平标题行 + 主操作（business.html） ===== */
-.wb-header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-lg);
 }
 
 /* ===== 步骤条（四步流程 / 九态步骤条） ===== */
@@ -198,6 +188,8 @@
 
 .fgrid .span-2 { grid-column: span 2; }
 
+.fgrid .span-3 { grid-column: span 3; }
+
 .fgrid .field {
   display: flex;
   flex-direction: column;
@@ -327,45 +319,6 @@
   justify-content: flex-end;
   gap: var(--space-sm);
   flex-wrap: wrap;
-}
-
-/* ============================================================
-   业务工作台（business.html）
-   ============================================================ */
-
-/* 统计指标卡行（独立白卡，替代原头图内嵌条） */
-.flow-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-
-.flow-stats .stat-cell {
-  background: var(--gray-100);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  padding: var(--space-md) var(--space-lg);
-}
-
-.flow-stats .stat-label {
-  font-size: 12px;
-  color: var(--gray-500);
-}
-
-.flow-stats .stat-value {
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--gray-800);
-  margin-top: 4px;
-}
-
-.flow-stats .stat-value .unit {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--gray-500);
-  margin-left: 2px;
 }
 
 /* 列表标题行 */
@@ -1475,7 +1428,7 @@
 
 @media (max-width: 760px) {
   .fgrid, .fgrid.cols-3 { grid-template-columns: 1fr; }
-  .fgrid .span-2 { grid-column: span 1; }
+  .fgrid .span-2, .fgrid .span-3 { grid-column: span 1; }
   .order-grid { grid-template-columns: 1fr; }
   .flow-stats { grid-template-columns: repeat(2, 1fr); }
   .kv-grid, .mini-stats, .state-boxes { grid-template-columns: 1fr; }
@@ -1811,349 +1764,6 @@
   .page-order-form .field-input { font-size: 16px; }
   .page-order-form .summary-card .summary-grid { grid-template-columns: 1fr; }
   .page-order-form .flow-footer { flex-wrap: wrap; gap: var(--space-sm); }
-}
-
-/* ============================================================
-   业务总览（business.html）· 苹果风格快捷操作枢纽
-   仅作用于 body.page-workbench，不影响其他流程页面；
-   页面无列表无卡片：摘要数字条 + 流程五步入口 + 继续办理（ov-* 系列）
-   ============================================================ */
-
-/* ===== 局部设计变量：Apple 色彩 / 圆角 / 阴影 / 字体 ===== */
-.page-workbench {
-  --color-primary: #0071e3;                        /* Apple 蓝 */
-  --color-primary-dark: #0077ed;
-  --color-primary-light: rgba(0, 113, 227, 0.12);
-  --color-success: #34c759;                        /* Apple 系统绿 */
-  --color-danger: #ff3b30;                         /* Apple 系统红 */
-  --color-warning: #ff9500;                        /* Apple 系统橙 */
-  --gray-100: #ffffff;
-  --gray-200: #f5f5f7;                             /* Apple 页面底色 */
-  --gray-300: #d2d2d7;                             /* Apple 描边灰 */
-  --gray-400: #aeaeb2;
-  --gray-500: #86868b;                             /* Apple 次要文本 */
-  --gray-600: #6e6e73;
-  --gray-700: #1d1d1f;                             /* Apple 主文本 */
-  --gray-800: #1d1d1f;
-  --radius-md: 10px;
-  --radius-lg: 16px;                               /* 卡片柔和大圆角 */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.03), 0 4px 16px rgba(0, 0, 0, 0.04);
-  --shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.05);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
-  color: #1d1d1f;
-  background: #f5f5f7;
-}
-
-/* ===== 主内容区：留白 + 阅读宽度（对齐苹果网页内容列） ===== */
-.page-workbench .main {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 32px clamp(20px, 4vw, 44px) 56px;
-}
-
-/* ===== 页头：扁平大标题（替代原深色头图） ===== */
-.page-workbench .wb-header { margin-bottom: 28px; }
-
-.page-workbench .wb-title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-  color: #1d1d1f;
-}
-
-.page-workbench .wb-desc {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: #86868b;
-}
-
-/* ===== 主操作：苹果胶囊按钮 ===== */
-.page-workbench .btn-primary {
-  height: 38px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 980px;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  background: #0071e3;
-  color: #ffffff;
-  transition: background-color 0.2s, transform 0.12s, box-shadow 0.2s;
-}
-
-.page-workbench .btn-primary:hover { background: #0077ed; }
-.page-workbench .btn-primary:active { background: #0068d1; transform: scale(0.97); }
-.page-workbench .btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.25); }
-
-/* ===== 概览摘要：纯排版数字条（无卡片，hairline 收底） ===== */
-.page-workbench .ov-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 18px 44px;
-  padding: 6px 2px 26px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  margin-bottom: 36px;
-}
-
-.page-workbench .ov-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 72px;
-}
-
-.page-workbench .ov-num {
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: #1d1d1f;
-  font-variant-numeric: tabular-nums;
-}
-
-.page-workbench .ov-unit {
-  font-style: normal;
-  font-size: 14px;
-  font-weight: 500;
-  color: #86868b;
-  margin-left: 4px;
-}
-
-.page-workbench .ov-label { font-size: 13px; color: #86868b; }
-
-/* 可点击指标（订单总数 → 订单台账履约流程视图） */
-.page-workbench .ov-link { text-decoration: none; }
-.page-workbench .ov-link .ov-num { color: #0071e3; transition: opacity 0.2s; }
-.page-workbench .ov-link:hover .ov-num { opacity: 0.75; }
-
-/* 指标间竖分隔 */
-.page-workbench .ov-sep {
-  width: 1px;
-  height: 34px;
-  background: rgba(0, 0, 0, 0.08);
-}
-
-/* ===== 分区：标题行 + 内容 ===== */
-.page-workbench .ov-section { margin-bottom: 40px; }
-
-.page-workbench .ov-section-head {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.page-workbench .ov-section-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: #1d1d1f;
-}
-
-.page-workbench .ov-section-sub { font-size: 13px; color: #86868b; }
-
-.page-workbench .ov-more {
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 500;
-  color: #0071e3;
-  text-decoration: none;
-}
-
-.page-workbench .ov-more:hover { text-decoration: underline; }
-
-/* ===== 业务流程五步入口：行式列表（hairline 分隔，行即入口） ===== */
-.page-workbench .ov-steps { display: flex; flex-direction: column; }
-
-.page-workbench .ov-step {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 17px 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.page-workbench .ov-step:hover { background: rgba(0, 0, 0, 0.028); }
-.page-workbench .ov-step:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.25);
-}
-
-.page-workbench .step-no {
-  min-width: 26px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #aeaeb2;
-  font-variant-numeric: tabular-nums;
-}
-
-.page-workbench .ov-step.is-active .step-no { color: #0071e3; }
-
-.page-workbench .step-main { flex: 1; min-width: 0; }
-.page-workbench .step-title { font-size: 16px; font-weight: 600; color: #1d1d1f; }
-.page-workbench .step-desc { margin-top: 2px; font-size: 13px; color: #86868b; }
-.page-workbench .ov-step:not(.is-active) .step-title { color: #86868b; }
-
-.page-workbench .step-count {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 980px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #0071e3;
-  background: rgba(0, 113, 227, 0.1);
-}
-
-.page-workbench .step-idle { flex-shrink: 0; font-size: 12px; color: #aeaeb2; }
-
-.page-workbench .step-go {
-  flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: #0071e3;
-}
-
-/* ===== 继续办理：进行中订单下一步直达（行式） ===== */
-.page-workbench .ov-resume { display: flex; flex-direction: column; }
-
-.page-workbench .ov-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 13px 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.page-workbench .ov-row:hover { background: rgba(0, 0, 0, 0.028); }
-.page-workbench .ov-row:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.25);
-}
-
-.page-workbench .ov-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.page-workbench .ov-order-no {
-  flex-shrink: 0;
-  min-width: 150px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1d1d1f;
-  font-variant-numeric: tabular-nums;
-}
-
-.page-workbench .ov-order-meta {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  color: #86868b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.page-workbench .ov-status { flex-shrink: 0; font-size: 12px; font-weight: 500; }
-
-.page-workbench .ov-action {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: #0071e3;
-}
-
-/* ===== 空状态：纯排版居中（无卡片面板） ===== */
-.page-workbench .ov-empty { padding: 52px 24px; text-align: center; }
-.page-workbench .ov-empty-title { font-size: 17px; font-weight: 600; color: #1d1d1f; }
-.page-workbench .ov-empty-desc { margin-top: 6px; font-size: 13px; color: #86868b; }
-.page-workbench .ov-empty .btn-primary { margin-top: 20px; }
-.page-workbench .ov-empty .ov-more { margin-left: 0; display: inline-block; margin-top: 14px; font-size: 14px; }
-
-/* ===== 侧边栏：hairline 轻量化 ===== */
-.page-workbench .sidebar { border-right-color: rgba(0, 0, 0, 0.06); }
-.page-workbench .brand { border-bottom-color: rgba(0, 0, 0, 0.06); }
-
-/* ===== 全局提示：深色毛玻璃胶囊 ===== */
-.page-workbench .toast {
-  background: rgba(29, 29, 31, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 980px;
-  padding: 12px 24px;
-  font-weight: 500;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-}
-
-.page-workbench .toast.error { background: rgba(255, 59, 48, 0.92); color: #ffffff; }
-
-/* ===== 入场动效：一次性 fade-up（仅持久容器；步骤/行不参与，避免重渲时动画重播） ===== */
-@keyframes wb-fade-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.page-workbench .wb-header {
-  animation: wb-fade-up 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) both;
-}
-
-.page-workbench .ov-summary {
-  animation: wb-fade-up 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) both;
-  animation-delay: 0.06s;
-}
-
-.page-workbench .ov-section {
-  animation: wb-fade-up 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) both;
-  animation-delay: 0.12s;
-}
-
-/* ===== 响应式 ===== */
-@media (max-width: 760px) {
-  .page-workbench .main { padding: 24px 16px 40px; }
-  .page-workbench .wb-header { margin-bottom: 20px; }
-  .page-workbench .wb-title { font-size: 24px; }
-  .page-workbench .ov-summary { gap: 16px 28px; padding-bottom: 22px; margin-bottom: 28px; }
-  .page-workbench .ov-num { font-size: 28px; }
-  .page-workbench .ov-sep { display: none; }
-  .page-workbench .ov-step { gap: 14px; padding: 15px 4px; }
-  .page-workbench .ov-step .step-desc { font-size: 12px; }
-  .page-workbench .ov-row { gap: 10px; padding: 13px 4px; }
-  .page-workbench .ov-row .ov-order-meta { display: none; }
-  .page-workbench .ov-order-no { min-width: 0; }
-}
-
-/* ===== 降级：减少动态效果 ===== */
-@media (prefers-reduced-motion: reduce) {
-  .page-workbench .wb-header,
-  .page-workbench .ov-summary,
-  .page-workbench .ov-section { animation: none; }
-
-  .page-workbench .ov-step,
-  .page-workbench .ov-row,
-  .page-workbench .btn-primary { transition: none; }
-
-  .page-workbench .ov-step:hover,
-  .page-workbench .ov-row:hover { background: transparent; }
-
-  .page-workbench .btn-primary:active { transform: none; }
 }
 
 /* ============================================================

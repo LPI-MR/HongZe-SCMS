@@ -1,5 +1,6 @@
 // ===== transport-entry 模块脚本（运输信息录入）=====
-// 依赖 trips-store.js 提供的共享数据层；数据保存后调度看板自动同步
+// 依赖 trips-store.js 提供的共享数据层；数据持久化到 PostgreSQL，
+// 保存成功后调度看板（每 5 秒拉取 /api/trips）自动同步
 (function () {
   'use strict';
 
@@ -35,7 +36,7 @@
   const MODES = store.MODES;
   const esc = store.esc;
 
-  let state = store.load();
+  let state = { seq: 0, trips: [] };  // boot 时经 HZDB 缓存基座从数据库装载
 
   const $ = id => document.getElementById(id);
   const els = {
@@ -133,7 +134,7 @@
   els.pTrip.addEventListener('change', onTripChange);
 
   // 提交上报：更新车次节点与时间（可录实际到货重量），写入日志
-  els.progressForm.addEventListener('submit', e => {
+  els.progressForm.addEventListener('submit', async e => {
     e.preventDefault();
     const trip = state.trips.find(t => t.id === els.pTrip.value);
     if (!trip) {
@@ -166,11 +167,16 @@
       }
     }
 
+    const prev = { nodeIndex: trip.nodeIndex, time: trip.time,
+                   loadedTons: trip.loadedTons, actualTons: trip.actualTons };
     trip.nodeIndex = nodeIndex;
     trip.time = nodeTime;
     if (loadedValue != null) trip.loadedTons = loadedValue;
     if (actualValue != null) trip.actualTons = actualValue;
-    store.save(state);
+    if (!await store.save(state)) {
+      Object.assign(trip, prev);  // 落库失败回滚，内存保留原状可重试
+      return;
+    }
 
     // 日志附带到货重量与亏吨率（如已录入）
     const rate = store.lossRate(trip);
@@ -195,10 +201,10 @@
   });
 
   // ===== 新增车次 =====
-  // 预填下一个车次号（消耗 seq，立即持久化避免重复取号）
-  function prefillId() {
+  // 预填下一个车次号（消耗 seq，立即持久化避免重复取号；落库失败回退序号）
+  async function prefillId() {
     els.nId.value = store.nextId(state);
-    store.save(state);
+    if (!await store.save(state)) state.seq--;
   }
 
   // ===== 自定义节点链编辑器 =====
@@ -266,7 +272,7 @@
 
   els.nMode.addEventListener('change', onModeChange);
 
-  els.newForm.addEventListener('submit', e => {
+  els.newForm.addEventListener('submit', async e => {
     e.preventDefault();
     const id = els.nId.value.trim();
     if (!id) {
@@ -306,7 +312,10 @@
       time: Date.now(),
     });
     state.trips.push(trip);
-    store.save(state);
+    if (!await store.save(state)) {
+      state.trips.pop();  // 落库失败回滚，车次号已被消耗（seq 已持久化）
+      return;
+    }
 
     store.pushLog({
       time: Date.now(),
@@ -343,10 +352,17 @@
   }
 
   // ===== 初始化 =====
-  els.pTime.value = nowLocal();
-  onModeChange();
-  prefillId();
-  fillOrderList();
-  refreshTripSelect();
-  renderLogs();
+  // 等 HZDB 缓存基座就绪后从数据库装载车次与日志，再初始化表单
+  async function boot() {
+    await HZDB.ready();
+    state = store.load();
+
+    els.pTime.value = nowLocal();
+    onModeChange();
+    prefillId();
+    fillOrderList();
+    refreshTripSelect();
+    renderLogs();
+  }
+  boot();
 })();

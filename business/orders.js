@@ -1,6 +1,6 @@
 // ===== 订单台账模块脚本 =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责订单台账的检索、渲染与增删改流转
-// 订单数据走共享数据层（business-data.js）：订单台账 / 执行跟踪 / 结算管理共用同一份 localStorage 数据
+// 订单数据走共享数据层（business-data.js）：订单台账 / 执行跟踪 / 结算管理共用同一份 DB 数据（HZDB 基座）
 // 合同 / 矿山 / 航次等跨模块字段统一经 HZData 数据基座（hz-data.js）调取各模块权威数据源，
 // 后端就绪后仅需在 HZData 注册对应模块适配器，本页业务代码无需改动
 (function () {
@@ -53,20 +53,29 @@
   // 订单列表：[{id, order_code, contract_id, contract_code, mine_id, mine_name,
   //   voyage_id, trip_ids, customer, cargo_name, cargo_qty, amount, sign_date,
   //   plan_end_date, status, remark, created_by, created_at, updated_at}]
-  let orders = biz.loadOrders();
+  // （boot() 中经 HZDB 装载）
+  let orders = [];
 
   // 合同：contracts 模块权威数据，按 id 索引用于带出编号 / 客户 / 金额默认值
-  const contracts = rawArr('contracts');
+  let contracts = [];
   const contractById = {};
-  contracts.forEach(c => { contractById[c.id] = c; });
 
   // 矿山：mines 模块（矿山管理）权威数据，下拉仅列启用矿山
-  const mines = rawArr('mines').filter(m => m.status !== 'inactive');
+  let mines = [];
 
   // 航次：oceanTrips 模块（海运管理）权威数据，按 id 索引回填航次号
-  const voyages = rawArr('oceanTrips');
+  let voyages = [];
   const voyageById = {};
-  voyages.forEach(v => { voyageById[v.id] = v; });
+
+  // 装载订单与跨模块关联数据（boot() 中 await HZDB.ready() 后调用）
+  function loadData() {
+    orders = biz.loadOrders();
+    contracts = rawArr('contracts');
+    contracts.forEach(c => { contractById[c.id] = c; });
+    mines = rawArr('mines').filter(m => m.status !== 'inactive');
+    voyages = rawArr('oceanTrips');
+    voyages.forEach(v => { voyageById[v.id] = v; });
+  }
 
   // 状态标签类名映射（business.css 状态标签变体）
   const STATUS_CLS = {
@@ -141,7 +150,9 @@
     const endInput = document.getElementById('searchDateEnd');
 
     // 按当前检索条件过滤表格行；无匹配时显示空状态行
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       const start = startInput.value;
       const end = endInput.value;
       // 关键词检索：空格分隔多个词，全部命中（AND）才算匹配，不限字段模糊匹配
@@ -172,22 +183,22 @@
       renderPage();
     };
 
-    // 关键词输入 / 日期变更即筛（免点击查询按钮）
-    nameInput.addEventListener('input', () => applyFilter());
-    startInput.addEventListener('change', () => applyFilter());
-    endInput.addEventListener('change', () => applyFilter());
+    // 关键词输入 / 日期变更即筛（免点击查询按钮，回到第 1 页）
+    nameInput.addEventListener('input', () => applyFilter(true));
+    startInput.addEventListener('change', () => applyFilter(true));
+    endInput.addEventListener('change', () => applyFilter(true));
 
-    // 提交：阻止表单默认提交（保留回车触发过滤）
+    // 提交：阻止表单默认提交（保留回车触发过滤，回到第 1 页）
     form.addEventListener('submit', e => {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
-    // 重置：清空条件并回到「全部」流程胶囊，随后恢复显示全部行
+    // 重置：清空条件并回到「全部」流程胶囊，随后恢复显示全部行（回到第 1 页）
     form.addEventListener('reset', () => {
       resetFlowNav();
       // 等浏览器完成原生 reset 后再过滤
-      requestAnimationFrame(() => applyFilter());
+      requestAnimationFrame(() => applyFilter(true));
     });
   }
 
@@ -202,7 +213,7 @@
       if (!pill) return;
       activeFlow = pill.dataset.flow || '';
       nav.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p === pill));
-      if (applyFilter) applyFilter();
+      if (applyFilter) applyFilter(true); // 胶囊切换后回到第 1 页
     });
   }
 
@@ -240,8 +251,9 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach((r, i) => {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     // 同步分页控件状态
@@ -253,6 +265,18 @@
     $('pgPrev').disabled = curPage <= 1;
     $('pgNext').disabled = curPage >= pages;
     $('pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定订单行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(r => !r.hidden);
+    const idx = rows.findIndex(r => r.dataset.id === id);
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -573,8 +597,8 @@
     });
   }
 
-  // 保存新增 / 编辑：校验必填项后写回数据并持久化
-  function saveForm() {
+  // 保存新增 / 编辑：校验必填项后写回数据并持久化（async 写库，失败回滚现场）
+  async function saveForm() {
     const code = document.getElementById('fCode').value.trim();
     const contractId = document.getElementById('fContract').value;
     const customer = document.getElementById('fCustomer').value.trim();
@@ -603,10 +627,13 @@
     const mineId = document.getElementById('fMine').value;
     const mine = mines.find(m => m.id === mineId) || null;
 
+    let addedId = '';
+    let prev = null; // 编辑回滚快照
     if (editingId) {
       // 编辑：更新既有订单（编号与状态不变，不写流转日志）
       const old = byId(editingId);
       if (!old) return;
+      prev = Object.assign({}, old);
       Object.assign(old, {
         contract_id: contractId,
         contract_code: contract.code || '',
@@ -645,8 +672,9 @@
         updated_at: Date.now()
       };
       orders.push(o);
-      // 建单即记录初始化日志，与流转链保持一致
-      biz.pushLog({
+      addedId = o.id;
+      // 建单即记录初始化日志，与流转链保持一致（写失败不阻断建单，留待后续操作补记）
+      await biz.pushLog({
         id: genLogId(),
         order_id: o.id,
         from_status: '',
@@ -657,13 +685,17 @@
       });
     }
 
-    if (!biz.saveOrders(orders)) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+    if (!await biz.saveOrders(orders)) {
+      // 写库失败：回滚现场（编辑恢复原字段 / 新增移除临时记录），保持抽屉输入不丢
+      if (prev) Object.assign(byId(editingId) || {}, prev);
+      else if (addedId) orders = orders.filter(x => x.id !== addedId);
+      alert('保存失败，本次修改未能写入数据库，请稍后重试。');
       return;
     }
 
     closeDrawer();
     renderAll();
+    locateRowPage(addedId); // 新增订单可能落在其他页，跳转到位
   }
 
   // ----- 订单流转抽屉：目标状态单选（合法流转目标）+ 备注 -----
@@ -709,8 +741,8 @@
     showDrawer('订单流转 · ' + (o.order_code || ''), html);
   }
 
-  // 确认流转：校验状态机合法性 → 更新状态 → 写流转日志
-  function confirmFlow() {
+  // 确认流转：校验状态机合法性 → 更新状态 → 写流转日志（async 写库，失败回滚现场）
+  async function confirmFlow() {
     const o = byId(currentId);
     if (!o) return;
 
@@ -725,9 +757,11 @@
     }
 
     const from = o.status;
+    const prevUpdatedAt = o.updated_at;
+    const prevLogs = biz.loadLogs(); // 日志快照（供写库失败时回滚）
     o.status = to;
     o.updated_at = Date.now();
-    if (!biz.pushLog({
+    if (!await biz.pushLog({
       id: genLogId(),
       order_id: o.id,
       from_status: from,
@@ -736,11 +770,18 @@
       time: Date.now(),
       remark: document.getElementById('flowRemark').value.trim()
     })) {
-      alert('本地存储空间不足，流转日志未能保存，请清理后重试');
+      // 日志写库失败：回滚状态变更，保持现场
+      o.status = from;
+      o.updated_at = prevUpdatedAt;
+      alert('保存失败，流转日志未能写入数据库，请稍后重试');
       return;
     }
-    if (!biz.saveOrders(orders)) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+    if (!await biz.saveOrders(orders)) {
+      // 订单写库失败：回滚状态变更，并 best-effort 回滚已写入的日志
+      o.status = from;
+      o.updated_at = prevUpdatedAt;
+      try { await biz.saveLogs(prevLogs); } catch (e) { /* 回滚失败忽略 */ }
+      alert('保存失败，本次修改未能写入数据库，请稍后重试。');
       return;
     }
 
@@ -748,8 +789,8 @@
     renderAll();
   }
 
-  // 终止订单：确认后置为终态并写日志
-  function terminateOrder(id) {
+  // 终止订单：确认后置为终态并写日志（async 写库，失败回滚现场）
+  async function terminateOrder(id) {
     const o = byId(id);
     if (!o) return;
     if (!biz.canTransitionOrder(o.status, biz.ORDER_TERMINAL)) {
@@ -759,9 +800,11 @@
     if (!confirm('确定终止订单「' + (o.order_code || '') + '」吗？终止后不可恢复。')) return;
 
     const from = o.status;
+    const prevUpdatedAt = o.updated_at;
     o.status = biz.ORDER_TERMINAL;
     o.updated_at = Date.now();
-    biz.pushLog({
+    // 终止日志（写失败不阻断终止，留待后续操作补记）
+    await biz.pushLog({
       id: genLogId(),
       order_id: o.id,
       from_status: from,
@@ -770,25 +813,38 @@
       time: Date.now(),
       remark: '终止订单'
     });
-    if (!biz.saveOrders(orders)) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+    if (!await biz.saveOrders(orders)) {
+      // 订单写库失败：回滚状态变更，保持现场
+      o.status = from;
+      o.updated_at = prevUpdatedAt;
+      alert('保存失败，本次修改未能写入数据库，请稍后重试。');
       return;
     }
 
     renderAll();
   }
 
-  // 删除订单：确认后移除订单并级联清除流转日志
-  function deleteOrder(id) {
+  // 删除订单：确认后移除订单并级联清除流转日志（async 写库，失败回滚现场）
+  async function deleteOrder(id) {
     const o = byId(id);
     if (!o) return;
     if (!confirm('确定删除订单「' + (o.order_code || '') + '」吗？关联流转日志将一并清除。')) return;
 
     if (currentId === id) closeDrawer();
+    const prevOrders = orders;
+    const prevLogs = biz.loadLogs();
     orders = orders.filter(x => x.id !== id);
-    biz.saveLogs(biz.loadLogs().filter(l => l.order_id !== id));
-    if (!biz.saveOrders(orders)) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据后重试。');
+    if (!await biz.saveLogs(prevLogs.filter(l => l.order_id !== id))) {
+      // 日志写库失败：恢复订单列表，保持现场
+      orders = prevOrders;
+      alert('保存失败，本次删除未能写入数据库，请稍后重试。');
+      return;
+    }
+    if (!await biz.saveOrders(orders)) {
+      // 订单写库失败：恢复订单列表，并 best-effort 回滚已删除的日志
+      orders = prevOrders;
+      try { await biz.saveLogs(prevLogs); } catch (e) { /* 回滚失败忽略 */ }
+      alert('保存失败，本次删除未能写入数据库，请稍后重试。');
       return;
     }
 
@@ -968,13 +1024,19 @@
     if (addBtn) addBtn.addEventListener('click', () => openFormDrawer(null));
   }
 
-  initSearch();
-  initFlowNav();
-  initAdd();
-  initTableActions();
-  initDrawer();
-  initExport();
-  initCheckAll();
-  bindPager();
-  renderAll(); // 启动时从 localStorage 恢复订单数据
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();
+    initSearch();
+    initFlowNav();
+    initAdd();
+    initTableActions();
+    initDrawer();
+    initExport();
+    initCheckAll();
+    bindPager();
+    renderAll(); // 启动时从 DB 恢复订单数据
+  }
+  boot().catch(err => console.error('订单台账初始化失败：', err));
 })();

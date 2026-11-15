@@ -1,6 +1,6 @@
 // ===== suppliers 模块脚本（仓储管理 · 供应商列表子模块）=====
-// 供应商基础资料与矿石分垛明细的维护入口；数据存 localStorage，
-// 与库存管理页（warehouse.js）共用同一个 STORE_KEY，两页数据保持一致
+// 供应商基础资料与矿石分垛明细的维护入口；数据持久化到 PostgreSQL：
+// 读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/warehouses 全量替换
 (function () {
   'use strict';
 
@@ -31,7 +31,7 @@
 
   /* ==================== 数据层（与 warehouse.js 保持一致） ==================== */
 
-  const STORE_KEY = 'hz_warehouse_suppliers_v1';
+  // 仓库主数据（供应商）：boot 时经 HZDB.ready() 从数据库装载
 
   // 合作类型定义（key → 徽标样式类）
   const TYPES = {
@@ -41,177 +41,16 @@
     '运输接驳': 'shuttle'
   };
 
-  // 供应商公开资料（来源：河北新闻网、邯郸市政府网、武安市政府网、启信宝等公开报道与工商信息）
-  const LEGACY_HBLG_INTRO = '河北陆港保税物流有限公司立足河北、服务京津冀，依托陆港口岸与保税政策优势，开展保税仓储、中转配送、通关协办等一体化物流服务，为客户提供大宗商品存储与供应链运转支撑。';
+  let suppliers = [];
 
-  const HBLG_PROFILE = {
-    address: '河北省邯郸市武安市（武安保税物流中心）',
-    throughput: '设计年货物处理量3000万吨',
-    area: '规划占地1600亩',
-    // 仓库规模与矿石分垛（垛位为示例初始化数据，可在编辑抽屉中调整）
-    scale: '50000㎡',
-    stacks: [
-      { name: '1号垛', ore: 'PB粉', tonnage: '2.5万吨', note: '' },
-      { name: '2号垛', ore: '纽曼粉', tonnage: '1.8万吨', note: '' },
-      { name: '3号垛', ore: '巴西混合粉', tonnage: '1.5万吨', note: '' },
-      { name: '4号垛', ore: 'PB块', tonnage: '1.2万吨', note: '' },
-      { name: '5号垛', ore: '超特粉', tonnage: '1.0万吨', note: '' },
-      { name: '6号垛', ore: '金布巴粉', tonnage: '0.8万吨', note: '' }
-    ],
-    intro: '河北港口集团旗下核心物流载体，运营河北省首家B型保税物流中心——武安保税物流中心，业务涵盖保税物流、铁路运输、钢材交易、再生钢铁、混矿加工、供应链金融、跨境电商、仓储交割八大板块。"河北陆港—天津等港口"铁水联运线路入选国家级典型案例，2024年完成联运量21.6万标箱，2021—2024年累计74.97万标箱，货源以武安地区钢厂原料等大宗货物为主。',
-    facilities: '中心依托万利丰铁路专用线建设，设海关监管区、内贸物流区、综合服务区、行政商业区四大功能区，具备保税存储、出口退税、国际贸易与转口贸易等功能；铁水联运通道连通天津港、曹妃甸港、山东港口，提供集装箱短驳进站、装箱调偏、报关清关、预约提箱、跨境电商通关等配套服务。'
-  };
-
-  const NYYS_PROFILE = {
-    address: '河北省邯郸市武安市南环东路1001号',
-    contact: '李勇旺',
-    phone: '0310-6287117',
-    throughput: '300万吨级智慧物流园（规划）',
-    area: '约146亩（仓储用地）',
-    // 仓库规模与矿石分垛（垛位为示例初始化数据，可在编辑抽屉中调整）
-    scale: '5000㎡',
-    stacks: [
-      { name: '1号垛', ore: 'PB粉', tonnage: '0.6万吨', note: '' },
-      { name: '2号垛', ore: '混合粉', tonnage: '0.4万吨', note: '' },
-      { name: '3号垛', ore: '磁铁精粉', tonnage: '0.3万吨', note: '邯邢本地矿' },
-      { name: '4号垛', ore: '巴西混合粉', tonnage: '0.3万吨', note: '' },
-      { name: '5号垛', ore: 'FMG混合粉', tonnage: '0.2万吨', note: '' },
-      { name: '6号垛', ore: '罗布河混合粉', tonnage: '0.2万吨', note: '' }
-    ],
-    intro: '成立于2011年6月，注册资本5250万元，注册地位于邯郸武安市南环东路1001号。主营道路货物运输（普通、罐车、冷藏、大件、集装箱）、货运站场经营、铁路货物运输服务与汽车维修等，投资建设南洋（移山）智慧物流园，旗下全资持有武安市南洋石油销售有限公司。',
-    facilities: '仓储地块位于武安东环路东侧、邯武快速路南侧（仓储用地约146亩）；运营南洋物流园，承担武安市区邮政快件分拨（15公里直封直投），园区配套货运站场、汽车维修及成品油补给等服务。'
-  };
-
-  const PUBLIC_PROFILES = {
-    '河北陆港保税物流有限公司': HBLG_PROFILE,
-    '河北南洋移山物流有限公司': NYYS_PROFILE
-  };
-
-  const SEED_SUPPLIERS = [
-    {
-      id: 'sup-001',
-      name: '河北陆港保税物流有限公司',
-      type: '保税物流',
-      contact: '',
-      phone: '',
-      address: HBLG_PROFILE.address,
-      throughput: HBLG_PROFILE.throughput,
-      storage: '',
-      area: HBLG_PROFILE.area,
-      intro: HBLG_PROFILE.intro,
-      facilities: HBLG_PROFILE.facilities,
-      remark: '',
-      createdAt: Date.now()
-    },
-    {
-      id: 'sup-002',
-      name: '河北南洋移山物流有限公司',
-      type: '运输接驳',
-      contact: NYYS_PROFILE.contact,
-      phone: NYYS_PROFILE.phone,
-      address: NYYS_PROFILE.address,
-      throughput: NYYS_PROFILE.throughput,
-      storage: '',
-      area: NYYS_PROFILE.area,
-      intro: NYYS_PROFILE.intro,
-      facilities: NYYS_PROFILE.facilities,
-      remark: '',
-      createdAt: Date.now()
-    }
-  ];
-
-  function load() {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return migrate(seed());
-      const data = JSON.parse(raw);
-      if (!data || !Array.isArray(data.list)) return seed();
-      return migrate(data.list);
-    } catch (e) {
-      return seed();
-    }
-  }
-
-  // 旧版示例指标值（migrate 时视为占位，需替换为真实资料）
-  const LEGACY_CAPS = ['500万吨/年', '静态仓容60万吨', '约1500亩'];
-
-  // 一次性数据补丁：南洋移山追加混合粉类垛位 + 品名库补齐（老数据浏览器生效，按品类名幂等）
-  function patchStacks(list) {
-    let changed = false;
-    try {
-      if (!localStorage.getItem('hz_warehouse_stack_patch_v1')) {
-        list.forEach(s => {
-          if (s.name !== '河北南洋移山物流有限公司') return;
-          s.stacks = Array.isArray(s.stacks) ? s.stacks : [];
-          [
-            { name: '4号垛', ore: '巴西混合粉', tonnage: '0.3万吨', note: '' },
-            { name: '5号垛', ore: 'FMG混合粉', tonnage: '0.2万吨', note: '' },
-            { name: '6号垛', ore: '罗布河混合粉', tonnage: '0.2万吨', note: '' }
-          ].forEach(t => {
-            if (!s.stacks.some(x => (x.ore || '').trim() === t.ore)) {
-              s.stacks.push(Object.assign({}, t));
-              changed = true;
-            }
-          });
-        });
-        // 品名库同步补齐新品名（老浏览器品名库已存在时追加）
-        const rawOre = localStorage.getItem('hz_warehouse_ores_v1');
-        const dataOre = rawOre ? JSON.parse(rawOre) : null;
-        if (dataOre && Array.isArray(dataOre.list)) {
-          ['FMG混合粉', '罗布河混合粉'].forEach(n => {
-            if (!dataOre.list.includes(n)) dataOre.list.push(n);
-          });
-          localStorage.setItem('hz_warehouse_ores_v1', JSON.stringify(dataOre));
-        }
-        localStorage.setItem('hz_warehouse_stack_patch_v1', '1');
-      }
-    } catch (e) { /* 忽略 */ }
-    return changed;
-  }
-
-  // 数据迁移：为已有记录按公司名补充公开资料（不覆盖用户已填写的内容）
-  function migrate(list) {
-    let changed = false;
-    list.forEach(s => {
-      const p = PUBLIC_PROFILES[s.name];
-      if (!p) return;
-      Object.keys(p).forEach(k => {
-        if (k === 'intro') {
-          if (!s.intro || s.intro === LEGACY_HBLG_INTRO) { s.intro = p.intro; changed = true; }
-        } else if (k === 'stacks') {
-          // 分垛明细：旧数据无垛位（或为空数组）时补种子垛位，已有垛位不覆盖
-          if (!Array.isArray(s.stacks) || !s.stacks.length) {
-            s.stacks = p.stacks.map(t => Object.assign({}, t));
-            changed = true;
-          }
-        } else if (!s[k] || LEGACY_CAPS.includes(s[k])) { s[k] = p[k]; changed = true; }
-      });
-    });
-    if (patchStacks(list)) changed = true;
-    if (changed) save(list);
-    return list;
-  }
-
-  // 首次使用写入初始数据（stacks 深拷贝，避免编辑时改动共享种子数组）
-  function seed() {
-    const initial = SEED_SUPPLIERS.map(s => Object.assign({}, s, {
-      stacks: (s.stacks || []).map(t => Object.assign({}, t))
-    }));
-    save(initial);
-    return initial;
-  }
-
+  // 保存：全量写回数据库（PUT /api/warehouses）；失败由 HZDB toast 提示，页面内存保留可重试
   function save(list) {
-    try {
-      localStorage.setItem(STORE_KEY, JSON.stringify({ list }));
-    } catch (e) { /* 存储不可用时忽略 */ }
+    return HZDB.put('warehouses', list);
   }
 
   function genId() {
     return 'sup-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   }
-
-  let suppliers = load();
 
   /* ==================== 渲染 ==================== */
 
@@ -391,7 +230,7 @@
   document.getElementById('btn-cancel').addEventListener('click', closeDrawer);
   mask.addEventListener('click', () => { closeDetail(); closeDrawer(); });
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
 
     const name = nameInput.value.trim();
@@ -429,7 +268,7 @@
       suppliers.push({ id: genId(), ...data, createdAt: Date.now() });
     }
 
-    save(suppliers);
+    if (!await save(suppliers)) return;   // 保存失败：内存保留现场，抽屉不关可重试
     renderAll();
     closeDrawer();
   });
@@ -510,10 +349,14 @@
       openDrawer(s);
     });
 
-    document.getElementById('detail-del').addEventListener('click', () => {
+    document.getElementById('detail-del').addEventListener('click', async () => {
       if (window.confirm('确定删除供应商「' + s.name + '」吗？')) {
+        const prev = suppliers.slice();
         suppliers = suppliers.filter(x => x.id !== s.id);
-        save(suppliers);
+        if (!await save(suppliers)) {
+          suppliers = prev;   // 保存失败回滚，详情弹窗保留可重试
+          return;
+        }
         renderAll();
         closeDetail();
       }
@@ -547,13 +390,19 @@
 
   /* ==================== 初始化 ==================== */
 
-  renderAll();
+  async function boot() {
+    await HZDB.ready();
+    suppliers = HZDB.get('warehouses') || [];
+    renderAll();
 
-  // 支持库存管理页「调整库存」跳转：/warehouse/suppliers.html?edit=<id>
-  // 自动打开该供应商的编辑抽屉（分垛明细在此维护）
-  const editParam = location.search.match(/[?&]edit=([^&]+)/);
-  if (editParam) {
-    const s = suppliers.find(x => x.id === decodeURIComponent(editParam[1]));
-    if (s) openDrawer(s);
+    // 支持库存管理页「调整库存」跳转：/warehouse/suppliers.html?edit=<id>
+    // 自动打开该供应商的编辑抽屉（分垛明细在此维护）
+    const editParam = location.search.match(/[?&]edit=([^&]+)/);
+    if (editParam) {
+      const s = suppliers.find(x => x.id === decodeURIComponent(editParam[1]));
+      if (s) openDrawer(s);
+    }
   }
+
+  boot();
 })();

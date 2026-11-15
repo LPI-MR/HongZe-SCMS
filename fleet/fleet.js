@@ -1,12 +1,10 @@
 /* ============================================================
    汽运车队模块 · 车队档案与运力信息维护
    布局与仓储管理模块保持一致（KPI 卡 / 卡片列表 / 详情弹窗 / 编辑抽屉）
-   数据暂存 localStorage，接口就绪后仅替换 load/save 即可
+   数据持久化到 PostgreSQL：读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/fleets 全量替换
    ============================================================ */
 (function () {
   'use strict';
-
-  var STORE_KEY = 'hzwl_fleets_v2';
 
   var FLEET_TYPES = {
     '自营车队': 'own',
@@ -16,45 +14,28 @@
 
   /* ==================== 数据层 ==================== */
 
+  // 读取：boot 完成后从 HZDB 缓存同步取（未装载时为空数组兜底）
   function load() {
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      var list = raw ? JSON.parse(raw) : null;
-      if (!Array.isArray(list)) {
-        list = seed();
-        save(list);
-      }
-      return normalize(list);
-    } catch (e) {
-      return seed();
-    }
+    var list = HZDB.get('fleets');
+    if (!Array.isArray(list)) list = [];
+    return normalize(list);
   }
 
+  // 保存：全量写回数据库（PUT /api/fleets）；失败由 HZDB toast 提示，页面内存保留可重试
   function save(list) {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) { /* 忽略存储异常 */ }
+    return HZDB.put('fleets', list);
   }
 
-  // 初始车队（资料待补充，可通过详情弹窗「编辑车队」填写）
-  function seed() {
-    var now = Date.now();
-    return [
-      { id: 'fleet-001', name: '河北中惠供应链管理有限公司', type: '合作车队', contact: '', phone: '', address: '', capacity: '', fleetSize: '', minGuarantee: '', maxCapacity: '', remark: '', createdAt: now },
-      { id: 'fleet-002', name: '渤海新合运输车队', type: '外协车队', contact: '', phone: '', address: '', capacity: '', fleetSize: '', minGuarantee: '', maxCapacity: '', remark: '', createdAt: now }
-    ];
-  }
-
-  // 记录字段兜底（兼容早期版本数据）
+  // 记录字段兜底（兼容早期版本数据；纯内存修正，不触发保存）
   function normalize(list) {
-    var changed = false;
     list.forEach(function (s) {
-      if (!FLEET_TYPES[s.type]) { s.type = '合作车队'; changed = true; }
+      if (!FLEET_TYPES[s.type]) s.type = '合作车队';
       ['contact', 'phone', 'address', 'capacity', 'fleetSize', 'minGuarantee', 'maxCapacity', 'remark'].forEach(function (k) {
-        if (typeof s[k] !== 'string') { s[k] = ''; changed = true; }
+        if (typeof s[k] !== 'string') s[k] = '';
       });
-      if (!s.id) { s.id = genId(); changed = true; }
-      if (!s.createdAt) { s.createdAt = Date.now(); changed = true; }
+      if (!s.id) s.id = genId();
+      if (!s.createdAt) s.createdAt = Date.now();
     });
-    if (changed) save(list);
     return list;
   }
 
@@ -76,7 +57,7 @@
 
   /* ==================== 渲染 ==================== */
 
-  var suppliers = load();
+  var suppliers = [];   // boot 时从 HZDB 缓存装载
   var grid = document.getElementById('supplier-grid');
   var searchInput = document.getElementById('supplier-search');
 
@@ -322,5 +303,11 @@
 
   searchInput.addEventListener('input', renderList);
 
-  renderAll();
+  // ===== 启动：装载数据库缓存后渲染 =====
+  async function boot() {
+    await HZDB.ready();   // 启动遮罩 + /api/bootstrap 全量装载（失败可点重试）
+    suppliers = load();
+    renderAll();
+  }
+  boot();
 })();

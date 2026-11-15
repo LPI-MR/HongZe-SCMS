@@ -1,11 +1,12 @@
 // ===== ocean 模块脚本（海运管理 · 海运综合台账） =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责海运航次的增删改查、状态流转、
 // 港口胶囊筛选、分页，以及行展开后的港口现货联动子表渲染
-// 数据源走 HZData 模块化数据基座（common/hz-data.js）：
-//  - oceanTrips（hz_ocean_voyages，读写）：海运航次权威数据
-//  - mines（hz_mines，只读）：矿山主数据（抽屉联动）
-//  - oceanSpots（hz_ocean_spots，读写）：港口现货参考数据（联动子表）
-//  - oceanCoas（hz_ocean_coas，读写）：COA 品质证书
+// 数据持久化到 PostgreSQL：读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/voyages 等全量替换；
+// 字典与跨模块读经 HZData 模块化数据基座（common/hz-data.js，底层走 HZDB 缓存）：
+//  - voyages（ocean.ocean_voyage，读写）：海运航次权威数据
+//  - mines（只读）：矿山主数据（抽屉联动）
+//  - spots（ocean.ocean_spot，读写）：港口现货参考数据（联动子表）
+//  - coas（ocean.ocean_coa，读写）：COA 品质证书
 (function () {
   'use strict';
 
@@ -48,55 +49,11 @@
 
   // ===== 字典派生（经 HZData 模块化数据基座，替代本地静态字典） =====
   // 矿山 → 推荐装货港映射（HZData.dict('mineLoadPorts')，矿山 PRD 6.5 约定）
+  // 构建时机：HZDB.ready() 之后（boot 内执行——dict 读取 DB 字典缓存，静态值兜底）
   const MINE_LOAD_PORTS = {};
-  (HZData.dict('mineLoadPorts') || []).forEach(d => {
-    MINE_LOAD_PORTS[d.mine] = { port: d.port, country: d.country, distance_note: d.note };
-  });
 
   // 常用卸货港快捷选项（HZData.dict('dischargePorts') 中国主要接卸港）
-  const DISCHARGE_PORT_DICT = (HZData.dict('dischargePorts') || []).map(d => d.name);
-
-  // ===== 港口现货参考数据（静态展示数据，来源：中国矿产·中矿国链港口现货） =====
-  // 缺测值（原表「–」）统一记为 null，展示为「–」；no 为原表序号（同序号=同船多品种）
-  const SPOT_SEED = {
-    source: '中国矿产·中矿国链港口现货',
-    dataDate: '2026-05-25',
-    rows: [
-      { no: 1,  port: '京唐港', variety: '卡拉拉精粉',       fe: '62.33',  sio2: '12.06',  al2o3: '0.12',  p: '0.032', s: '0.067', mn: null,    moisture: '8.5',   vessel: 'SM SAMCHEONPO（三千浦）',   berth: '一公司' },
-      { no: 2,  port: '黄骅港', variety: '米纳斯精粉',       fe: '66.92',  sio2: '2.8',    al2o3: '0.53',  p: '0.025', s: null,    mn: '0.03',  moisture: '8.7',   vessel: 'SHANDONG DREAM（山东梦想）', berth: '矿石2场940-990米、矿石700-740米，矿石11场' },
-      { no: 3,  port: '黄骅港', variety: '卡拉拉精粉',       fe: '62.1',   sio2: '12.38',  al2o3: '0.2',   p: '0.03',  s: '0.036', mn: null,    moisture: '8.69',  vessel: 'JIN WEN FENG（锦文峰）',     berth: '' },
-      { no: 4,  port: '青岛港', variety: 'KBH南非铁精粉',    fe: '62.45',  sio2: '2.16',   al2o3: '0.46',  p: '0.19',  s: '0.041', mn: null,    moisture: '6.54',  vessel: 'ANASTASIA（安纳斯塔西娅）',  berth: '重象口' },
-      { no: 5,  port: '青岛港', variety: 'SFGB',             fe: '54.94',  sio2: '14.54',  al2o3: '2.11',  p: '0.068', s: null,    mn: '0.287', moisture: '8.3',   vessel: 'ORE ZHOUSHAN（矿石舟山）',   berth: '' },
-      { no: 6,  port: '青岛港', variety: '塞拉利昂烧结精粉', fe: '61.22',  sio2: '6.27',   al2o3: '3.38',  p: '0.041', s: '0.005', mn: null,    moisture: '10.62', vessel: 'SEABREEZE（海洋清风）',       berth: '' },
-      { no: 7,  port: '日照港', variety: 'KMG块',            fe: '51.66',  sio2: '22.51',  al2o3: '1.31',  p: '0.01',  s: '0.018', mn: null,    moisture: '2.07',  vessel: 'DEE4 OAK（橡树）',           berth: '' },
-      { no: 8,  port: '日照港', variety: 'YGBZ块',           fe: '62.11',  sio2: '8.95',   al2o3: '0.86',  p: '0.03',  s: '0.01',  mn: null,    moisture: '1.31',  vessel: 'MALINDI（马林迪）',           berth: '' },
-      { no: 9,  port: '日照港', variety: '塞拉利昂DSO粉',    fe: '55.21',  sio2: '3.07',   al2o3: '6.55',  p: '0.068', s: '0.004', mn: null,    moisture: '12.64', vessel: 'SAMC TRANSPORTER（海瀛撮运）', berth: '' },
-      { no: 10, port: '岚山港', variety: '罗伊山NEXUS粉',    fe: '57.218', sio2: '7.378',  al2o3: '3.175', p: '0.047', s: '0.035', mn: null,    moisture: '9.89',  vessel: 'MV HUI ZHEN HAI（惠珍海）',   berth: '' },
-      { no: 11, port: '岚山港', variety: 'LONS块',           fe: '49.5',   sio2: '18.46',  al2o3: '1.53',  p: '0.05',  s: null,    mn: '0.162', moisture: '4.5',   vessel: 'SHINE ON（照耀）',           berth: '装港指标' },
-      { no: 11, port: '岚山港', variety: 'LONS筛后块',       fe: '49.72',  sio2: '17.652', al2o3: '1.62',  p: '0.0466', s: null,   mn: '0.148', moisture: '2.71',  vessel: 'SHINE ON（照耀）',           berth: '卸港CCIC' },
-      { no: 11, port: '岚山港', variety: 'LONS筛后粉',       fe: '51.56',  sio2: '16.576', al2o3: '2.211', p: '0.0562', s: null,   mn: '0.254', moisture: '8.39',  vessel: 'SHINE ON（照耀）',           berth: '卸港CCIC' },
-      { no: 12, port: '岚山港', variety: 'LONS块',           fe: '53.75',  sio2: '14.23',  al2o3: '1.97',  p: '0.059', s: null,    mn: '0.215', moisture: '4.8',   vessel: 'PAN DREAM（潘梦）',           berth: '' },
-      { no: 13, port: '岚山港', variety: 'KMG粉',            fe: '47.95',  sio2: '24.92',  al2o3: '2.63',  p: '0.01',  s: '0.012', mn: null,    moisture: '4.07',  vessel: 'GREAT LINK（大联）',           berth: '' },
-      { no: 14, port: '连云港', variety: '卡拉拉精粉',       fe: '62.16',  sio2: '12.27',  al2o3: '0.1',   p: '0.028', s: '0.034', mn: null,    moisture: '8.08',  vessel: 'SIFNOS I（锡弗诺斯）',         berth: '' },
-      { no: 15, port: '连云港', variety: 'LONS筛后块',       fe: '49.89',  sio2: '17.78',  al2o3: '1.95',  p: '0.066', s: null,    mn: '0.015', moisture: '0.54',  vessel: 'ALONA（阿罗那）',             berth: '卸港CCIC' },
-      { no: 15, port: '连云港', variety: 'LONS筛后粉',       fe: '54.17',  sio2: '15.18',  al2o3: '2.29',  p: '0.08',  s: null,    mn: '0.015', moisture: '5.01',  vessel: 'ALONA（阿罗那）',             berth: '卸港CCIC' },
-      { no: 16, port: '镇江港', variety: '罗伊山NEXUS粉',    fe: '57.218', sio2: '7.378',  al2o3: '3.175', p: '0.047', s: '0.035', mn: null,    moisture: '9.89',  vessel: 'MV HUI ZHEN HAI（惠珍海）',   berth: '' },
-      { no: 17, port: '湛江港', variety: 'SFGB',             fe: '54.64',  sio2: '15.29',  al2o3: '2.18',  p: '0.065', s: null,    mn: '0.293', moisture: '8.6',   vessel: 'GRAND WISDOM（裕智）',         berth: '' }
-    ]
-  };
-
-  // ===== 本地持久化 =====
-  const LS_VOYAGES = 'hz_ocean_voyages';   // 航次数据（本模块权威存储键，经 HZData 'oceanTrips' 调取）
-  const LS_SPOTS = 'hz_ocean_spots';       // 港口现货参考数据（经 HZData 'oceanSpots' 调取）
-
-  function loadJSON(key, fallback) {
-    try {
-      const v = JSON.parse(localStorage.getItem(key));
-      return v == null ? fallback : v;
-    } catch (e) {
-      return fallback;
-    }
-  }
+  let DISCHARGE_PORT_DICT = [];
 
   // 矿山主数据：经 HZData 模块化接口直调 mine 模块数据源（本模块只读）
   function loadMines() {
@@ -107,80 +64,14 @@
   //   load_port, load_country, discharge_port, discharge_country,
   //   cargo_type, quantity, freight_rate, freight_total,
   //   sail_date, eta_date, status, remark, created_at, updated_at, created_by}]
-  let voyages = loadJSON(LS_VOYAGES, []);
-  if (!Array.isArray(voyages)) voyages = [];
+  let voyages = [];   // boot 时经 HZDB.ready() 从数据库装载
 
-  // 港口现货参考列表（模块级，联动子表渲染用；init 时从统一数据源恢复）
+  // 港口现货参考列表（模块级，联动子表渲染用；boot 时经 HZData 归一化恢复）
   let spots = [];
 
-  // ===== 预置航次示例数据（首次打开时写入，与四大矿山关联） =====
-  function seedVoyages() {
-    if (loadJSON(LS_VOYAGES, null) !== null) return;   // 已有数据（含空数组）则不重复写入
-
-    const mines = loadMines();
-    // 按矿山简称建立 id 索引；矿山数据缺失时退化为空关联（仅展示）
-    const byShort = {};
-    mines.forEach(m => { byShort[m.short_name || ''] = m; });
-
-    const DAY = 24 * 60 * 60 * 1000;
-    const base = Date.now();
-
-    // [船名, 矿山简称, 装货港, 装货国, 卸货港, 卸货国, 货种, 货量万吨, 运价$/吨, 离港(天前), 航程天数, 状态]
-    const seed = [
-      ['Pacific Glory', '力拓', '丹皮尔港', '澳大利亚', '青岛港', '中国', 'PB粉', 17.0, 21.5, 6, 11, 'sailing'],
-      ['Bulk Venture', '必和必拓', '黑德兰港', '澳大利亚', '曹妃甸港', '中国', '纽曼粉', 18.0, 20.8, 4, 0, 'pending'],
-      ['Vale Rio Doce', '淡水河谷', '图巴朗港', '巴西', '青岛港', '中国', '卡拉加斯粉', 30.0, 32.5, 12, 40, 'sailing'],
-      ['Iron Chieftain', '福斯特库', '黑德兰港', '澳大利亚', '日照港', '中国', '超特粉', 17.5, 19.2, 20, 10, 'arrived'],
-      ['Pilbara Spirit', '力拓', '丹皮尔港', '澳大利亚', '舟山港', '中国', '杨迪粉', 16.8, 22.0, 45, 12, 'done'],
-      ['Minas Gerais', '淡水河谷', '图巴朗港', '巴西', '湛江港', '中国', 'IOCJ', 28.0, 31.8, 2, 0, 'loading']
-    ];
-
-    voyages = seed.map((s, i) => {
-      const m = byShort[s[1]] || {};
-      const sail = base - s[9] * DAY;
-      const eta = s[10] > 0 ? sail + s[10] * DAY : sail;
-      return {
-        id: 'v' + (base + i).toString(36),
-        voyage_code: genCode(i + 1),
-        vessel_name: s[0],
-        mine_id: m.id || '',
-        mine_name: s[1],
-        load_port: s[2], load_country: s[3],
-        discharge_port: s[4], discharge_country: s[5],
-        cargo_type: s[6], quantity: s[7], freight_rate: s[8],
-        freight_total: Math.round(s[7] * 10000 * s[8]),
-        sail_date: fmtDate(sail), eta_date: fmtDate(eta),
-        status: s[11],
-        remark: '',
-        created_at: sail,
-        updated_at: base,
-        created_by: '系统预置'
-      };
-    });
-
-    try {
-      localStorage.setItem(LS_VOYAGES, JSON.stringify(voyages));
-    } catch (e) { /* 预置失败不阻断页面，用户可手动新增 */ }
-  }
-
-  // ===== 预置港口现货参考数据（首次打开时经 HZData 归一化落库，行展开联动子表用） =====
-  function seedSpots() {
-    if (loadJSON(LS_SPOTS, null) !== null) return;
-    const list = SPOT_SEED.rows.map((r, i) =>
-      HZData.normalize('oceanSpots', Object.assign({ id: 'spot-' + String(i + 1).padStart(3, '0') }, r), i));
-    try {
-      localStorage.setItem(LS_SPOTS, JSON.stringify({ __version: 'v1', list: list }));
-    } catch (e) { /* 预置失败不阻断页面，联动子表走空态 */ }
-  }
-
+  // 保存：全量写回数据库（PUT /api/voyages）；失败由 HZDB toast 提示，页面内存保留可重试
   function save() {
-    try {
-      localStorage.setItem(LS_VOYAGES, JSON.stringify(voyages));
-      return true;
-    } catch (e) {
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议清理旧数据后重试。');
-      return false;
-    }
+    return HZDB.put('voyages', voyages);
   }
 
   function genId() {
@@ -399,12 +290,14 @@
       const p = chip.getAttribute('data-port');
       portFilter = (p === '全部') ? '' : p;
       refreshPortChips();
-      if (applyFilter) applyFilter();
+      if (applyFilter) applyFilter(true); // 胶囊筛选后回到第 1 页
     });
   }
 
   // 筛选执行：按卸货港归一化精确匹配（tr.v-row 的 data-discharge）
-  applyFilter = function () {
+  // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+  applyFilter = function (resetPage) {
+    if (resetPage === true) curPage = 1;
     const kw = HZData.normalizePort(portFilter);
 
     let visible = 0;
@@ -434,10 +327,11 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach((r, i) => {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
-    syncDetailRows();
+    syncDetailRows(); // 详情行跟随父行显隐
 
     $('pagerTotal').textContent = total;
     $('pgPages').textContent = pages;
@@ -449,13 +343,25 @@
     $('pgLast').disabled = curPage >= pages;
   }
 
+  // 定位指定航次行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被筛选隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    const rows = Array.from(tbody.querySelectorAll('tr.v-row')).filter(r => !r.hidden);
+    const idx = rows.findIndex(r => r.dataset.id === id);
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
+  }
+
   // ===== 行展开状态（详情行跟随父行可见性 + 展开记忆） =====
   let expandedIds = new Set();
 
   function syncDetailRows() {
     tbody.querySelectorAll('tr.detail-row').forEach(d => {
       const parent = tbody.querySelector('tr.v-row[data-id="' + d.dataset.parent + '"]');
-      d.hidden = !parent || parent.hidden || !expandedIds.has(d.dataset.parent);
+      d.hidden = !parent || parent.hidden || parent.style.display === 'none' || !expandedIds.has(d.dataset.parent);
     });
   }
 
@@ -518,6 +424,7 @@
     updateStats();
     const emptyRow = tbody.querySelector('.empty-row');
     if (emptyRow) emptyRow.hidden = voyages.length > 0;
+    refreshPortChips(); // 胶囊筛选器跟随数据刷新（修复初始化不渲染导致筛选不可用）
     if (applyFilter) applyFilter();
   }
 
@@ -680,15 +587,18 @@
     };
   }
 
-  function saveEditor() {
+  async function saveEditor() {
     const data = collectForm();
     if (!data) return;
 
+    let addedId = '';
     if (editingId) {
       const old = voyages.find(v => v.id === editingId);
       if (!old) { showTip('数据已被删除，请刷新页面'); return; }
+      const prev = Object.assign({}, old);   // 回滚快照：保存失败时恢复现场，弹窗保留供重试
       Object.assign(old, data);
       old.updated_at = Date.now();
+      if (!await save()) { Object.assign(old, prev); return; }
     } else {
       data.id = genId();
       data.voyage_code = genCode();
@@ -696,14 +606,18 @@
       data.updated_at = Date.now();
       data.created_by = 'admin';
       voyages.push(data);
+      addedId = data.id;
+      if (!await save()) { voyages.pop(); return; }
     }
 
-    if (!save()) return;
     closeEditor();
     renderAll();
+    locateRowPage(addedId); // 新增航次可能落在其他页，跳转到位
   }
 
   function initEditor() {
+    // 新增航次按钮（banner）：打开空表单抽屉（修复按钮未绑定导致新增功能不可用）
+    $('addVoyageBtn').addEventListener('click', () => openEditor(null));
     $('fMine').addEventListener('change', () => onMineChange(false));
     $('fQuantity').addEventListener('input', syncFreightTotal);
     $('fFreightRate').addEventListener('input', syncFreightTotal);
@@ -718,7 +632,7 @@
 
   // ===== 表格操作：展开 / 推进 / 编辑 / 删除（事件委托） =====
   function initTableActions() {
-    tbody.addEventListener('click', e => {
+    tbody.addEventListener('click', async e => {
       // 行展开：切换详情行（港口现货联动子表）显示
       const expandBtn = e.target.closest('.row-expand');
       if (expandBtn) {
@@ -740,9 +654,10 @@
         if (!next) return;
         if (!confirm('确认将航次 ' + v.voyage_code + '（' + v.vessel_name + '）状态由「' +
           STATUS[v.status] + '」推进为「' + STATUS[next] + '」吗？')) return;
+        const prevStatus = v.status;   // 回滚快照：保存失败时恢复状态
         v.status = next;
         v.updated_at = Date.now();
-        save();
+        if (!await save()) { v.status = prevStatus; return; }
         renderAll();
         return;
       }
@@ -765,22 +680,18 @@
       const removeBtn = e.target.closest('.row-act.remove');
       if (removeBtn) {
         if (!confirm('确认删除航次 ' + v.voyage_code + '（' + v.vessel_name + '）吗？删除后不可恢复。')) return;
+        const prev = voyages.slice();   // 回滚快照：保存失败时恢复现场
         voyages = voyages.filter(x => x.id !== v.id);
-        save();
+        if (!await save()) { voyages = prev; return; }
         renderAll();
       }
     });
   }
 
   // ===== COA 品质证书（Certificate of Analysis，航次级品质单据） =====
-  // 独立存储键 hz_ocean_coas，与航次 1:1 关联（voyage_id），不改动 hz_ocean_voyages 结构
-  const LS_COAS = 'hz_ocean_coas';
-
-  function loadCoas() { return loadJSON(LS_COAS, []); }
+  // 与航次 1:1 关联（voyage_id）；boot 时经 HZDB 从数据库装载，写经 PUT /api/coas 全量替换
   function saveCoas(list) {
-    try {
-      localStorage.setItem(LS_COAS, JSON.stringify(list));
-    } catch (e) { showTip('证书数据保存失败，请检查浏览器存储空间'); }
+    return HZDB.put('coas', list);
   }
 
   // 数值展示：保留三位小数千分位（与单据原值一致）；空值显示 —
@@ -789,34 +700,7 @@
     return Number(n).toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
   }
 
-  // 首次打开预置力拓样例证书（数据来源：Rio Tinto Certificate of Analysis #810190245）
-  function seedCoas() {
-    if (loadJSON(LS_COAS, null) !== null) return;
-    const matched = voyages.find(v => v.vessel_name === 'G.P. ZAFIRAKIS');
-    saveCoas([{
-      id: 'coa' + Date.now().toString(36),
-      voyage_id: matched ? matched.id : '',
-      certificate_no: '810190245',
-      issue_date: '2026-08-18',
-      country_of_origin: 'Australia（澳大利亚）',
-      bl_date: '2026-08-18',
-      shipment_no: '416919',
-      vessel_name: 'G.P. ZAFIRAKIS',
-      port_of_loading: 'DAMPIER, WESTERN AUSTRALIA（丹皮尔港）',
-      port_of_discharge: 'MAIN PORT(S) CHINA（中国主要港口）',
-      goods: 'PILBARA BLEND FINES（PB粉）',
-      wet_tons: 175795.000,
-      dry_tons: 160806.312,
-      moisture: 8.640,
-      physical_63mm: 12.689,
-      fe: 61.120, p: 0.106, s: 0.018, sio2: 4.150, al2o3: 2.360, loi: 5.230,
-      remark: '签发方：Rio Tinto Commercial Pte. Ltd.（新加坡）',
-      created_at: Date.now(),
-      updated_at: Date.now()
-    }]);
-  }
-
-  let coas = loadCoas();   // 证书集合（模块级，renderRow 中用于按钮状态标记）
+  let coas = [];   // 证书集合（模块级，renderRow 中用于按钮状态标记；boot 时从数据库装载）
 
   // 按 voyage_id 查找航次对应证书
   function findCoaByVoyage(vid) {
@@ -956,7 +840,7 @@
   // 成分类数值校验区间：0-100
   function validPct(n) { return n === null || (Number.isFinite(n) && n >= 0 && n <= 100); }
 
-  function saveCoaEditor() {
+  async function saveCoaEditor() {
     const vid = $('cVoyage').value;
     const certNo = $('cCertificateNo').value.trim();
     const issueDate = $('cIssueDate').value;
@@ -990,6 +874,7 @@
     const now = Date.now();
     if (coaEditorTargetId) {
       const coa = coas.find(c => c.id === coaEditorTargetId);
+      const prev = Object.assign({}, coa);   // 回滚快照：保存失败时恢复现场，弹窗保留供重试
       Object.assign(coa, {
         voyage_id: vid, certificate_no: certNo, issue_date: issueDate,
         country_of_origin: $('cOrigin').value.trim(), bl_date: $('cBlDate').value,
@@ -999,8 +884,9 @@
         fe: fe, p: p, s: s, sio2: sio2, al2o3: al2o3, loi: loi,
         remark: $('cRemark').value.trim(), updated_at: now
       });
+      if (!await saveCoas(coas)) { Object.assign(coa, prev); return; }
     } else {
-      coas.push({
+      const rec = {
         id: 'coa' + now.toString(36),
         voyage_id: vid, certificate_no: certNo, issue_date: issueDate,
         country_of_origin: $('cOrigin').value.trim(), bl_date: $('cBlDate').value,
@@ -1010,10 +896,11 @@
         fe: fe, p: p, s: s, sio2: sio2, al2o3: al2o3, loi: loi,
         remark: $('cRemark').value.trim(),
         created_at: now, updated_at: now
-      });
+      };
+      coas.push(rec);
+      if (!await saveCoas(coas)) { coas.pop(); return; }
     }
 
-    saveCoas(coas);
     closeCoaEditor();
     renderAll();   // 刷新列表按钮的已登记标记
     showTip('品质证书已保存');
@@ -1034,12 +921,13 @@
       const coa = coas.find(c => c.id === coaViewEditingId);
       if (coa) openCoaEditor(coa);
     });
-    $('coaViewDelete').addEventListener('click', () => {
+    $('coaViewDelete').addEventListener('click', async () => {
       const coa = coas.find(c => c.id === coaViewEditingId);
       if (!coa) return;
       if (!confirm('确认删除证书「' + coa.certificate_no + '」吗？删除后不可恢复。')) return;
+      const prev = coas.slice();   // 回滚快照：保存失败时恢复现场
       coas = coas.filter(c => c.id !== coa.id);
-      saveCoas(coas);
+      if (!await saveCoas(coas)) { coas = prev; return; }
       closeCoaView();
       renderAll();
       showTip('品质证书已删除');
@@ -1067,22 +955,34 @@
     : '<td class="spot-num">' + esc(v) + '</td>';
 
 
-  // ===== 初始化 =====
-  seedVoyages();          // 首次打开预置示例航次（关联五大矿山）
-  seedCoas();             // 首次打开预置力拓样例品质证书（COA）
-  seedSpots();            // 首次打开预置港口现货参考数据（经 HZData 落库）
-  spots = HZData.list('oceanSpots');   // 从统一数据源恢复现货列表（已归一化）
+  // ===== 初始化（boot：HZDB 就绪后装载数据并渲染） =====
+  async function boot() {
+    await HZDB.ready();
 
-  // 填充卸货港快捷选项（datalist，经 HZData 字典）
-  const disPortList = document.getElementById('disPortOptions');
-  if (disPortList) {
-    disPortList.innerHTML = DISCHARGE_PORT_DICT.map(p => '<option value="' + esc(p) + '"></option>').join('');
+    // 装载航次 / 现货 / 证书（HZDB 缓存，来源 /api/bootstrap）
+    voyages = HZDB.get('voyages') || [];
+    if (!Array.isArray(voyages)) voyages = [];
+    spots = HZData.list('oceanSpots');   // 现货列表经 HZData 归一化（id/normalized_port/vessel_clean）
+    coas = HZDB.get('coas') || [];
+
+    // 字典派生（依赖 HZDB 缓存，就绪后构建）
+    (HZData.dict('mineLoadPorts') || []).forEach(d => {
+      MINE_LOAD_PORTS[d.mine] = { port: d.port, country: d.country, distance_note: d.note };
+    });
+    DISCHARGE_PORT_DICT = (HZData.dict('dischargePorts') || []).map(d => d.name);
+
+    // 填充卸货港快捷选项（datalist，经 HZData 字典）
+    const disPortList = document.getElementById('disPortOptions');
+    if (disPortList) {
+      disPortList.innerHTML = DISCHARGE_PORT_DICT.map(p => '<option value="' + esc(p) + '"></option>').join('');
+    }
+
+    initPortChips();
+    initEditor();
+    initTableActions();
+    initCoa();              // COA 品质证书抽屉事件绑定
+    bindPager();
+    renderAll();            // 从数据库缓存恢复数据并渲染（含现货联动子表）
   }
-
-  initPortChips();
-  initEditor();
-  initTableActions();
-  initCoa();              // COA 品质证书抽屉事件绑定
-  bindPager();
-  renderAll();            // 启动时从 localStorage 恢复数据并渲染（含现货联动子表）
+  boot();
 })();

@@ -1,17 +1,7 @@
 // ===== 首页逻辑：真实数据聚合 + 模块入口 + 趋势图 + 最新动态 =====
-// 数据层沿用全站约定：localStorage 键名与各模块保持一致（只读，不写入）
+// 数据层：HZDB 数据基座（bootstrap 全量缓存）只读聚合，本页不写入
 (function () {
   'use strict';
-
-  // localStorage 安全读取（与各模块约定一致）
-  function loadJSON(key, fallback) {
-    try {
-      const v = JSON.parse(localStorage.getItem(key));
-      return v == null ? fallback : v;
-    } catch (e) {
-      return fallback;
-    }
-  }
 
   // XSS 防护：动态文案统一转义
   function esc(s) {
@@ -269,26 +259,22 @@
     });
   }
 
-  // ===== 初始化 =====
-  function init() {
+  // ===== 异步启动：待数据基座就绪后装载共享数据并渲染 =====
+  async function boot() {
+    await HZDB.ready();
     renderGreet();
 
     // 数据层只读聚合；异常时按空数据处理，保证首页可渲染
-    const contracts = loadJSON('hz_contracts', []);
-    const mines = loadJSON('hz_mines', []);
-    const voyages = loadJSON('hz_ocean_voyages', []);
     const arr = x => Array.isArray(x) ? x : [];
+    const contracts = arr(HZDB.get('contracts'));
+    const mines = arr(HZDB.get('mines'));
+    const voyages = arr(HZDB.get('voyages'));
 
-    renderKpis(arr(contracts), arr(mines), arr(voyages));
+    renderKpis(contracts, mines, voyages);
     renderModules();
-    renderTrend(arr(contracts));
-    renderActivity(arr(contracts), arr(mines), arr(voyages));
+    renderTrend(contracts);
+    renderActivity(contracts, mines, voyages);
     bindKpiNav();
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  boot().catch(err => console.error('首页初始化失败：', err));
 })();

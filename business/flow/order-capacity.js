@@ -1,4 +1,4 @@
-// ===== order-capacity 模块脚本（业务总览 · 运力方案页）=====
+// ===== order-capacity 模块脚本（订单管理 · 运力方案页）=====
 // 复刻 hongze_demo CapacityFormPage：铁路直达 / 公铁联运 / 公路直达三通道运力编辑
 // + 四态货物分配指标 + 运输组织方案 PDF 报告 + 完成方案浮层
 // 依赖 flow-data.js 提供的共享数据层
@@ -6,7 +6,7 @@
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {
@@ -65,9 +65,10 @@
     footer: $('footer'),
     btnPrev: $('btn-prev'),
     btnDetail: $('btn-detail'),
+    btnGotoDetail: $('btn-goto-detail'),
+    btnGotoPlan: $('btn-goto-plan'),
     doneMask: $('done-mask'),
     doneMono: $('done-mono'),
-    btnGotoDetail: $('btn-goto-detail'),
     rptSub: $('rpt-sub'),
     rptOrderKv: $('rpt-order-kv'),
     rptPortBlock: $('rpt-port-block'),
@@ -82,12 +83,12 @@
   };
 
   const id = new URLSearchParams(location.search).get('id') || '';
-  const order = id ? data.getOrder(id) : undefined;
+  let order = null;   // 当前流程订单（loadData 装载）
 
-  // ===== 订单不存在：仅展示空状态 =====
-  if (!order) {
-    els.missing.hidden = false;
-    return;
+  // 装载数据：订单 + 已有运力记录（须在 HZDB.ready 之后调用）
+  function loadData() {
+    order = id ? data.getOrder(id) : undefined;
+    loadCapacities();
   }
 
   /* ==================== 通用提示 ==================== */
@@ -113,8 +114,9 @@
   let autoSaveTimer = null;
   function scheduleAutoSave() {
     clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      saveAll();
+    autoSaveTimer = setTimeout(async () => {
+      // 落库失败（HZDB 已 toast）：不提示「已保存」，待下次输入重试
+      if (!await saveAll()) return;
       showSaved();
     }, 800);
   }
@@ -470,7 +472,7 @@
   /* ==================== 保存 / 完成 / 报告 ==================== */
 
   // 保存全部通道运力：整体替换该订单运力记录（含 id，供运输方案批次按 capacityId 关联）
-  function saveAll() {
+  async function saveAll() {
     const list = [];
     directs.forEach(r => list.push({
       id: r.id, orderId: id, channelType: 'rail_direct',
@@ -494,13 +496,14 @@
       idleCapacity: Number(r.idleCapacity) || 0, plannedQty: Number(r.plannedQty) || 0,
       price: Number(r.price) || 0, leadTime: Number(r.leadTime) || 0, carrier: r.carrier,
     }));
-    data.upsertCapacities(id, list);
+    return data.upsertCapacities(id, list);
   }
 
   // 完成方案：保存 + 状态更新为待确认 + 展示完成浮层（导出由浮层内"下载 PDF"触发）
-  function completePlan() {
-    saveAll();
-    data.updateOrderStatus(id, 'pending_confirm');
+  // （写库失败 HZDB 已 toast：不弹完成浮层，内存现场保留供重试）
+  async function completePlan() {
+    if (!await saveAll()) return;
+    if (!await data.updateOrderStatus(id, 'pending_confirm')) return;
     els.doneMask.hidden = false;
   }
 
@@ -601,97 +604,114 @@
     window.print();
   }
 
-  /* ==================== 事件绑定 ==================== */
+  /* ==================== 事件绑定与初始化 ==================== */
 
-  // 数字字段输入：直接更新模型（不重渲染，避免输入中断）
-  document.addEventListener('input', e => {
-    const input = e.target;
-    if (!input.matches || !input.matches('input[type="number"][data-f]')) return;
-    const rowEl = input.closest('[data-row]');
-    if (!rowEl) return;
-    setRow(rowEl.dataset.row, input.dataset.f, input.value);
-  });
-
-  // 全局点击委托：最前统一收起打开的搜索下拉面板（面板外点击）
-  document.addEventListener('click', e => {
-    document.querySelectorAll('.ss-panel.open').forEach(panel => {
-      if (!panel.parentElement.contains(e.target)) panel.classList.remove('open');
+  // 绑定事件、填充摘要并完成首次渲染（boot 中 loadData 之后调用）
+  function initPage() {
+    // 数字字段输入：直接更新模型（不重渲染，避免输入中断）
+    document.addEventListener('input', e => {
+      const input = e.target;
+      if (!input.matches || !input.matches('input[type="number"][data-f]')) return;
+      const rowEl = input.closest('[data-row]');
+      if (!rowEl) return;
+      setRow(rowEl.dataset.row, input.dataset.f, input.value);
     });
 
-    // 删除路线
-    const del = e.target.closest('[data-del]');
-    if (del) {
-      const rowEl = del.closest('[data-row]');
-      const found = rowById(rowEl.dataset.row);
-      if (found) removeRow(found.kind, found.row.id);
+    // 全局点击委托：最前统一收起打开的搜索下拉面板（面板外点击）
+    document.addEventListener('click', e => {
+      document.querySelectorAll('.ss-panel.open').forEach(panel => {
+        if (!panel.parentElement.contains(e.target)) panel.classList.remove('open');
+      });
+
+      // 删除路线
+      const del = e.target.closest('[data-del]');
+      if (del) {
+        const rowEl = del.closest('[data-row]');
+        const found = rowById(rowEl.dataset.row);
+        if (found) removeRow(found.kind, found.row.id);
+        return;
+      }
+
+      // 添加路线
+      const add = e.target.closest('[data-add]');
+      if (add) {
+        addRow(add.dataset.add);
+        return;
+      }
+
+      // 折叠面板开合
+      const collapse = e.target.closest('[data-collapse]');
+      if (collapse) {
+        collapse.closest('.flow-collapse').classList.toggle('open');
+        return;
+      }
+
+      // 完成方案
+      if (e.target.closest('.js-complete')) {
+        completePlan();
+        return;
+      }
+
+      // 下载 PDF
+      if (e.target.closest('.js-pdf')) {
+        downloadPdf();
+        return;
+      }
+
+      // 完成浮层：继续修改
+      if (e.target.closest('.js-keep')) {
+        els.doneMask.hidden = true;
+        return;
+      }
+
+      // 完成浮层：点击遮罩关闭
+      if (e.target === els.doneMask) {
+        els.doneMask.hidden = true;
+      }
+    });
+
+    // 头部与浮层摘要：订单号 + 货物名称 · 总量
+    els.headMono.textContent = order.id;
+    els.doneMono.textContent = order.id;
+    els.headCargo.textContent = (order.cargoName ? order.cargoName + ' · ' : '') + data.fmtNum(order.cargoTotal) + ' 吨';
+
+    // 步骤条与底部导航链接
+    els.btnPrev.href = 'order-port.html?id=' + encodeURIComponent(id);
+    els.stepBackPort.href = 'order-port.html?id=' + encodeURIComponent(id);
+    els.stepBackForm.href = 'order-form.html?id=' + encodeURIComponent(id);
+    els.btnDetail.href = 'order-detail.html?id=' + encodeURIComponent(id);
+    // 完成浮层入口：订单详情 / 第四环节运输方案（href 需带订单 id）
+    els.btnGotoDetail.href = 'order-detail.html?id=' + encodeURIComponent(id);
+    els.btnGotoPlan.href = 'order-plan.html?id=' + encodeURIComponent(id);
+
+    // 渲染三通道列表 + 指标
+    renderList('direct');
+    renderList('transit');
+    renderList('road');
+    refreshMetrics();
+
+    // 按订单存在性展示内容区
+    els.missing.hidden = true;
+    els.steps.hidden = false;
+    els.head.hidden = false;
+    els.metrics.hidden = false;
+    els.railSection.hidden = false;
+    els.roadSection.hidden = false;
+    els.footer.hidden = false;
+  }
+
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();
+
+    // 订单不存在：仅展示空状态，不绑定后续事件
+    if (!order) {
+      els.missing.hidden = false;
       return;
     }
 
-    // 添加路线
-    const add = e.target.closest('[data-add]');
-    if (add) {
-      addRow(add.dataset.add);
-      return;
-    }
-
-    // 折叠面板开合
-    const collapse = e.target.closest('[data-collapse]');
-    if (collapse) {
-      collapse.closest('.flow-collapse').classList.toggle('open');
-      return;
-    }
-
-    // 完成方案
-    if (e.target.closest('.js-complete')) {
-      completePlan();
-      return;
-    }
-
-    // 下载 PDF
-    if (e.target.closest('.js-pdf')) {
-      downloadPdf();
-      return;
-    }
-
-    // 完成浮层：继续修改
-    if (e.target.closest('.js-keep')) {
-      els.doneMask.hidden = true;
-      return;
-    }
-
-    // 完成浮层：点击遮罩关闭
-    if (e.target === els.doneMask) {
-      els.doneMask.hidden = true;
-    }
-  });
-
-  /* ==================== 初始化填充 ==================== */
-
-  // 头部与浮层摘要：订单号 + 货物名称 · 总量
-  els.headMono.textContent = order.id;
-  els.doneMono.textContent = order.id;
-  els.headCargo.textContent = (order.cargoName ? order.cargoName + ' · ' : '') + data.fmtNum(order.cargoTotal) + ' 吨';
-
-  // 步骤条与底部导航链接
-  els.btnPrev.href = 'order-port.html?id=' + encodeURIComponent(id);
-  els.stepBackPort.href = 'order-port.html?id=' + encodeURIComponent(id);
-  els.stepBackForm.href = 'order-form.html?id=' + encodeURIComponent(id);
-  els.btnDetail.href = 'order-detail.html?id=' + encodeURIComponent(id);
-  els.btnGotoDetail.href = 'order-detail.html?id=' + encodeURIComponent(id);
-
-  // 加载运力数据并渲染三通道列表 + 指标
-  loadCapacities();
-  renderList('direct');
-  renderList('transit');
-  renderList('road');
-  refreshMetrics();
-
-  // 按订单存在性展示内容区
-  els.missing.hidden = true;
-  els.steps.hidden = false;
-  els.head.hidden = false;
-  els.metrics.hidden = false;
-  els.railSection.hidden = false;
-  els.roadSection.hidden = false;
-  els.footer.hidden = false;
+    initPage();
+  }
+  boot().catch(err => console.error('运力方案页初始化失败：', err));
 })();

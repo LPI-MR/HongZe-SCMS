@@ -1,4 +1,4 @@
-// ===== order-plan 模块脚本（业务总览 · 运输方案页）=====
+// ===== order-plan 模块脚本（订单管理 · 运输方案页）=====
 // 复刻 hongze_demo PlanReportPage：订单 / 港口 / 铁路 / 公路 / 运输方案五节报告
 // + 批次可编辑表（编辑 / 保存双态切换）+ 分配摘要与汇总指标 + PDF 打印导出
 // 依赖 flow-data.js 提供的共享数据层
@@ -6,7 +6,7 @@
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {
@@ -75,22 +75,23 @@
   };
 
   const id = new URLSearchParams(location.search).get('id') || '';
-  const order = id ? data.getOrder(id) : undefined;
+  let order = null;     // 当前流程订单（loadData 装载）
+  let savedPlan = null; // 已保存方案（loadData 装载）
+  let batches = [];     // 批次编辑模型（loadData 装载；批次深拷贝，避免直接改动存储）
+  let caps = [];        // 该订单运力通道（批次通道下拉与联动来源）
+  let editing = false;  // 编辑态开关（无方案时初始即编辑态）
 
-  // ===== 订单不存在：仅展示空状态 =====
-  if (!order) {
-    els.missing.hidden = false;
-    return;
+  // 装载数据：订单 + 已存方案 + 运力（须在 HZDB.ready 之后调用）
+  function loadData() {
+    order = id ? data.getOrder(id) : undefined;
+
+    savedPlan = data.getPlan(id);
+    batches = savedPlan && Array.isArray(savedPlan.batches)
+      ? savedPlan.batches.map(b => ({ ...b }))
+      : [];
+    caps = data.listCapacities(id);
+    editing = !savedPlan;
   }
-
-  // 已保存方案（批次深拷贝，避免直接改动存储）；无方案时初始即编辑态
-  const savedPlan = data.getPlan(id);
-  const batches = savedPlan && Array.isArray(savedPlan.batches)
-    ? savedPlan.batches.map(b => ({ ...b }))
-    : [];
-  // 该订单运力通道（批次通道下拉与联动来源）
-  const caps = data.listCapacities(id);
-  let editing = !savedPlan;
 
   /* ==================== 保存提示 ==================== */
 
@@ -243,8 +244,9 @@
   }
 
   // 保存方案：写回存储 + 状态保持待确认 + 回到报告态
-  function savePlan() {
-    data.upsertPlan({
+  // （写库失败 HZDB 已 toast：保留编辑态现场供重试，不切换报告态）
+  async function savePlan() {
+    if (!await data.upsertPlan({
       orderId: id,
       batches: batches.map(b => ({
         batchNo: b.batchNo,
@@ -255,8 +257,8 @@
         remark: b.remark || '',
       })),
       updatedAt: new Date().toISOString(),
-    });
-    data.updateOrderStatus(id, 'pending_confirm');
+    })) return;
+    if (!await data.updateOrderStatus(id, 'pending_confirm')) return;
     order.status = 'pending_confirm';
     editing = false;
     renderBatches();
@@ -482,42 +484,40 @@
     window.print();
   }
 
-  /* ==================== 事件委托 ==================== */
-
-  // 批次数字字段行内编辑
-  document.addEventListener('input', e => {
-    const t = e.target;
-    if (!t.matches || !t.matches('[data-bf]')) return;
-    const tr = t.closest('[data-bidx]');
-    if (!tr) return;
-    setBatch(Number(tr.dataset.bidx), t.dataset.bf, t.value);
-  });
-
-  // 批次通道切换（联动时效 / 运价）
-  document.addEventListener('change', e => {
-    const t = e.target;
-    if (!t.matches || !t.matches('[data-bch]')) return;
-    const tr = t.closest('[data-bidx]');
-    if (!tr) return;
-    onChannelChange(Number(tr.dataset.bidx), t.value);
-  });
-
-  document.addEventListener('click', e => {
-    const del = e.target.closest('[data-bdel]');
-    if (del) {
-      const tr = del.closest('[data-bidx]');
-      if (tr) removeBatch(Number(tr.dataset.bidx));
-      return;
-    }
-    if (e.target.closest('#btn-add-batch')) { addBatch(); return; }
-    if (e.target.closest('.js-edit')) { enterEdit(); return; }
-    if (e.target.closest('.js-save')) { savePlan(); return; }
-    if (e.target.closest('.js-pdf')) { downloadPdf(); return; }
-  });
-
-  /* ==================== 初始化 ==================== */
+  /* ==================== 事件委托与初始化 ==================== */
 
   function init() {
+    // 批次数字字段行内编辑
+    document.addEventListener('input', e => {
+      const t = e.target;
+      if (!t.matches || !t.matches('[data-bf]')) return;
+      const tr = t.closest('[data-bidx]');
+      if (!tr) return;
+      setBatch(Number(tr.dataset.bidx), t.dataset.bf, t.value);
+    });
+
+    // 批次通道切换（联动时效 / 运价）
+    document.addEventListener('change', e => {
+      const t = e.target;
+      if (!t.matches || !t.matches('[data-bch]')) return;
+      const tr = t.closest('[data-bidx]');
+      if (!tr) return;
+      onChannelChange(Number(tr.dataset.bidx), t.value);
+    });
+
+    document.addEventListener('click', e => {
+      const del = e.target.closest('[data-bdel]');
+      if (del) {
+        const tr = del.closest('[data-bidx]');
+        if (tr) removeBatch(Number(tr.dataset.bidx));
+        return;
+      }
+      if (e.target.closest('#btn-add-batch')) { addBatch(); return; }
+      if (e.target.closest('.js-edit')) { enterEdit(); return; }
+      if (e.target.closest('.js-save')) { savePlan(); return; }
+      if (e.target.closest('.js-pdf')) { downloadPdf(); return; }
+    });
+
     els.headMono.textContent = order.id;
     updateHeadStatus();
 
@@ -545,5 +545,18 @@
     els.footer.hidden = false;
   }
 
-  init();
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();
+
+    // 订单不存在：仅展示空状态，不绑定后续事件
+    if (!order) {
+      els.missing.hidden = false;
+      return;
+    }
+
+    init();
+  }
+  boot().catch(err => console.error('运输方案页初始化失败：', err));
 })();

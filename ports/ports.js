@@ -1,146 +1,10 @@
 // ===== 港口信息管理模块脚本 =====
 // 列表页（ports.html）：检索卡片 + 台账卡片（搜索 / 分页 / 导出 / 新增 / 编辑 / 删除）
 // 详情页（ports-detail.html?id=xxx）：港口概览 + 指标 + 信息卡片 + 港区分部（✎ 编辑）
-// 数据持久化：localStorage（hz_ports_data），{__version, list} 包装格式，版本不匹配自动回种子
+// 数据持久化到 PostgreSQL：读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/ports 全量替换
+// （港口地图自定义点位 PM_CUSTOM_KEY 为纯 UI 状态，仍保留 localStorage）
 (function () {
   'use strict';
-
-  var STORAGE_KEY = 'hz_ports_data';
-  var VERSION = 'v17';   // v17：既有通道新增公铁联运邢台南站线路（93 元/吨）
-
-  // ===== 种子数据（黄骅港 / 天津港）=====
-  var SEED = [
-    {
-      id: 'port-huanghua',
-      name: '黄骅港',
-      subtitle: '河北省沧州市·渤海沿岸',
-      photo: '/ports/assets/huanghua-port.png',
-      intro: '津冀沿海港口群的重要组成部分，我国西煤东运、北煤南运重要枢纽港口，国家能源运输大通道的关键节点',
-      metrics: [
-        { label: '年吞吐量', value: '3.66亿 / 119万标箱', unit: '', note: '数据时间：2025年' },
-        { label: '年设计通过能力', value: '2.89亿 / 95万标箱', unit: '', note: '数据时间：2025年' },
-        { label: '泊位数量', value: '47', unit: '个', note: '数据时间：2025年' },
-        { label: '最大泊位吨级', value: '20', unit: '万吨' }
-      ],
-      basicInfo: [
-        { label: '港口名称', value: '黄骅港' },
-        { label: '所属地区', value: '河北省沧州市黄骅市' },
-        { label: '始建时间', value: '1984年' },
-        { label: '行政管理部门', value: '沧州市海洋和港航管理局' },
-        { label: '主营业务货类', value: '煤炭、矿石、集装箱、液体化工等' }
-      ],
-      capacity: [
-        { label: '集疏港铁路', value: '朔黄铁路、邯黄铁路、沧港铁路' },
-        { label: '集疏港公路', value: '黄石高速、荣乌高速、秦滨高速' }
-      ],
-      zones: [
-        {
-          name: '综合港区',
-          location: '黄骅港最北端',
-          positioning: '以集装箱、粮食、滚装、成品油、液体化工品及其他散杂货运输为主，承担临港工业及腹地物资中转运输、综合物流服务等功能，是黄骅港的大型综合性港区。',
-          facilities: '建有集装箱码头、滚装码头、通用散杂货码头、粮食码头及液体化工品码头等。'
-        },
-        {
-          name: '散货港区',
-          location: '综合港区以南、煤炭港区以北',
-          positioning: '以铁矿石、原油等大宗散货物资运输为主，兼顾煤炭、成品油、液化天然气等其他散货运输，主要建设大型专业化散货码头，满足临港工业和腹地散货运输需求。',
-          facilities: '建有大型专业化矿石码头（如20万吨级、25万吨级矿石泊位）、煤炭码头、原油码头及通用散货码头等。'
-        },
-        {
-          name: '煤炭港区',
-          location: '散货港区以南、河口港区以北',
-          positioning: '黄骅港的核心能源港区，主要承担煤炭下水（北煤南运）功能，是黄骅港煤炭运输的保供核心，为国家级能源运输大通道的关键节点。',
-          facilities: '建有大型煤炭专业化泊位（如5万吨级、10万吨级煤炭泊位）及相应的煤炭堆场、翻车机房等后方配套设施。'
-        },
-        {
-          name: '河口港区',
-          location: '黄骅港最南端（宣惠河口）',
-          positioning: '为补充性港区，主要承担煤炭、建材及部分散杂货运输，因受泥沙淤积影响，船舶靠泊受限，发展空间相对有限。',
-          facilities: '建有煤炭泊位、建材泊位及部分通用散杂货泊位等。'
-        }
-      ],
-      channels: [
-        { channel: '黄骅港铁路直达', route: '黄骅港经邯黄铁路、沧港铁路、京沪、京广铁路到达武安保税', via: '—', cost: '91.6 元/吨' },
-        { channel: '黄骅港公铁联运', route: '黄骅港经邯黄铁路到达曹庄镇站后经汽运运输至武安保税', via: '曹庄镇站', cost: '87 元/吨' },
-        { channel: '黄骅港公铁联运', route: '黄骅港经邯黄铁路到达邢台南站后经汽运运输至武安保税', via: '邢台南站', cost: '93 元/吨' },
-        { channel: '黄骅港汽运直达', route: '黄骅港汽运运输至武安保税', via: '—', cost: '81 元/吨' }
-      ]
-    },
-    {
-      id: 'port-tianjin',
-      name: '天津港',
-      subtitle: '天津市滨海新区·渤海沿岸',
-      photo: '/ports/assets/tianjin-port.png',
-      intro: '京津冀的海上门户，是中蒙俄经济走廊东部起点、新亚欧大陆桥重要节点、21世纪海上丝绸之路战略支点',
-      metrics: [
-        { label: '年吞吐量', value: '5.95亿 / 2403万标箱', unit: '', note: '数据时间：2025年' },
-        { label: '年设计通过能力', value: '—', unit: '', note: '数据时间：2025年' },
-        { label: '泊位数量', value: '213', unit: '个', note: '数据时间：2025年' },
-        { label: '最大泊位吨级', value: '30', unit: '万吨' }
-      ],
-      basicInfo: [
-        { label: '港口名称', value: '天津港' },
-        { label: '所属地区', value: '天津市滨海新区' },
-        { label: '始建时间', value: '1951年' },
-        { label: '行政管理部门', value: '天津港股份有限公司' },
-        { label: '主营业务货类', value: '集装箱、铁矿石、石油及制品、钢材、煤炭等' }
-      ],
-      capacity: [
-        { label: '集疏港铁路', value: '黄万铁路、朔黄铁路、西南环线、新港北铁路集装箱中心站' },
-        { label: '集疏港公路', value: '滨保高速、京津高速、京津塘高速、津晋高速、京石高速、滨海大道、塘承高速、秦滨高速、长深高速' }
-      ],
-      zones: [
-        {
-          name: '北疆港区',
-          location: '天津港主航道以北，北至永定新河口，西至海防路，东至东疆港区。',
-          positioning: '天津港综合性主港区、核心主力集装箱港区，兼顾商品汽车、件杂货，是华北集装箱进出口最主要作业区。',
-          facilities: '天津港集装箱码头、国际联盟码头、欧亚国际码头、C段智能化集装箱码头（全球首个智慧零碳码头）及北疆集装箱物流中心。'
-        },
-        {
-          name: '东疆港区',
-          location: '北疆港区以东，天津港主航道以东区域。',
-          positioning: '集装箱+邮轮母港，天津航运服务业高地，天津自贸区核心板块，重点发展航运金融、融资租赁、跨境电商等高端航运服务。',
-          facilities: '太平洋集装箱码头、天津国际邮轮母港、东疆保税港区、大冷链物流园区。'
-        },
-        {
-          name: '南疆港区',
-          location: '天津港主航道以南，北至海河口，为东西长、南北窄的条状人工岛。',
-          positioning: '国家能源、大宗原材料中转港区（散货能源港），以煤炭、铁矿石、原油、LNG等能源类货物中转为主，以铁路、管道集疏运为主。',
-          facilities: '天津港焦炭码头、天津港远航矿石码头、天津港散货物流中心。'
-        },
-        {
-          name: '大沽口港区',
-          location: '海河入海口南侧，大沽口区域。',
-          positioning: '临港工业配套港区（工业港），服务临港经济区，以钢铁、粮食、矿建、液体化工品、重大件等运输为主，兼顾部分中转运输。',
-          facilities: '临港工业区配套码头、天津港汇盛码头等。'
-        },
-        {
-          name: '高沙岭港区',
-          location: '天津港北部，滨海新区南部。',
-          positioning: '远期集装箱拓展区，承接北疆外迁的杂货、散货，服务后方临港制造业，远期预留集装箱发展空间。',
-          facilities: '产业配套码头、预留集装箱码头空间。'
-        },
-        {
-          name: '大港港区（南港片区）',
-          location: '天津港南部，南港工业区配套区域。',
-          positioning: '化工专用港区，服务南港石化新材料产业园，以油品、LNG、液体化工品、部分干散货运输为主。',
-          facilities: '南港化工配套码头、LNG接收站、油品及液体化工品专用码头。'
-        },
-        {
-          name: '北塘港区（含中心渔港）',
-          location: '天津港北部，北塘区域。',
-          positioning: '城市配套型港区，货运逐步收缩，北区以冷链物流运输（国家骨干冷链基地）为主，南区以滨海旅游客运、休闲文旅为主。',
-          facilities: '冷链物流园区、旅游客运码头。'
-        },
-        {
-          name: '海河港区',
-          location: '海河下游，海河二道闸以下河段（海河两岸）。',
-          positioning: '城市内河港区，货运逐步退出，未来主要发展内河观光旅游客运，兼顾城市短途工业物料、小型临港码头。',
-          facilities: '小型临港码头、旅游客运码头。'
-        }
-      ]
-    }
-  ];
 
   // ===== 状态 =====
   var ports = [];
@@ -203,29 +67,15 @@
   else document.addEventListener('navbar:loaded', setActiveNav, { once: true });
 
   // ===== 数据读写 =====
+  // 保存：全量写回数据库（PUT /api/ports）；失败由 HZDB toast 提示，页面内存保留可重试
   function saveData() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ __version: VERSION, list: ports }));
-    } catch (e) {
-      toast('保存失败：浏览器本地存储不可用');
-    }
+    return HZDB.put('ports', ports);
   }
 
+  // 读取：boot 完成后从 HZDB 缓存同步取（未装载时为空数组兜底）
   function loadData() {
-    var stored = null;
-    try { stored = localStorage.getItem(STORAGE_KEY); } catch (e) { /* 忽略 */ }
-    if (stored) {
-      try {
-        var parsed = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed.list) && parsed.__version === VERSION) {
-          ports = parsed.list;
-          return;
-        }
-      } catch (e) { /* 解析失败则重新写入种子数据 */ }
-    }
-    // 版本不匹配或无缓存：写入种子数据（副本，避免污染 SEED）
-    ports = JSON.parse(JSON.stringify(SEED));
-    saveData();
+    var list = HZDB.get('ports');
+    ports = Array.isArray(list) ? list : [];
   }
 
   // ============================================================
@@ -549,6 +399,7 @@
   var pmInitedFor = null;     // 已初始化的地图容器元素（重渲染后重新初始化）
 
   // 可编辑港口的自绘数据持久化：{ [港口名]: { added: [{name,desc,area}], removed: [基础区域索引], berthPos: { 码头/站点名: [lat,lng] } } }
+  // 纯 UI 可视化状态（地图自绘标注，非业务台账数据），保留 localStorage，不在 DB 改造范围
   var PM_CUSTOM_KEY = 'hz_port_map_custom';
   function pmCustomAll() {
     try { return JSON.parse(localStorage.getItem(PM_CUSTOM_KEY)) || {}; }
@@ -904,7 +755,7 @@
     p[key] = p[key] || [];
     var body = '<div id="f-kv-rows">' + p[key].map(kvRowHTML).join('') + '</div>'
       + '<button class="form-add" id="f-kv-add">＋ 添加字段</button>';
-    openModal(title, body, function () {
+    openModal(title, body, async function () {
       var rows = [];
       document.querySelectorAll('#f-kv-rows .form-kv-row').forEach(function (row) {
         var label = row.querySelector('.f-label').value.trim();
@@ -912,7 +763,7 @@
         if (label || value) rows.push({ label: label, value: value });
       });
       p[key] = rows;
-      saveData();
+      if (!await saveData()) return;
       renderDetail();
       toast(title + '已更新');
     });
@@ -939,7 +790,7 @@
     }
     var body = '<div id="f-zone-rows">' + p.zones.map(zoneRow).join('') + '</div>'
       + '<button class="form-add" id="f-zone-add">＋ 添加港区</button>';
-    openModal('编辑港区分部', body, function () {
+    openModal('编辑港区分部', body, async function () {
       var rows = [];
       document.querySelectorAll('#f-zone-rows .form-zone-row').forEach(function (row) {
         var name = row.querySelector('.z-name').value.trim();
@@ -952,7 +803,7 @@
         });
       });
       p.zones = rows;
-      saveData();
+      if (!await saveData()) return;
       renderDetail();
       toast('港区分部已更新');
     });
@@ -1021,7 +872,9 @@
     var nameInput = document.getElementById('searchName');
     var locInput = document.getElementById('searchLocation');
 
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       var keywords = (nameInput.value || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
       var loc = (locInput.value || '').trim().toLowerCase();
 
@@ -1050,11 +903,11 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
     form.addEventListener('reset', function () {
-      requestAnimationFrame(function () { applyFilter(); });
+      requestAnimationFrame(function () { applyFilter(true); });
     });
   }
 
@@ -1071,8 +924,9 @@
     if (curPage < 1) curPage = 1;
 
     var start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach(function (r, i) {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     $('#pagerTotal').textContent = total;
@@ -1083,6 +937,18 @@
     $('#pgPrev').disabled = curPage <= 1;
     $('#pgNext').disabled = curPage >= pages;
     $('#pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定港口行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    var rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)')).filter(function (r) { return !r.hidden; });
+    var idx = rows.findIndex(function (r) { return r.dataset.id === id; });
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -1114,11 +980,12 @@
     var body = '<div class="form-row"><label>港口名称</label><input id="f-new-name" placeholder="如：青岛港"></div>'
       + '<div class="form-row"><label>副标题（所属地区）</label><input id="f-new-sub" placeholder="如：山东省青岛市·胶州湾"></div>'
       + '<div class="form-row"><label>港口简介</label><input id="f-new-intro" placeholder="一句话介绍该港口"></div>';
-    openModal('新增港口', body, function () {
+    openModal('新增港口', body, async function () {
       var name = $('#f-new-name').value.trim();
       if (!name) { toast('港口名称不能为空'); return false; }
+      var newId = uid('port');
       ports.push({
-        id: uid('port'),
+        id: newId,
         name: name,
         subtitle: $('#f-new-sub').value.trim(),
         intro: $('#f-new-intro').value.trim(),
@@ -1135,10 +1002,12 @@
           { label: '主营业务货类', value: '' }
         ],
         capacity: [],
+        wharfs: [],
         zones: []
       });
-      saveData();
+      if (!await saveData()) return;
       renderAll();
+      locateRowPage(newId); // 新增行可能落在其他页，跳转到位
       toast('已新增「' + name + '」，点击名称进入详情补充信息');
     });
   }
@@ -1149,7 +1018,7 @@
     var body = '<div class="form-row"><label>港口名称</label><input id="f-edit-name" value="' + esc(p.name) + '"></div>'
       + '<div class="form-row"><label>副标题（所属地区）</label><input id="f-edit-sub" value="' + esc(p.subtitle) + '"></div>'
       + '<div class="form-row"><label>港口简介</label><input id="f-edit-intro" value="' + esc(p.intro) + '"></div>';
-    openModal('编辑港口', body, function () {
+    openModal('编辑港口', body, async function () {
       var name = $('#f-edit-name').value.trim();
       if (!name) { toast('港口名称不能为空'); return false; }
       p.name = name;
@@ -1162,7 +1031,7 @@
           if (r.label === '所属地区') r.value = p.subtitle;
         });
       }
-      saveData();
+      if (!await saveData()) return;
       renderAll();
       toast('已保存');
     });
@@ -1173,9 +1042,9 @@
     if (!p) return;
     var body = '<p style="font-size:14px;color:var(--gray-700);">确定删除「<b>' + esc(p.name)
       + '</b>」？删除后无法恢复。</p>';
-    openModal('删除港口', body, function () {
+    openModal('删除港口', body, async function () {
       ports = ports.filter(function (x) { return x.id !== id; });
-      saveData();
+      if (!await saveData()) return;
       renderAll();
       toast('已删除「' + p.name + '」');
     });
@@ -1256,10 +1125,7 @@
     });
   }
 
-  // ===== 初始化 =====
-  loadData();
-
-  // 港区分部视图切换：港区介绍 ⇄ 卫星俯瞰地图
+  // ===== 港区分部视图切换：港区介绍 ⇄ 卫星俯瞰地图 =====
   function switchZoneView(btn) {
     var scope = btn.closest('.zones-card');
     if (!scope) return;
@@ -1284,43 +1150,48 @@
     }
   }
 
-  if (detailPanel) {
-    // 详情模式
-    renderDetail();
+  // ===== 初始化 =====
+  // 装载数据库缓存后再渲染（boot 遮罩失败时可点重试）
+  async function boot() {
+    await HZDB.ready();
+    loadData();
 
-    $('#backBtn').addEventListener('click', function () {
-      location.href = '/ports/ports.html';
-    });
+    if (detailPanel) {
+      // 详情模式
+      renderDetail();
 
-    document.addEventListener('click', function (e) {
-      var zvBtn = e.target.closest('[data-zview]');
-      if (zvBtn) { switchZoneView(zvBtn); return; }
-      var editBtn = e.target.closest('[data-edit]');
-      if (!editBtn) return;
-      var key = editBtn.getAttribute('data-edit');
-      if (key === 'basicInfo') editKV('basicInfo', '基本信息');
-      else if (key === 'capacity') editKV('capacity', '集疏运体系');
-      else if (key === 'zones') editZones();
-    });
-  } else {
-    // 列表模式
-    initSearch();
-    initTableActions();
-    initExport();
-    bindPager();
-    renderAll();
+      $('#backBtn').addEventListener('click', function () {
+        location.href = '/ports/ports.html';
+      });
+
+      document.addEventListener('click', function (e) {
+        var zvBtn = e.target.closest('[data-zview]');
+        if (zvBtn) { switchZoneView(zvBtn); return; }
+        var editBtn = e.target.closest('[data-edit]');
+        if (!editBtn) return;
+        var key = editBtn.getAttribute('data-edit');
+        if (key === 'basicInfo') editKV('basicInfo', '基本信息');
+        else if (key === 'capacity') editKV('capacity', '集疏运体系');
+        else if (key === 'zones') editZones();
+      });
+    } else {
+      // 列表模式
+      initSearch();
+      initTableActions();
+      initExport();
+      bindPager();
+      renderAll();
+    }
+
+    var addBtn = $('#btnAddPort');
+    if (addBtn) addBtn.addEventListener('click', addPort);
   }
+  boot();
 
-  var addBtn = $('#btnAddPort');
-  if (addBtn) addBtn.addEventListener('click', addPort);
   $('#modalMask').addEventListener('click', function (e) {
     if (e.target === this) closeModal();
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeModal();
   });
-
-  // ===== 初始化 =====
-  loadData();
-  if (tbody) renderAll();   // 仅列表模式有台账表格；详情页（无 .ledger-table）跳过，避免空引用报错
 })();

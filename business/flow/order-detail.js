@@ -1,4 +1,4 @@
-// ===== order-detail 模块脚本（业务总览 · 订单详情页）=====
+// ===== order-detail 模块脚本（订单管理 · 订单详情页）=====
 // 复刻 hongze_demo OrderDetailPage：九态流转条 + 六页签
 // （基本信息 / 财务状态 / 发运状态 / 仓储堆存 / 货物动态 / 运输时间轴）
 // 财务金额自动同步运力合计；发运按通道累加并自动流转订单状态；
@@ -8,7 +8,7 @@
   'use strict';
 
   // 本页对应的导航路径（与 navbar.html 中 data-path 一致）
-  const NAV_PATH = '业务管理 / 业务总览';
+  const NAV_PATH = '订单管理';
 
   // 设置导航栏选中态：子项高亮 + 展开父级菜单（父按钮不具备独立停留态）
   function setActiveNav() {
@@ -46,6 +46,7 @@
     headUpdated: $('head-updated'),
     roleSelect: $('role-select'),
     delBtn: document.querySelector('.js-del'),
+    btnGotoPlan: $('btn-goto-plan'),
     statusTrack: $('status-track'),
     tabs: $('tabs'),
     toast: $('toast'),
@@ -130,22 +131,28 @@
   };
 
   const id = new URLSearchParams(location.search).get('id') || '';
-  const order = id ? data.getOrder(id) : undefined;
+  let order = null;        // 当前流程订单（loadData 装载）
 
-  // ===== 订单不存在：仅展示空状态 =====
-  if (!order) {
-    els.missing.hidden = false;
-    return;
-  }
-
-  const port = data.getPort(id);
-  const caps = data.listCapacities(id);
-  const plan = data.getPlan(id);
-  const financial = data.getFinancial(id) || data.emptyFinancial(id);
-  const shippings = data.ensureShippings(id, caps);
-  const logs = data.listLogs(id);
+  // 关联数据（loadData 装载；shippings 在 boot 中经 ensureShippings 补建后读取）
+  let port = null;
+  let caps = [];
+  let plan = null;
+  let financial = null;
+  let shippings = [];
+  let logs = [];
   let role = 'admin';
-  let currentStatus = data.migrateStatus(order.status);
+  let currentStatus = '';
+
+  // 装载数据：订单及关联的港口/运力/方案/财务/日志（须在 HZDB.ready 之后调用）
+  function loadData() {
+    order = id ? data.getOrder(id) : undefined;
+    port = data.getPort(id);
+    caps = data.listCapacities(id);
+    plan = data.getPlan(id);
+    financial = data.getFinancial(id) || data.emptyFinancial(id);
+    logs = data.listLogs(id);
+    currentStatus = data.migrateStatus(order ? order.status : '');
+  }
 
   /* ==================== 通用提示 ==================== */
 
@@ -511,21 +518,28 @@
   }
 
   // 确认收款：状态流转至「订单已确认」并按收款额推导收款状态
-  function confirmPayment() {
+  async function confirmPayment() {
     const received = Number(els.finReceivedInput.value) || 0;
     if (received <= 0) {
       toast('请先填写本次收款金额', 'error');
       return;
     }
-    const ok = data.transitionStatus(id, 'confirmed', '当前操作员', role, '财务确认收款');
+    const ok = await data.transitionStatus(id, 'confirmed', '当前操作员', role, '财务确认收款');
     if (!ok) {
       toast('当前状态不允许确认收款', 'error');
       return;
     }
+    // 收款信息改动前快照：写库失败（HZDB 已 toast）时回滚，不切换发运页签
+    const prevAmount = financial.receivedAmount;
+    const prevPay = financial.paymentStatus;
     const total = totalFreight();
     financial.receivedAmount = received;
     financial.paymentStatus = total > 0 && received >= total ? 'paid' : 'partial';
-    data.upsertFinancial(financial);
+    if (!await data.upsertFinancial(financial)) {
+      financial.receivedAmount = prevAmount;
+      financial.paymentStatus = prevPay;
+      return;
+    }
     order.status = 'confirmed';
     currentStatus = 'confirmed';
     renderFinance();
@@ -536,28 +550,40 @@
   }
 
   // 保存财务信息（收款金额 / 收款与发票状态 / 备注）
-  function saveFinance() {
+  async function saveFinance() {
+    // 改动前快照：写库失败（HZDB 已 toast）时回滚内存现场，保留输入供重试
+    const prevAmount = financial.receivedAmount;
+    const prevRemark = financial.remark;
     financial.receivedAmount = Number(els.finReceivedInput.value) || 0;
     financial.remark = els.finRemark.value.trim();
-    data.upsertFinancial(financial);
+    if (!await data.upsertFinancial(financial)) {
+      financial.receivedAmount = prevAmount;
+      financial.remark = prevRemark;
+      return;
+    }
     renderFinance();
     toast('财务信息已保存');
   }
 
   // 上传财务凭证
-  function uploadFinVoucher() {
+  async function uploadFinVoucher() {
     const name = els.finVchName.value.trim();
     if (!name) {
       toast('请填写凭证名称', 'error');
       return;
     }
+    // 改动前快照：写库失败（HZDB 已 toast）时回滚本地临时凭证
+    const prevVouchers = (financial.vouchers || []).slice();
     data.addVoucher(financial, {
       name: name,
       type: els.finVchType.value,
       uploadedBy: data.ROLE_META[role].label,
       note: els.finVchNote.value.trim(),
     });
-    data.upsertFinancial(financial);
+    if (!await data.upsertFinancial(financial)) {
+      financial.vouchers = prevVouchers;
+      return;
+    }
     els.finVchName.value = '';
     els.finVchNote.value = '';
     renderVouchers();
@@ -689,7 +715,7 @@
   }
 
   // 批次发货：校验 → 累加发运量 → 通道状态推导 → 凭证 → 日志 → 订单状态流转
-  function executeBatchShip() {
+  async function executeBatchShip() {
     const capId = els.shipChannel.value;
     const qty = Number(els.shipQty.value) || 0;
     const shipDate = els.shipDate.value;
@@ -717,11 +743,14 @@
     const cap = caps.find(c => c.id === capId) || {};
     const chLabel = channelTitle(cap) + '（' + channelRoute(cap) + '）';
     const oldState = s.state;
+    // 改动前快照：写库失败（HZDB 已 toast）时回滚内存现场
+    const prevShipping = { shippedQty: s.shippedQty, actualDate: s.actualDate, planDate: s.planDate, state: s.state };
+    const prevVouchers = (s.vouchers || []).slice();
+    const voucherName = els.shipVchName.value.trim();
     s.shippedQty = shipped + qty;
     if (!s.actualDate) s.actualDate = shipDate;
     if (!s.planDate) s.planDate = shipDate;
     s.state = autoShippingState(Number(s.shippedQty), planned);
-    const voucherName = els.shipVchName.value.trim();
     if (voucherName) {
       data.addVoucher(s, {
         name: voucherName,
@@ -730,24 +759,34 @@
         note: els.shipRemark.value.trim() || (shipDate + ' 发货 ' + data.fmtNum(qty) + '吨'),
       });
     }
-    data.upsertShippings(id, shippings);
+    // 发运量落库失败：回滚该通道字段与凭证，保留表单输入供重试
+    if (!await data.upsertShippings(id, shippings)) {
+      s.shippedQty = prevShipping.shippedQty;
+      s.actualDate = prevShipping.actualDate;
+      s.planDate = prevShipping.planDate;
+      s.state = prevShipping.state;
+      s.vouchers = prevVouchers;
+      return;
+    }
 
     const stateChanged = oldState !== s.state;
     const remark = chLabel + '：发货 ' + data.fmtNum(qty) + '吨（累计 ' + data.fmtNum(s.shippedQty) + '/' + data.fmtNum(planned) + '吨）'
       + (stateChanged ? '，状态变更：' + data.SHIPPING_META[oldState].label + ' → ' + data.SHIPPING_META[s.state].label : '');
-    data.addOperationLog(id, '当前操作员', role, '批次发货操作', { remark: remark });
+    await data.addOperationLog(id, '当前操作员', role, '批次发货操作', { remark: remark });
 
-    // 订单状态流转：全部通道完成 → 发运完成；任一通道开始 → 发运中
+    // 订单状态流转：全部通道完成 → 发运完成；任一通道开始 → 发运中（流转失败仅影响状态展示，发货数据已落库）
     const allCompleted = shippings.length > 0 && shippings.every(x => x.state === 'completed');
     const anyShipping = shippings.some(x => x.state === 'shipping' || x.state === 'completed');
     if (allCompleted && currentStatus === 'shipping') {
-      data.transitionStatus(id, 'shipped', '当前操作员', role, '全部通道发运完成');
-      order.status = 'shipped';
-      currentStatus = 'shipped';
+      if (await data.transitionStatus(id, 'shipped', '当前操作员', role, '全部通道发运完成')) {
+        order.status = 'shipped';
+        currentStatus = 'shipped';
+      }
     } else if (anyShipping && currentStatus === 'confirmed') {
-      data.transitionStatus(id, 'shipping', '当前操作员', role, '开始发运');
-      order.status = 'shipping';
-      currentStatus = 'shipping';
+      if (await data.transitionStatus(id, 'shipping', '当前操作员', role, '开始发运')) {
+        order.status = 'shipping';
+        currentStatus = 'shipping';
+      }
     }
 
     // 表单重置（保留通道选择）
@@ -839,7 +878,7 @@
   }
 
   // 仓储操作：校验 → 堆存/提货登记 → 凭证 → 日志（不影响订单状态）
-  function executeWarehouseOp() {
+  async function executeWarehouseOp() {
     const capId = els.whChannel.value;
     const arriveQty = Number(els.whArrive.value) || 0;
     const pickupQty = Number(els.whPick.value) || 0;
@@ -871,9 +910,12 @@
       return;
     }
 
+    // 改动前快照：写库失败（HZDB 已 toast）时回滚内存现场
+    const prevShipping = { storedQty: s.storedQty, pickedUpQty: s.pickedUpQty };
+    const prevVouchers = (s.vouchers || []).slice();
+    const voucherName = els.whVchName.value.trim();
     s.storedQty = newStored;
     s.pickedUpQty = pickedUp + pickupQty;
-    const voucherName = els.whVchName.value.trim();
     if (voucherName) {
       data.addVoucher(s, {
         name: voucherName,
@@ -882,13 +924,19 @@
         note: els.whRemark.value.trim() || (operateDate + ' ' + (arriveQty > 0 ? '到货' : '提货') + '操作'),
       });
     }
-    data.upsertShippings(id, shippings);
+    // 堆存/提货落库失败：回滚该通道字段与凭证，保留表单输入供重试
+    if (!await data.upsertShippings(id, shippings)) {
+      s.storedQty = prevShipping.storedQty;
+      s.pickedUpQty = prevShipping.pickedUpQty;
+      s.vouchers = prevVouchers;
+      return;
+    }
 
     const cap = caps.find(c => c.id === capId) || {};
     const parts = [];
     if (arriveQty > 0) parts.push('到货入库 ' + data.fmtNum(arriveQty) + '吨（累计堆存 ' + data.fmtNum(newStored) + '吨）');
     if (pickupQty > 0) parts.push('提货出关 ' + data.fmtNum(pickupQty) + '吨（累计提货 ' + data.fmtNum(s.pickedUpQty) + '吨）');
-    data.addOperationLog(id, '当前操作员', role, '仓储堆存操作', {
+    await data.addOperationLog(id, '当前操作员', role, '仓储堆存操作', {
       remark: channelTitle(cap) + '（' + channelRoute(cap) + '）：' + parts.join('，'),
     });
 
@@ -1065,94 +1113,123 @@
 
   /* ==================== 删除订单 ==================== */
 
-  function handleDelete() {
+  async function handleDelete() {
     if (!window.confirm('确认删除订单 ' + order.id + ' 及其所有关联数据？')) return;
-    data.deleteOrder(id);
-    location.href = '../business.html';
+    // 删除为异步写库：成功后再跳回台账（失败 HZDB 已 toast，留在本页）
+    if (!await data.deleteOrder(id)) return;
+    location.href = '../orders.html';
   }
 
-  /* ==================== 事件绑定 ==================== */
+  /* ==================== 事件绑定与初始化 ==================== */
 
-  // 角色切换：重渲权限相关区域
-  els.roleSelect.addEventListener('change', () => {
-    role = els.roleSelect.value;
+  // 绑定事件、填充摘要并完成首次渲染（boot 中 loadData 之后调用）
+  function initPage() {
+    // 角色切换：重渲权限相关区域
+    els.roleSelect.addEventListener('change', () => {
+      role = els.roleSelect.value;
+      renderShipping();
+      renderWarehouse();
+    });
+
+    // 页签切换（事件委托）
+    els.tabs.addEventListener('click', e => {
+      const btn = e.target.closest('.tab[data-tab]');
+      if (btn) switchTab(btn.dataset.tab);
+    });
+
+    $('btn-confirm-pay').addEventListener('click', confirmPayment);
+    $('btn-save-fin').addEventListener('click', saveFinance);
+    $('btn-fin-vch').addEventListener('click', uploadFinVoucher);
+    $('btn-exec-ship').addEventListener('click', executeBatchShip);
+    $('btn-exec-wh').addEventListener('click', executeWarehouseOp);
+    $('btn-goto-log').addEventListener('click', () => switchTab('log'));
+    els.delBtn.addEventListener('click', handleDelete);
+
+    // 收款/发票状态切换 + 财务凭证删除（事件委托）
+    document.addEventListener('click', async e => {
+      const payBtn = e.target.closest('[data-fin-pay]');
+      if (payBtn) {
+        financial.paymentStatus = payBtn.dataset.finPay;
+        renderPayGroup();
+        return;
+      }
+      const invBtn = e.target.closest('[data-fin-inv]');
+      if (invBtn) {
+        financial.invoiceStatus = invBtn.dataset.finInv;
+        renderInvoiceGroup();
+        return;
+      }
+      const delBtn = e.target.closest('[data-fin-vdel]');
+      if (delBtn) {
+        // 改动前快照：写库失败（HZDB 已 toast）时回滚，DOM 仍展示原凭证
+        const prevVouchers = (financial.vouchers || []).slice();
+        data.removeVoucher(financial, delBtn.dataset.finVdel);
+        if (!await data.upsertFinancial(financial)) {
+          financial.vouchers = prevVouchers;
+          return;
+        }
+        renderVouchers();
+        toast('凭证已删除');
+      }
+    });
+
+    // 通道切换：实时状态盒联动
+    els.shipChannel.addEventListener('change', renderShipStateBoxes);
+    els.whChannel.addEventListener('change', renderWhStateBoxes);
+
+    // 第四环节入口：运输方案（批次分配）页，href 需带订单 id
+    els.btnGotoPlan.href = 'order-plan.html?id=' + encodeURIComponent(id);
+
+    els.headMono.textContent = order.id;
+    els.headCreated.textContent = data.fmtDate(order.createdAt);
+    els.headUpdated.textContent = data.fmtDate(order.updatedAt);
+    updateHeadStatus();
+    renderStatusTrack();
+    renderBasicKv();
+    renderBasicChips();
+    renderBasicPort();
+    renderBasicTransport();
+    renderBasicCaps();
+    renderBasicBatches();
+    renderFinance();
     renderShipping();
     renderWarehouse();
-  });
+    renderCargo();
+    renderLogTimeline();
+    renderLogRows();
 
-  // 页签切换（事件委托）
-  els.tabs.addEventListener('click', e => {
-    const btn = e.target.closest('.tab[data-tab]');
-    if (btn) switchTab(btn.dataset.tab);
-  });
+    // 凭证类型下拉
+    [els.finVchType, els.shipVchType, els.whVchType].forEach(sel => {
+      sel.innerHTML = data.VOUCHER_TYPES.map(t => '<option value="' + data.esc(t) + '">' + data.esc(t) + '</option>').join('');
+    });
 
-  $('btn-confirm-pay').addEventListener('click', confirmPayment);
-  $('btn-save-fin').addEventListener('click', saveFinance);
-  $('btn-fin-vch').addEventListener('click', uploadFinVoucher);
-  $('btn-exec-ship').addEventListener('click', executeBatchShip);
-  $('btn-exec-wh').addEventListener('click', executeWarehouseOp);
-  $('btn-goto-log').addEventListener('click', () => switchTab('log'));
-  els.delBtn.addEventListener('click', handleDelete);
+    // 发货 / 仓储操作时间默认当前
+    els.shipDate.value = data.toLocalInput(new Date());
+    els.whDate.value = data.toLocalInput(new Date());
 
-  // 收款/发票状态切换 + 财务凭证删除（事件委托）
-  document.addEventListener('click', e => {
-    const payBtn = e.target.closest('[data-fin-pay]');
-    if (payBtn) {
-      financial.paymentStatus = payBtn.dataset.finPay;
-      renderPayGroup();
+    // 解除隐藏，默认展示基本信息页签
+    els.head.hidden = false;
+    els.statusTrack.hidden = false;
+    els.tabs.hidden = false;
+    switchTab('basic');
+  }
+
+  // ===== 异步启动：待数据基座就绪后装载数据、绑定事件并渲染 =====
+  async function boot() {
+    await HZDB.ready();
+    loadData();
+
+    // 订单不存在：仅展示空状态，不绑定后续事件
+    if (!order) {
+      els.missing.hidden = false;
       return;
     }
-    const invBtn = e.target.closest('[data-fin-inv]');
-    if (invBtn) {
-      financial.invoiceStatus = invBtn.dataset.finInv;
-      renderInvoiceGroup();
-      return;
-    }
-    const delBtn = e.target.closest('[data-fin-vdel]');
-    if (delBtn) {
-      data.removeVoucher(financial, delBtn.dataset.finVdel);
-      data.upsertFinancial(financial);
-      renderVouchers();
-      toast('凭证已删除');
-    }
-  });
 
-  // 通道切换：实时状态盒联动
-  els.shipChannel.addEventListener('change', renderShipStateBoxes);
-  els.whChannel.addEventListener('change', renderWhStateBoxes);
+    // 补建缺失的发运记录（写库；失败 HZDB 已 toast，按已有记录展示）
+    await data.ensureShippings(id, caps);
+    shippings = data.listShippings(id);
 
-  /* ==================== 初始化渲染 ==================== */
-
-  els.headMono.textContent = order.id;
-  els.headCreated.textContent = data.fmtDate(order.createdAt);
-  els.headUpdated.textContent = data.fmtDate(order.updatedAt);
-  updateHeadStatus();
-  renderStatusTrack();
-  renderBasicKv();
-  renderBasicChips();
-  renderBasicPort();
-  renderBasicTransport();
-  renderBasicCaps();
-  renderBasicBatches();
-  renderFinance();
-  renderShipping();
-  renderWarehouse();
-  renderCargo();
-  renderLogTimeline();
-  renderLogRows();
-
-  // 凭证类型下拉
-  [els.finVchType, els.shipVchType, els.whVchType].forEach(sel => {
-    sel.innerHTML = data.VOUCHER_TYPES.map(t => '<option value="' + data.esc(t) + '">' + data.esc(t) + '</option>').join('');
-  });
-
-  // 发货 / 仓储操作时间默认当前
-  els.shipDate.value = data.toLocalInput(new Date());
-  els.whDate.value = data.toLocalInput(new Date());
-
-  // 解除隐藏，默认展示基本信息页签
-  els.head.hidden = false;
-  els.statusTrack.hidden = false;
-  els.tabs.hidden = false;
-  switchTab('basic');
+    initPage();
+  }
+  boot().catch(err => console.error('订单详情页初始化失败：', err));
 })();

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新建订单 - 泓泽宜通 HongZe-SCMS</title>
+  <!-- 公共样式模板：全局变量 / 布局 / 导航 / 按钮与输入组件 -->
+  <link rel="stylesheet" href="/css/common.css" />
+  <!-- 业务流程模块样式：步骤条 / 表单网格 / 搜索下拉 / 校验提示 -->
+  <link rel="stylesheet" href="/business/flow/flow.css" />
+  <!-- 本页专属样式：三区块布局 / 智能方案卡 / 目的地级联 / 成功浮层 -->
+  <link rel="stylesheet" href="/business/flow/order-new.css" />
+</head>
+<!-- page-order-new：新建订单页（订单管理默认首屏，PRD F1） -->
+<body class="page-order-new">
+  <div class="layout">
+    <!-- 左侧公共导航栏 -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-name">泓泽宜通</div>
+        <div class="brand-sub">HongZe-SCMS</div>
+      </div>
+      <!-- 由 common/fetch.js 动态加载 common/navbar.html -->
+      <div id="navbar"></div>
+    </aside>
+
+    <main class="main">
+      <!-- 四步流程步骤条：当前第 1 步（本页为录入首屏） -->
+      <div class="flow-steps">
+        <span class="step current"><span class="idx">1</span>录入订单</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">2</span>港口信息</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">3</span>运力方案</span>
+        <span class="step-line"></span>
+        <span class="step"><span class="idx">4</span>运输方案</span>
+      </div>
+
+      <!-- 页面头部 -->
+      <div class="form-head">
+        <div>
+          <div class="form-title">新建订单</div>
+          <div class="form-sub">填写完成并提交后自动生成订单编号，进入「港口信息」环节</div>
+        </div>
+      </div>
+
+      <!-- 登录主体提示条（降级 / E1 阻断，由脚本控制显隐） -->
+      <div class="subject-banner" id="subject-banner" hidden></div>
+
+      <!-- 内容滚动区 -->
+      <div class="main-scroll">
+
+        <!-- 区块 01：自然信息（F2，登录主体自动填充只读） -->
+        <section class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>01 自然信息</span>
+            <span class="head-extra" id="sum-subject">未获取</span>
+          </button>
+          <div class="collapse-body">
+            <div class="fgrid">
+              <div class="field">
+                <label class="field-label">公司名称<span class="link-tag">登录主体</span></label>
+                <input class="field-input" id="subject-company" readonly tabindex="-1" />
+              </div>
+              <div class="field">
+                <label class="field-label">联系人</label>
+                <input class="field-input" id="subject-contact" readonly tabindex="-1" />
+              </div>
+              <div class="field">
+                <label class="field-label">联系方式</label>
+                <input class="field-input" id="subject-phone" readonly tabindex="-1" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 区块 02：订单核心信息（F3，字段顺序固定 BR-O03） -->
+        <section class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>02 订单核心信息</span>
+            <span class="head-extra" id="sum-core">未填写</span>
+          </button>
+          <div class="collapse-body">
+            <div class="fgrid cols-3">
+              <!-- 矿山（首位，搜索选择） -->
+              <div class="field" data-form-item="mine">
+                <label class="field-label">来源矿山<span class="req">*</span><span class="link-tag">矿山管理</span></label>
+                <div class="ss">
+                  <input class="field-input ss-input" id="f-mine" placeholder="请选择来源矿山" autocomplete="off" />
+                  <div class="ss-panel" id="panel-mine"></div>
+                </div>
+                <div class="hint" data-hint="mine"></div>
+              </div>
+              <!-- 品类（矿山产品明细 category 同源：选矿山后选品类大类，选中后过滤货物名称） -->
+              <div class="field" data-form-item="category">
+                <label class="field-label">品类<span class="req">*</span><span class="link-tag">矿山管理</span></label>
+                <div class="ss">
+                  <input class="field-input ss-input" id="f-category" placeholder="请选择品类" autocomplete="off" />
+                  <div class="ss-panel" id="panel-category"></div>
+                </div>
+                <div class="hint" data-hint="category"></div>
+              </div>
+              <!-- 货物名称（矿山产品下拉选择，选中后联动带出品质；无明细矿山可手填回退） -->
+              <div class="field" data-form-item="cargoName">
+                <label class="field-label">货物名称<span class="req">*</span><span class="link-tag">矿山产品</span></label>
+                <div class="ss">
+                  <input class="field-input ss-input" id="f-cargoName" placeholder="请选择货物名称" autocomplete="off" />
+                  <div class="ss-panel" id="panel-cargoName"></div>
+                </div>
+                <div class="hint" data-hint="cargoName"></div>
+              </div>
+              <!-- 货物品质（选中产品后自动带出品位/粒度/水分，与矿山管理产品详情同源，可修改） -->
+              <div class="field" data-form-item="cargoQuality">
+                <label class="field-label">货物品质<span class="req">*</span></label>
+                <input class="field-input" id="f-cargoQuality" placeholder="如：品位 62%、粒度 -10mm、水分 8%" />
+                <div class="hint" data-hint="cargoQuality"></div>
+              </div>
+              <!-- 吨数（E3） -->
+              <div class="field" data-form-item="tonnage">
+                <label class="field-label">吨数（吨）<span class="req">*</span></label>
+                <input class="field-input" id="f-tonnage" placeholder="如：70000" />
+                <div class="hint" data-hint="tonnage"></div>
+              </div>
+              <!-- 价格（E4） -->
+              <div class="field" data-form-item="price">
+                <label class="field-label">价格（元/吨）<span class="req">*</span></label>
+                <input class="field-input" id="f-price" placeholder="如：800.00" />
+                <div class="hint" data-hint="price"></div>
+              </div>
+              <!-- 港口（搜索选择，E7 空数据提示） -->
+              <div class="field" data-form-item="port">
+                <label class="field-label">港口<span class="req">*</span><span class="link-tag">港口管理</span></label>
+                <div class="ss">
+                  <input class="field-input ss-input" id="f-port" placeholder="请选择到达港口" autocomplete="off" />
+                  <div class="ss-panel" id="panel-port"></div>
+                </div>
+                <div class="hint" data-hint="port"></div>
+              </div>
+              <!-- 到港时间（年月日必选、时分可选：Apple 风格日历弹层；隐藏域承载机器值 YYYY-MM-DD 或 YYYY-MM-DDTHH:mm） -->
+              <div class="field" data-form-item="arrivalAt">
+                <label class="field-label">到港时间<span class="req">*</span></label>
+                <input class="field-input dt-trigger" id="f-arrivalAt" readonly placeholder="请选择到港时间" />
+                <input type="hidden" id="f-arrivalAt-value" />
+                <div class="hint" data-hint="arrivalAt"></div>
+              </div>
+              <!-- 发运时间（年月日必选、时分可选：Apple 风格日历弹层） -->
+              <div class="field" data-form-item="departAt">
+                <label class="field-label">发运时间<span class="req">*</span></label>
+                <input class="field-input dt-trigger" id="f-departAt" readonly placeholder="请选择发运时间" />
+                <input type="hidden" id="f-departAt-value" />
+                <div class="hint" data-hint="departAt"></div>
+              </div>
+              <!-- 码头（多选，选填：按所选港口从「港口管理」带出码头清单） -->
+              <div class="field span-2" data-form-item="wharfs">
+                <label class="field-label">码头（可多选）<span class="link-tag">港口管理</span></label>
+                <div class="chip-group" id="wharf-chips"></div>
+                <div class="hint" id="wharf-hint" hidden></div>
+              </div>
+              <!-- 船名（选填；填写后提交自动同步海运航次） -->
+              <div class="field" data-form-item="vessel">
+                <label class="field-label">船名（选填）</label>
+                <input class="field-input" id="f-vessel" placeholder="如：远盛海 008" />
+                <div class="hint">填写船名并提交后，自动同步「海运管理」生成航次</div>
+              </div>
+              <!-- 目的地（三级框选 + 反向关联，span 全宽） -->
+              <div class="field span-3" data-form-item="destination">
+                <label class="field-label">目的地<span class="req">*</span><span class="link-tag">客户管理</span></label>
+                <div class="dest-cascade" id="dest-cascade">
+                  <div class="dest-col">
+                    <div class="dest-col-head">铁路站</div>
+                    <div class="dest-col-list" id="dest-stations"></div>
+                  </div>
+                  <div class="dest-col">
+                    <div class="dest-col-head">堆场</div>
+                    <div class="dest-col-list" id="dest-yards"></div>
+                  </div>
+                  <div class="dest-col">
+                    <div class="dest-col-head">钢厂客户<span class="dest-col-note">选填 · 末端节点</span></div>
+                    <div class="dest-col-list" id="dest-steels"></div>
+                  </div>
+                </div>
+                <div class="dest-path-row">
+                  <span class="dest-path" id="dest-path">未选择</span>
+                  <button type="button" class="link-btn" id="dest-clear">清除</button>
+                </div>
+                <div class="hint" data-hint="destination"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 区块 03：智能方案（F4，条件满足自动生成，A7 无按钮自动刷新） -->
+        <section class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>03 智能方案</span>
+            <span class="head-extra" id="sum-plan">待触发</span>
+          </button>
+          <div class="collapse-body">
+            <div class="plan-status" id="plan-status">补全「港口、目的地（需选至堆场）、吨数」后自动生成运输方案</div>
+            <div class="plan-grid" id="plan-grid" hidden></div>
+            <!-- E6 重试入口（计算异常时显示） -->
+            <div class="plan-fail" id="plan-fail" hidden>
+              <span>生成失败，点击重试</span>
+              <button type="button" class="link-btn" id="plan-retry">重试</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 区块 04：船舶静态信息（F5，9 项，选填；提交后随订单同步海运航次） -->
+        <section class="flow-collapse open">
+          <button type="button" class="collapse-head" data-collapse>
+            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+            <span>04 船舶静态信息</span>
+            <span class="head-extra">选填 · 同步海运</span>
+          </button>
+          <div class="collapse-body">
+            <div class="link-bar">
+              <div class="link-tip">船舶静态信息将随订单同步至「海运管理」航次记录（vessel_info，9 项一致）</div>
+            </div>
+            <div class="fgrid cols-3">
+              <div class="field">
+                <label class="field-label">船公司名称</label>
+                <input class="field-input" id="v-company" placeholder="如：中远海运" />
+              </div>
+              <div class="field">
+                <label class="field-label">船舶规模</label>
+                <input class="field-input" id="v-scale" placeholder="如：5 万吨级" />
+              </div>
+              <div class="field">
+                <label class="field-label">船型类别</label>
+                <select class="field-input" id="v-type"></select>
+              </div>
+              <div class="field">
+                <label class="field-label">航线</label>
+                <input class="field-input" id="v-route" placeholder="如：青岛—黄骅" />
+              </div>
+              <div class="field">
+                <label class="field-label">运行时间</label>
+                <input class="field-input" id="v-runTime" placeholder="如：3 天 12 小时" />
+              </div>
+              <div class="field">
+                <label class="field-label">海运价格</label>
+                <input class="field-input" id="v-seaPrice" placeholder="如：45 元/吨" />
+              </div>
+              <div class="field">
+                <label class="field-label">到港全周期时间</label>
+                <input class="field-input" id="v-cycleTime" placeholder="如：7 天" />
+              </div>
+              <div class="field">
+                <label class="field-label">船发货人</label>
+                <input class="field-input" id="v-shipper" placeholder="发货人名称" />
+              </div>
+              <div class="field">
+                <label class="field-label">接货人</label>
+                <input class="field-input" id="v-consignee" placeholder="接货人名称" />
+              </div>
+            </div>
+          </div>
+        </section>
+      </div><!-- /.main-scroll -->
+
+      <!-- 底部操作栏 -->
+      <div class="flow-footer">
+        <a class="btn-ghost" href="../orders.html">← 返回订单台账</a>
+        <div style="display:flex;align-items:center;gap:var(--space-sm)">
+          <button type="button" class="btn-ghost" id="btn-reset">重置</button>
+          <button type="button" class="btn-primary" id="btn-submit">提交订单</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 提交成功浮层（TBD-08：进入下一步为主操作） -->
+  <div class="success-mask" id="success-mask" hidden>
+    <div class="success-card">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 7"/></svg>
+      </div>
+      <div class="success-title">订单提交成功</div>
+      <div class="success-code">订单编号：<b id="success-order-id">—</b></div>
+      <div class="success-sub">已生成港口信息预填与运力方案预填，可继续完善后续环节</div>
+      <div class="success-ops">
+        <button type="button" class="btn-primary" id="btn-go-port">进入下一步 · 港口信息</button>
+        <button type="button" class="btn-ghost" id="btn-go-detail">查看订单详情</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局提示 -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 公共导航栏加载脚本 -->
+  <script src="/common/fetch.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
+  <!-- 基础数据层（矿山 / 港口 / 字典） -->
+  <script src="/common/hz-data.js"></script>
+  <!-- 单位换算（吨 → 万吨，海运航次同步） -->
+  <script src="/common/units.js"></script>
+  <!-- flow 模块共享数据层（订单落库 / 港口 / 运力 / 航次联动） -->
+  <script src="/business/flow/flow-data.js?v=20261115a"></script>
+  <!-- 订单管理新建订单数据层（登录主体 / 校验 / 智能方案 / 组装） -->
+  <script src="/business/flow/order-new-data.js?v=20261115a"></script>
+  <!-- Apple 风格日期时间选择器（到港/发运时间） -->
+  <script src="/business/flow/date-picker.js"></script>
+  <!-- 业务数据层（订单台账同步） -->
+  <script src="/business/business-data.js?v=20261115a"></script>
+  <!-- 客户数据层（BR-O11 客户库状态联动） -->
+  <script src="/customers/data.js"></script>
+  <!-- 本页交互逻辑 -->
+  <script src="/business/flow/order-new.js?v=20261115a"></script>
+</body>
+</html>

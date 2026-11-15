@@ -1,11 +1,11 @@
 // ===== orders-flow 模块脚本（订单台账 · 全链路层，R4 重构）=====
 // 职责（零侵入 orders.js 台账核心逻辑）：
 //   1. 链路总览：业务工作流九态管道可视化（创建 → 履约 → 完成 + 已终止侧挂），
-//      与业务总览（business.html）工作流链路同源（flow-data.js 九态状态机）
+//      与订单管理流程页工作流链路同源（flow-data.js 九态状态机）
 //   2. 合并列表：创建阶段（录入中/待港口/待运力/待方案）的流程订单以行形式
 //      注入订单列表 tbody，融入既有检索 / 胶囊过滤 / 分页 / 编号
 //   3. 联动：管道点击 ↔ 胶囊过滤互相同步；流程行删除走 HZFlowData 级联删除
-// 数据源 hz_flow_*（flow-data.js），台账六态订单仍由 orders.js 管理，互不干扰
+// 数据源 flowOrders 九表资源（flow-data.js，HZDB 基座），台账六态订单仍由 orders.js 管理，互不干扰
 (function () {
   'use strict';
 
@@ -26,7 +26,7 @@
     completed: '已完成'
   };
 
-  // 管道分组：创建 / 履约 / 完成（与业务总览工作流链路一致）
+  // 管道分组：创建 / 履约 / 完成（与订单管理流程页工作流链路一致）
   const GROUPS = [
     { cap: '创建', states: ['draft', 'port', 'capacity', 'plan'] },
     { cap: '履约', states: ['pending_confirm', 'confirmed', 'shipping', 'shipped'] },
@@ -259,13 +259,14 @@
   function initFlowRowActions() {
     const tbody = document.querySelector('.ledger-table tbody');
     if (!tbody) return;
-    tbody.addEventListener('click', e => {
+    tbody.addEventListener('click', async e => {
       const btn = e.target.closest('.flow-del');
       if (!btn) return;
       const id = btn.dataset.flowDel;
       if (!id) return;
       if (!confirm('确认删除订单 ' + id + ' 及其所有关联数据？此操作不可撤销。')) return;
-      data.deleteOrder(id);
+      // 删除为异步写库：await 确保台账联动（removeFlowOrder）完成后再全量重渲
+      await data.deleteOrder(id);
       if (typeof window.HZLedgerRefresh === 'function') window.HZLedgerRefresh();
     });
   }

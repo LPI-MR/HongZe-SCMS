@@ -6,19 +6,20 @@
   <title>客户管理 - 泓泽宜通 HongZe-SCMS</title>
   <!-- 公共样式模板：全局变量 / 布局 / 导航 / 组件层 -->
   <link rel="stylesheet" href="/css/common.css" />
-  <!-- 客户管理模块样式：统一库 / 同步控制台共用 -->
+  <!-- 客户管理模块样式：新版三类客户模型 / 弹窗 / 抽屉 -->
   <link rel="stylesheet" href="customers.css" />
   <style>
     /* 本页专属：表格列宽与名称列样式 */
-    .min-w-cust { min-width: 1080px; }
-    .col-code { width: 190px; font-variant-numeric: tabular-nums; }
-    .col-roles { width: 220px; }
-    .col-industry { width: 150px; }
-    .col-source { width: 240px; }
-    .col-op { width: 90px; text-align: center; }
-    .cust-name { font-weight: 500; color: #1d1d1f; cursor: pointer; transition: color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1); }
+    .min-w-cust { min-width: 980px; }
+    .col-type   { width: 150px; }
+    .col-contact{ width: 110px; }
+    .col-phone  { width: 150px; }
+    .col-status { width: 96px; }
+    .col-source { width: 110px; }
+    .col-time   { width: 160px; }
+    .col-op     { width: 200px; }
+    .cust-name  { font-weight: 500; color: #1d1d1f; cursor: pointer; transition: color 0.18s cubic-bezier(0.25, 0.1, 0.25, 1); }
     .cust-name:hover { color: #0071e3; }
-    .cust-alias { font-size: 12px; color: #86868b; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -40,108 +41,104 @@
         <div class="ledger-header">
           <div>
             <div class="page-title">客户管理</div>
-            <div class="page-desc">客户管理统一库：汇聚六大业务模块的企业主体，自动打标 / 来源可溯 / 双视图检索</div>
+            <div class="page-desc">三类客户分类管理：集采贸易商 / 现货贸易商 / 下游客户 · 支持注册录入、信息编辑与类型归类</div>
           </div>
           <div class="header-actions">
-            <a class="btn btn-ghost" href="/customers/sync.html">同步控制台</a>
-            <button class="btn btn-primary" id="btnRefresh" type="button">刷新数据</button>
+            <a class="btn btn-ghost" href="/customers/register.html" target="_blank" rel="noopener">公开注册入口</a>
+            <button class="btn btn-primary" id="btnCreate" type="button">代注册客户</button>
           </div>
         </div>
 
-        <!-- 统一库概览：单行纯信息指标（无容器无边框，最小垂直占用） -->
-        <div class="kpi-line" role="group" aria-label="统一库概览">
+        <!-- 客户库概览 -->
+        <div class="kpi-line" role="group" aria-label="客户库概览">
           <div class="kp">
-            <span class="kp-label">统一主体总数</span>
+            <span class="kp-label">客户总数</span>
             <b class="kp-value" id="kpiTotal">0</b>
-            <span class="kp-note" id="kpiTotalNote">—</span>
+            <span class="kp-note" id="kpiActiveNote">可被业务引用 <b id="kpiActive">0</b> 家</span>
           </div>
           <div class="kp">
-            <span class="kp-label">客户视图主体</span>
-            <b class="kp-value" id="kpiCust">0</b>
-            <span class="kp-note">钢铁企业 <b id="kpiSteel">0</b> · 矿石贸易商 <b id="kpiTrader">0</b></span>
+            <span class="kp-label">集采贸易商</span>
+            <b class="kp-value" id="kpiType1">0</b>
+            <span class="kp-note">长协贸易商（中矿、宝武等）</span>
           </div>
           <div class="kp">
-            <span class="kp-label">供应商视图主体</span>
-            <b class="kp-value" id="kpiRes">0</b>
-            <span class="kp-note">物流 / 场站 / 仓储服务商</span>
+            <span class="kp-label">现货贸易商</span>
+            <b class="kp-value" id="kpiType2">0</b>
+            <span class="kp-note">临时采购散单客户</span>
           </div>
           <div class="kp">
-            <span class="kp-label">统一社会信用代码覆盖</span>
-            <b class="kp-value" id="kpiCode">0</b>
-            <span class="kp-note">空值待人工补录</span>
+            <span class="kp-label">下游客户</span>
+            <b class="kp-value" id="kpiType3">0</b>
+            <span class="kp-note">钢厂企业类客户</span>
+          </div>
+          <div class="kp">
+            <span class="kp-label">待审核</span>
+            <b class="kp-value" id="kpiPendingReview">0</b>
+            <span class="kp-note">注册审核</span>
           </div>
         </div>
 
-        <!-- 视图切换 + 客户类型细分（类型控件仅客户视图内可见） -->
-        <div class="tabs-row">
-          <div class="view-tabs" id="viewTabs">
-            <button class="view-tab active" type="button" data-view="all">全部主体 <span class="tab-badge" id="badgeAll">0</span></button>
-            <button class="view-tab" type="button" data-view="customer">客户视图 <span class="tab-badge" id="badgeCust">0</span></button>
-            <button class="view-tab" type="button" data-view="resource">供应商视图 <span class="tab-badge" id="badgeRes">0</span></button>
-          </div>
-          <div class="view-tabs type-tabs" id="typeTabs" hidden>
-            <button class="view-tab active" type="button" data-type="all">全部类型 <span class="tab-badge" id="typeBadgeAll">0</span></button>
-            <button class="view-tab" type="button" data-type="steel">钢铁企业 <span class="tab-badge" id="typeBadgeSteel">0</span></button>
-            <button class="view-tab" type="button" data-type="trader">矿石贸易商 <span class="tab-badge" id="typeBadgeTrader">0</span></button>
-          </div>
-        </div>
-
-        <!-- 台账列表 -->
+        <!-- 客户列表 -->
         <div class="ledger-card">
-          <div class="ledger-banner">
-            <span class="banner-title">客户主体列表</span>
-            <span class="banner-stat">共 <em id="custCount">0</em> 家主体，当前筛选命中 <em id="custHit">0</em> 家</span>
+          <div class="tabs-row">
+            <div class="view-tabs" id="typeTabs">
+              <button class="view-tab active" data-type="全部" type="button">全部客户 <span class="tab-badge" id="cntAll">0</span></button>
+              <button class="view-tab" data-type="集采贸易商" type="button">集采贸易商 <span class="tab-badge" id="cntT1">0</span></button>
+              <button class="view-tab" data-type="现货贸易商" type="button">现货贸易商 <span class="tab-badge" id="cntT2">0</span></button>
+              <button class="view-tab" data-type="下游客户" type="button">下游客户 <span class="tab-badge" id="cntT3">0</span></button>
+            </div>
           </div>
 
-          <!-- 筛选工具条：关键词 / 行业标签（多选）/ 数据来源 -->
           <div class="filter-bar">
-            <input class="field-input" type="text" id="searchKeyword" placeholder="搜索企业名称 / 简称 / 信用代码，空格分隔多关键词" />
-            <div class="chip-row" id="industryChips"></div>
-            <span class="filter-label">数据来源</span>
-            <select class="filter-select" id="sourceSelect">
-              <option value="">全部来源</option>
+            <span class="filter-label">筛选</span>
+            <input class="field-input" id="searchInput" type="text" placeholder="搜索客户名称 / 统一社会信用代码" style="width: 260px;" />
+            <select class="filter-select" id="statusSelect" aria-label="状态筛选">
+              <option value="全部">全部状态</option>
+              <option value="待审核">待审核</option>
+              <option value="正常">正常</option>
+              <option value="停用">停用</option>
+              <option value="已驳回">已驳回</option>
             </select>
-            <button class="btn btn-ghost btn-sm" id="btnReset" type="button">重置筛选</button>
+            <button class="btn btn-sm btn-ghost" id="btnReset" type="button">重置</button>
           </div>
 
-          <div class="table-wrap">
+          <div style="overflow-x: auto;">
             <table class="ledger-table min-w-cust">
               <thead>
                 <tr>
-                  <th class="col-index">序号</th>
-                  <th>企业名称</th>
-                  <th class="col-code">统一社会信用代码</th>
-                  <th class="col-roles">业务角色</th>
-                  <th class="col-industry">行业标签</th>
-                  <th class="col-source">数据来源</th>
+                  <th>客户名称</th>
+                  <th class="col-type">客户类型</th>
+                  <th class="col-contact">联系人</th>
+                  <th class="col-phone">联系方式</th>
+                  <th class="col-status">状态</th>
+                  <th class="col-source">客户来源</th>
+                  <th class="col-time">更新时间</th>
                   <th class="col-op">操作</th>
                 </tr>
               </thead>
-              <tbody id="custTbody">
-                <tr class="empty-row"><td colspan="7">加载中…</td></tr>
-              </tbody>
+              <tbody id="custTbody"></tbody>
             </table>
           </div>
 
-          <!-- 分页控制 -->
-          <div class="pager">
-            <div class="pager-left">
-              <select class="pager-size" id="pageSize">
-                <option value="10" selected>10 条/页</option>
-                <option value="20">20 条/页</option>
-                <option value="50">50 条/页</option>
-              </select>
-              <span class="pager-total">共 <b id="pagerTotal">0</b> 条记录</span>
-            </div>
+          <!-- 空态 -->
+          <div class="empty-guide" id="tableEmpty" hidden style="padding: 48px 24px; text-align: center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.4" style="margin: 0 auto 12px;">
+              <path d="M3 7l9-4 9 4-9 4-9-4z" stroke="#c7c7cc" />
+              <path d="M3 7v10l9 4 9-4V7" stroke="#c7c7cc" />
+            </svg>
+            <div class="eg-title">暂无客户</div>
+            <div class="eg-desc">可通过「代注册客户」直接录入三类客户，或通过公开注册入口自主注册</div>
+            <button class="btn btn-primary btn-sm" id="btnCreateEmpty" type="button" style="margin-top: 14px;">代注册客户</button>
+          </div>
+
+          <div class="pager" id="pager">
+            <div class="pager-total">共 <b id="pagerTotal">0</b> 条</div>
             <div class="pager-right">
-              <button type="button" class="pager-btn" id="pgFirst">首页</button>
-              <button type="button" class="pager-btn" id="pgPrev">上一页</button>
-              <span class="pager-info">
-                第 <input class="pager-input" type="number" id="pgInput" min="1" value="1" />
-                / <span id="pgPages">1</span> 页
-              </span>
-              <button type="button" class="pager-btn" id="pgNext">下一页</button>
-              <button type="button" class="pager-btn" id="pgLast">末页</button>
+              <div class="pager-info">
+                <button class="pager-btn" id="btnPrev" type="button" aria-label="上一页">‹</button>
+                <span id="pagerNow">1 / 1</span>
+                <button class="pager-btn" id="btnNext" type="button" aria-label="下一页">›</button>
+              </div>
             </div>
           </div>
         </div>
@@ -149,25 +146,167 @@
     </main>
   </div>
 
-  <!-- 主体详情抽屉（内容动态渲染） -->
-  <div class="drawer-mask" id="drawerMask" hidden>
-    <aside class="drawer">
-      <div class="drawer-header">
-        <span class="drawer-title" id="drawerTitle">主体详情</span>
-        <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭">&times;</button>
+  <!-- 客户详情抽屉 -->
+  <div class="drawer-mask" id="drawerMask" hidden></div>
+  <aside class="drawer" id="custDrawer" hidden aria-modal="true" role="dialog">
+    <header class="drawer-header">
+      <span class="drawer-title" id="drawerTitle">客户详情</span>
+      <button class="drawer-close" id="drawerClose" type="button" aria-label="关闭">&times;</button>
+    </header>
+    <div class="drawer-body" id="drawerBody"></div>
+  </aside>
+
+  <!-- 弹窗：平台代注册 -->
+  <div class="modal-mask" id="createMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <span class="modal-title">代注册客户</span>
+        <button class="modal-close" data-close="createMask" type="button" aria-label="关闭">&times;</button>
       </div>
-      <div class="drawer-body" id="drawerBody"></div>
-    </aside>
+      <div class="modal-body">
+        <div class="form-grid" style="grid-template-columns: 1fr;">
+          <div class="form-item">
+            <label class="field-label">客户类型 <span class="required">*</span></label>
+            <div class="type-pills" id="createTypePills">
+              <button class="type-pill active" data-v="集采贸易商" type="button">集采贸易商<span class="pill-sub">长协贸易商</span></button>
+              <button class="type-pill" data-v="现货贸易商" type="button">现货贸易商<span class="pill-sub">临时采购散单</span></button>
+              <button class="type-pill" data-v="下游客户" type="button">下游客户<span class="pill-sub">钢厂企业</span></button>
+            </div>
+            <div class="form-tip">保存即生效；客户类型可在列表「编辑 / 归类」中随时调整</div>
+            <div class="req-err" data-err="customer_type"></div>
+          </div>
+          <div class="form-item">
+            <label class="field-label">客户名称 <span class="required">*</span></label>
+            <input class="field-input" id="createName" type="text" placeholder="企业全称" maxlength="50" />
+            <div class="req-err" data-err="name"></div>
+          </div>
+          <div class="form-item">
+            <label class="field-label">统一社会信用代码 <span class="required">*</span></label>
+            <input class="field-input" id="createCode" type="text" placeholder="18 位统一社会信用代码" maxlength="18" style="text-transform: uppercase;" />
+            <div class="req-err" data-err="credit_code"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label">联系人 <span class="required">*</span></label>
+              <input class="field-input" id="createContact" type="text" placeholder="联系人姓名" maxlength="20" />
+              <div class="req-err" data-err="contact"></div>
+            </div>
+            <div class="form-item">
+              <label class="field-label">联系方式 <span class="required">*</span></label>
+              <input class="field-input" id="createPhone" type="text" placeholder="手机号或座机" maxlength="20" />
+              <div class="req-err" data-err="phone"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-close="createMask" type="button">取消</button>
+        <button class="btn btn-primary" id="btnCreateSave" type="button">保存并生效</button>
+      </div>
+    </div>
   </div>
 
-  <!-- 轻提示 -->
-  <div class="toast" id="toast"></div>
+  <!-- 弹窗：编辑客户信息 / 归类 -->
+  <div class="modal-mask" id="editMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <span class="modal-title" id="editModalTitle">编辑客户信息</span>
+        <button class="modal-close" data-close="editMask" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-note" style="margin-bottom: 14px;">客户名称、客户来源不可修改；客户类型可在三类间调整归类；统一社会信用代码仅原值为空时可补录</div>
+        <div class="form-grid" id="editForm">
+          <div class="form-item">
+            <label class="field-label">客户名称</label>
+            <input class="field-input" id="editName" type="text" disabled />
+          </div>
+          <div class="form-item">
+            <label class="field-label">客户类型 <span class="required">*</span></label>
+            <div class="type-pills" id="editTypePills">
+              <button class="type-pill" data-v="集采贸易商" type="button">集采贸易商<span class="pill-sub">长协贸易商</span></button>
+              <button class="type-pill" data-v="现货贸易商" type="button">现货贸易商<span class="pill-sub">临时采购散单</span></button>
+              <button class="type-pill" data-v="下游客户" type="button">下游客户<span class="pill-sub">钢厂企业</span></button>
+            </div>
+            <div class="form-tip">待归类客户请在此选择类型完成归类；已归类的客户可在三类间调整</div>
+            <div class="req-err" data-err="customer_type"></div>
+          </div>
+          <div class="form-grid">
+            <div class="form-item">
+              <label class="field-label">联系人 <span class="required">*</span></label>
+              <input class="field-input" id="editContact" type="text" maxlength="20" />
+              <div class="req-err" data-err="contact"></div>
+            </div>
+            <div class="form-item">
+              <label class="field-label">联系方式 <span class="required">*</span></label>
+              <input class="field-input" id="editPhone" type="text" maxlength="20" />
+              <div class="req-err" data-err="phone"></div>
+            </div>
+          </div>
+          <div class="form-item" id="editCodeWrap" hidden>
+            <label class="field-label">统一社会信用代码（补录） <span class="required">*</span></label>
+            <input class="field-input" id="editCode" type="text" placeholder="18 位统一社会信用代码" maxlength="18" style="text-transform: uppercase;" />
+            <div class="req-err" data-err="credit_code"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-close="editMask" type="button">取消</button>
+        <button class="btn btn-primary" id="btnEditSave" type="button">保存</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- 公共导航栏加载脚本 -->
+  <!-- 弹窗：注册审核 -->
+  <div class="modal-mask" id="reviewMask" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <span class="modal-title">注册审核</span>
+        <button class="modal-close" data-close="reviewMask" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid" id="reviewInfo" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;"></div>
+        <div class="form-item">
+          <label class="field-label">审核结论 <span class="required">*</span></label>
+          <div class="type-pills" id="reviewDecision">
+            <button class="type-pill active" data-v="approve" type="button">通过<span class="pill-sub">转为正常</span></button>
+            <button class="type-pill" data-v="reject" type="button">驳回<span class="pill-sub">需填写原因</span></button>
+          </div>
+        </div>
+        <div class="form-item" id="rejectReasonWrap" hidden style="margin-top: 12px;">
+          <label class="field-label">驳回原因 <span class="required">*</span></label>
+          <textarea class="field-input" id="rejectReason" rows="3" placeholder="请填写驳回原因（必填），客户修改后可重新提交"></textarea>
+          <div class="req-err" data-err="reject_reason"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-close="reviewMask" type="button">取消</button>
+        <button class="btn btn-primary" id="btnReviewSave" type="button">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗：停用 / 启用二次确认 -->
+  <div class="modal-mask" id="confirmMask" hidden>
+    <div class="modal" style="width: min(420px, 100%);" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <span class="modal-title" id="confirmTitle">停用客户</span>
+        <button class="modal-close" data-close="confirmMask" type="button" aria-label="关闭">&times;</button>
+      </div>
+      <div class="modal-body" id="confirmText"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-close="confirmMask" type="button">取消</button>
+        <button class="btn btn-danger" id="btnConfirmSave" type="button">确认停用</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
   <script src="/common/fetch.js"></script>
-  <!-- 同步引擎：复用其统一库只读接口（readUnified / 标签常量），不在本页启动同步 -->
-  <script src="sync-engine.js"></script>
-  <!-- 模块脚本 -->
-  <script src="customers.js"></script>
+  <!-- 数据基座：API + 缓存（localStorage → PostgreSQL 改造） -->
+  <script src="/common/hz-api.js"></script>
+  <script src="/common/hz-db.js"></script>
+  <script src="/customers/data.js?v=20261115a"></script>
+  <script src="/customers/customers.js?v=20261115a"></script>
 </body>
 </html>

@@ -1,14 +1,10 @@
 /* ============================================================
    钢厂管理模块 · 邯郸/武安地区钢厂档案维护
    布局与仓储管理/汽运车队保持一致（KPI 卡 / 卡片列表 / 详情弹窗 / 编辑抽屉）
-   数据暂存 localStorage，接口就绪后仅替换 load/save 即可
+   数据持久化到 PostgreSQL：读经 HZDB 内存缓存（/api/bootstrap），写经 PUT /api/steels 全量替换
    ============================================================ */
 (function () {
   'use strict';
-
-  var STORE_KEY = 'hzwl_steels_v2';
-  var REV_KEY = 'hzwl_steels_v2_rev';
-  var DATA_REV = 2; // 公开资料（产品/矿石需求）数据版本，升级后自动刷新固定钢厂对应字段
 
   var STEEL_TYPES = {
     '长期合作': 'core',
@@ -18,271 +14,28 @@
 
   /* ==================== 数据层 ==================== */
 
+  // 读取：boot 完成后从 HZDB 缓存同步取（未装载时为空数组兜底）
   function load() {
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      var list = raw ? JSON.parse(raw) : null;
-      if (!Array.isArray(list)) {
-        list = seed();
-      } else {
-        // 合并：新版本 seed 中新增的钢厂自动追加，保留用户已有记录与编辑
-        var ids = {};
-        list.forEach(function (s) { ids[s.id] = 1; });
-        seed().forEach(function (s) {
-          if (!ids[s.id]) list.push(s);
-        });
-        // 资料版本升级：刷新固定钢厂的"主要产品/矿石需求"公开资料，其余编辑保留
-        var rev = parseInt(localStorage.getItem(REV_KEY) || '0', 10);
-        if (rev < DATA_REV) {
-          var seedById = {};
-          seed().forEach(function (s) { seedById[s.id] = s; });
-          list.forEach(function (s) {
-            var sd = seedById[s.id];
-            if (sd) { s.products = sd.products; s.oreDemand = sd.oreDemand; }
-          });
-          try { localStorage.setItem(REV_KEY, String(DATA_REV)); } catch (e) { /* 忽略 */ }
-        }
-      }
-      save(list);
-      return normalize(list);
-    } catch (e) {
-      return seed();
-    }
+    var list = HZDB.get('steels');
+    if (!Array.isArray(list)) list = [];
+    return normalize(list);
   }
 
+  // 保存：全量写回数据库（PUT /api/steels）；失败由 HZDB toast 提示，页面内存保留可重试
   function save(list) {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) { /* 忽略存储异常 */ }
+    return HZDB.put('steels', list);
   }
 
-  // 初始钢厂档案（资料来源：企业官网、年报/评级报告、河北省工信厅、人民网/河北日报等公开报道）
-  // 矿石需求：标注"估算"的为按产能推算值，采购联系人需线下补充
-  function seed() {
-    var now = Date.now();
-    return [
-      {
-        id: 'steel-001',
-        name: '河北普阳钢铁有限公司',
-        type: '长期合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸武安市阳邑镇东500米',
-        capacity: '600万吨/年（铁、钢、材配套）',
-        oreDemand: '约950万吨/年（按产能估算）：进口矿以澳矿PB粉/块、FMG混合粉为主，配加邯邢本地磁铁精粉及巴西矿、块矿球团',
-        nature: '中外合资',
-        founded: '1992年',
-        regTime: '1992-10-05',
-        regCapital: '4.56亿美元（45600万美元）',
-        regAddress: '河北省邯郸武安市阳邑镇',
-        products: '中厚板（高强钢、耐磨钢、容器钢、管线钢、船板·八国船级社认证、风塔钢、桥梁钢、模具钢）、热轧卷板（硅钢基料、马口铁基料、汽车大梁钢、车轮钢）、冷轧带钢（无取向硅钢、镀锌铝镁、彩涂）',
-        intro: '始建于1992年，位于邯郸太行山东麓、革命老区武安市阳邑镇，毗邻青兰高速与309国道，具有年产铁、钢、材各600万吨的生产能力，是河北省知名的中厚板生产基地——拥有5条中厚板生产线，可生产6—120mm厚度钢板，产量约占全国中厚板总产量的10%；2024年完成粗钢485万吨、铁水336万吨，总资产980亿元，环保绩效A级企业，自2005年连年上榜中国企业500强，并与东北大学国家重点实验室合作研发高附加值品种钢。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-002',
-        name: '邯郸钢铁集团有限责任公司（河钢邯钢）',
-        type: '稳定合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸市复兴区（邯钢新区位于涉县）',
-        capacity: '优质钢产能1105万吨/年',
-        oreDemand: '约1750万吨/年（估算）：以力拓、淡水河谷、必和必拓、FMG四大矿山长协进口矿为主，配加河钢矿业自产铁精粉（资源掌控量39亿吨）',
-        nature: '国有企业（河钢集团核心企业）',
-        founded: '1958年',
-        regTime: '1995-12-28',
-        regCapital: '25亿元（250000万元）',
-        regAddress: '邯郸市复兴路232号',
-        products: '超低碳家电板（黑色家电深冲件）、汽车用钢、管线钢、优特钢、重轨、优质中板（品种钢为主）',
-        intro: '河钢集团核心企业，1958年建厂，现有职工1.8万人，优质钢产能1105万吨/年，是国家重要的精品板材和优特钢生产基地，培育了汽车用钢、家电用钢、优特钢、重轨、优质中板、管线钢、特种气体等系列品牌产品；原复兴区老厂（炼铁产能707万吨/年、炼钢产能595万吨/年）已于2022年12月退城关停，产能整体转移至涉县邯钢新区。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-003',
-        name: '新兴铸管股份有限公司',
-        type: '稳定合作',
-        contact: '',
-        phone: '',
-        address: '河北省武安市上洛阳村北（2672厂区）',
-        capacity: '武安本部产品总产能约300万吨/年',
-        oreDemand: '2024年实际采购铁矿石约1332万吨：进口矿约75%自用，其余经进口代理对外分销；配加国产精粉',
-        nature: '央企控股上市公司（新兴际华集团）',
-        founded: '20世纪70年代',
-        regTime: '1997-05-24',
-        regCapital: '约39.63亿元（396318.23万元）',
-        regAddress: '河北省武安市上洛阳村北（二六七二厂区）',
-        products: '球墨铸铁管、管铸件、钢格板（产量居世界首位、国内市占30%以上）、优特钢（斗齿钢国内市占前3、外贸高强合金）、热轧带肋钢筋',
-        intro: '深交所上市央企（股票代码000778），国务院国资委监管的新兴际华集团核心企业，是全球球墨铸铁管及管铸件研发制造商和竞争力较强的钢铁产品研发制造商。武安本部拥有1280m³钢铁高炉等3座高炉、2座80吨转炉及3条轧钢生产线，配套80万吨铸管生产线，产品总产能约300万吨；截至2024年末铸管年产能300万吨、管铸件年产能20万吨，生产基地遍布河北、安徽、湖北等区域。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-004',
-        name: '武安市裕华钢铁有限公司',
-        type: '稳定合作',
-        contact: '',
-        phone: '0310-5752935',
-        address: '河北省邯郸武安市上团城乡崇义四街村北',
-        capacity: '',
-        oreDemand: '自有矿山配套（集团矿业板块），外购以进口澳矿PB粉、巴西混矿为主，配加邯邢本地磁铁精粉',
-        nature: '民营企业',
-        founded: '2003年',
-        regTime: '2003-03-28',
-        regCapital: '10亿元（100000万元）',
-        regAddress: '河北省邯郸武安市上团城乡崇义四街村北',
-        products: '钢坯、热轧带肋钢筋（HRB400/HRB400E/HRB500）、热轧优质线材、热轧卷板',
-        intro: '成立于2003年3月，占地约3800余亩，现有固定资产650亿元、员工3万余人（集团口径），旗下设有钢铁冶炼、矿山资源、金融投资、国际贸易、循环经济、生态旅游、环保科技、铁路物流等多个板块；系河北省重点钢铁企业、省钢铁协会副会长单位、中国钢铁工业协会会员单位，国家工信部第一批"钢铁规范管理"认定企业。',
-        remark: '电话为公司公开登记电话，采购专线待补充',
-        createdAt: now
-      },
-      {
-        id: 'steel-005',
-        name: '河北文安钢铁集团有限公司',
-        type: '潜在合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸武安市',
-        capacity: '年轧材约300万吨',
-        oreDemand: '自有邯邢文辉矿业（西石门、玉石洼铁矿）供应磁铁精粉，不足部分外购进口粉矿',
-        nature: '民营企业',
-        founded: '1993年',
-        regTime: '2003-12-26',
-        regCapital: '约65.36亿元（653635万元）',
-        regAddress: '河北省邯郸武安市',
-        products: '热轧带钢（110万吨/年）、热轧光圆钢筋、热轧圆盘条、高速线材（80万吨/年）',
-        intro: '始建于1993年，现有职工5000余人，已形成集矿山开采、烧结、炼铁、炼钢、轧钢于一体的钢铁联合企业；拥有200㎡烧结机1台、108㎡烧结机2台，510m³高炉2座、1080m³高炉1座、50吨转炉2座，以及年产80万吨高速线材生产线1条、110万吨热轧带钢生产线2条；正在实施产能减量置换升级改造优特钢项目（总投资69.7亿元，建设1430m³高炉、120吨转炉及1450热轧生产线）。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-006',
-        name: '河北永洋特钢集团有限公司',
-        type: '潜在合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸市永年区永年特钢工业园区',
-        capacity: '年产量400多万吨（2021年粗钢102万吨）',
-        oreDemand: '约160万吨/年（按粗钢产量估算）：进口粉矿为主，配加邯邢本地磁铁精粉',
-        nature: '民营企业',
-        founded: '1993年',
-        regTime: '1993-06-15',
-        regCapital: '4.17亿元（41700万元）',
-        regAddress: '河北省邯郸市永年区',
-        products: '轻轨、重轨、起重机钢轨、矿用支护型钢、H型钢、弹簧扁钢',
-        intro: '成立于1993年，位于邯郸市永年区永年特钢工业园区，占地500多公顷（6000余亩），员工4000余人，年产量400多万吨，是全国规模最大、品种最多、规格最全的轻轨、重轨、矿山专用钢材生产基地，钢轨、起重机轨、矿工钢行业国家标准制定企业；累计投资13亿元引进活性焦脱硫脱硝干法一体化治理等环保工艺，达到钢铁行业超低排放标准；2021年实现销售收入79.43亿元。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-007',
-        name: '天津铁厂有限公司（天铁）',
-        type: '潜在合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸市涉县更乐镇（冀·津循环经济示范区天铁工业区）',
-        capacity: '炼铁304万吨、炼钢125万吨（升级改造后）',
-        oreDemand: '约480万吨/年（按炼铁产能估算）：以进口矿为主（经天津港/曹妃甸港到港短倒），配加国产精粉',
-        nature: '国有企业（天津市属法人独资）',
-        founded: '1990年',
-        regTime: '1990-03-05',
-        regCapital: '约70.1亿元（701039.48万元，实缴）',
-        regAddress: '河北省邯郸市涉县更乐镇',
-        products: '生铁、钢锭、钢坯、特钢商品卷',
-        intro: '注册于邯郸涉县的天津市属大型钢铁联合企业，地处冀·津（涉县·天铁）循环经济产业示范区，员工6800余人；正在实施装备升级改造项目，一期建设1780m³高炉、110吨转炉、110吨LF精炼炉及方坯连铸机，项目完成后炼铁产能304万吨、炼钢产能125万吨；特钢板材品种拓宽项目形成年产特钢商品卷150万吨能力，另建有投资12亿元、年产氧气5.37亿立方米的制氧中心。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-008',
-        name: '河北太行钢铁集团有限公司',
-        type: '潜在合作',
-        contact: '',
-        phone: '13785088578',
-        address: '河北省邯郸武安市徘徊镇顺义庄村南（南洺河工业园）',
-        capacity: '炼铁268万吨、炼钢280万吨（设计产能）',
-        oreDemand: '约430万吨/年（按炼铁产能估算）：进口澳矿为主，配套球团链篦机回转窑使用进口精粉制球团',
-        nature: '民营企业',
-        founded: '2013年',
-        regTime: '2013-09-02',
-        regCapital: '21.8亿元（218000万元）',
-        regAddress: '河北省邯郸武安市徘徊镇顺义庄村南',
-        products: 'ESP无头轧制薄带钢（以热代冷，最薄约0.7mm）、热轧板卷',
-        intro: '位于武安市工业园区南洺河工业园，总资产200亿元、在职员工7000余人，高新技术企业、制造业单项冠军、绿色工厂。新厂区一期总投资约130亿元，2019年7月动工、2021年7月全线投产，占地4700亩，主要装备包括300㎡带式烧结机2台、球团链篦机回转窑1座等；尤其从欧洲引进的ESP生产线实现薄板"以热代冷"，工艺、设备、环保全部按世界一流技术水平装备；达产后年设计产能炼铁268万吨、炼钢280万吨，可实现营业收入149亿元、利税33亿元。',
-        remark: '电话为公司公开登记电话，采购专线待补充',
-        createdAt: now
-      },
-      {
-        id: 'steel-009',
-        name: '冀南钢铁集团有限公司',
-        type: '潜在合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸武安市上团城镇兴凯街东侧',
-        capacity: '炼钢产能315万吨（二期置换升级中）',
-        oreDemand: '约430万吨/年（按置换后产能估算）：集团自有矿山配套，外购以进口澳矿、巴西矿为主，配加邯邢本地精粉',
-        nature: '民营企业（以裕华钢铁为骨干组建）',
-        founded: '2005年（集团2014年正式组建）',
-        regTime: '2005-09-09',
-        regCapital: '13亿元（130000万元）',
-        regAddress: '河北省邯郸武安市上团城镇兴凯街东侧',
-        products: '中厚板、热轧带钢、热轧卷板、高速线材、冷轧薄板、不锈钢板、H型钢、螺纹钢、铸造用生铁（26个系列2000余个规格；"冀南、裕冠、兴华、港陆"牌省名牌产品）',
-        intro: '坐落于"中国冶炼之乡"武安市，是以裕华钢铁为骨干组建的中国特大型民营钢铁集团，实质性兼并重组峰峰华信特钢、文丰钢铁、兴华钢铁、唐山港陆钢铁、唐山新宝泰、唐山国堂钢铁、山西裕福焦化、山西宝山矿业等公司；高新技术企业、制造业单项冠军企业，是业内少数具备全流程合规运营能力的钢铁企业之一；正在实施二期钢铁产能减量置换升级改造项目，炼钢产能315万吨（置换比例1.25:1）。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-010',
-        name: '金鼎钢铁集团有限公司',
-        type: '潜在合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸武安工业园区青龙山工业园区',
-        capacity: '钢铁产能800万吨（集团口径）',
-        oreDemand: '约1280万吨/年（按集团钢铁产能估算）：进口矿为主，集团自有矿山及焦化板块配套',
-        nature: '民营企业（方同舟控股旗下）',
-        founded: '1995年（注册主体2002年）',
-        regTime: '2002-07-19',
-        regCapital: '1.2亿元（12000万元）',
-        regAddress: '河北省邯郸市武安工业园区青龙山工业园区',
-        products: '装配式建筑用钢、热轧卷板（超短流程轧制，最薄0.7mm、精品钢20余种）；焦化板块：焦炭、甲醇、LNG及焦油、粗苯、氢气等化工产品',
-        intro: '始建于1995年，隶属于方同舟控股有限公司，是一家集钢铁、焦化、矿山资源、装备制造、国际贸易、地产开发于一体的跨行业、跨区域综合性大型民营钢铁企业集团；集团现拥有钢铁产能800万吨、焦化产能1000万吨，年产值近1000亿元；成员企业金鼎重工有限公司位于武安市青龙山工业园，占地2600余亩。',
-        remark: '',
-        createdAt: now
-      },
-      {
-        id: 'steel-011',
-        name: '河北新金钢铁有限公司',
-        type: '潜在合作',
-        contact: '',
-        phone: '',
-        address: '河北省邯郸武安市骈山村东',
-        capacity: '',
-        oreDemand: '外购进口粉矿为主（澳矿、巴西矿），配加邯邢本地磁铁精粉',
-        nature: '民营企业',
-        founded: '1999年（集团始建1993年）',
-        regTime: '1999-06-18',
-        regCapital: '7.88亿元（78800万元）',
-        regAddress: '河北省邯郸武安市骈山村东',
-        products: '冷轧板、镀锌板、热轧板、高速线材、光伏发电用高强韧结构钢、家电板（3D打印定制化服务）',
-        intro: '新金集团骨干企业，集团始建于1993年，经30年转型升级形成以钢铁为主导产业，集科技、金融、投资、外贸、旅游、焦化、铸造、新能源等多项战略新兴产业协同发展的格局；多次跻身中国企业500强、中国制造业500强、河北省百强企业，先后荣获国家"首都蓝天行动科技示范工程"等百余项荣誉；正与河北永洋特钢、邯郸紫山特钢实施整合重组升级改造项目（产能减量置换）。',
-        remark: '',
-        createdAt: now
-      }
-    ];
-  }
-
-  // 记录字段兜底（兼容早期版本数据）
+  // 记录字段兜底（兼容早期版本数据；纯内存修正，不触发保存）
   function normalize(list) {
-    var changed = false;
     list.forEach(function (s) {
-      if (!STEEL_TYPES[s.type]) { s.type = '稳定合作'; changed = true; }
+      if (!STEEL_TYPES[s.type]) s.type = '稳定合作';
       ['contact', 'phone', 'address', 'capacity', 'oreDemand', 'nature', 'founded', 'regTime', 'regCapital', 'regAddress', 'products', 'intro', 'remark'].forEach(function (k) {
-        if (typeof s[k] !== 'string') { s[k] = ''; changed = true; }
+        if (typeof s[k] !== 'string') s[k] = '';
       });
-      if (!s.id) { s.id = genId(); changed = true; }
-      if (!s.createdAt) { s.createdAt = Date.now(); changed = true; }
+      if (!s.id) s.id = genId();
+      if (!s.createdAt) s.createdAt = Date.now();
     });
-    if (changed) save(list);
     return list;
   }
 
@@ -304,7 +57,7 @@
 
   /* ==================== 渲染 ==================== */
 
-  var suppliers = load();
+  var suppliers = [];   // boot 时从 HZDB 缓存装载
   var grid = document.getElementById('supplier-grid');
   var searchInput = document.getElementById('supplier-search');
 
@@ -732,5 +485,11 @@
 
   searchInput.addEventListener('input', renderList);
 
-  renderAll();
+  // ===== 启动：装载数据库缓存后渲染 =====
+  async function boot() {
+    await HZDB.ready();   // 启动遮罩 + /api/bootstrap 全量装载（失败可点重试）
+    suppliers = load();
+    renderAll();
+  }
+  boot();
 })();

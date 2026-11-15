@@ -1,6 +1,7 @@
 // ===== contracts 模块脚本 =====
 // 公共导航栏由 /common/fetch.js 加载；本脚本负责本模块自身的初始化逻辑
-// 合同数据与材料文件均持久化到 localStorage，刷新页面不丢失
+// 合同数据与材料文件均持久化到 PostgreSQL（contracts / contractMaterials 资源），
+// 读写经 HZDB 缓存基座，刷新页面不丢失
 (function () {
   'use strict';
 
@@ -41,43 +42,55 @@
     document.addEventListener('navbar:loaded', setActiveNav, { once: true });
   }
 
-  // ===== 本地持久化 =====
-  // 合同数据走共享数据层（contracts-data.js）：台账与数据看板共用同一份 localStorage 数据与种子
+  // ===== 数据装载 =====
+  // 合同数据走共享数据层（contracts-data.js）：台账与数据看板共用数据库同表数据
   const store = window.HZContractData;
-  const LS_MATERIALS = 'hz_contract_materials'; // 合同材料（PDF 以 dataURL 存储）
-
-  function loadJSON(key, fallback) {
-    try {
-      const v = JSON.parse(localStorage.getItem(key));
-      return v == null ? fallback : v;
-    } catch (e) {
-      return fallback;
-    }
-  }
 
   // 合同列表：[{id, code, name, type, partyA, partyB, partyC, amount, received, paid, signDate, endDate, status}]
-  let contracts = store.load();
-  if (!Array.isArray(contracts)) contracts = store.load();
+  // boot 时经 HZDB.ready() 从数据库装载
+  let contracts = [];
 
   // 材料库：{ [合同id]: { approval|legal|contract|other: {name, dataUrl}|null } }
-  let matStore = loadJSON(LS_MATERIALS, {});
-  if (!matStore || typeof matStore !== 'object') matStore = {};
+  // 持久化到 contractMaterials 资源（contract.contract_material 表，一单多档），
+  // boot 时由 DB 行数组重建嵌套结构
+  let matStore = {};
 
-  function save() {
-    if (!store.save(contracts)) {
-      // 配额超限：不中断后续渲染流程，提示用户备份清理
-      alert('本地存储空间不足，本次修改未能保存到浏览器。建议先「导出 Excel」备份数据，再删除部分旧合同或材料后重试。');
-    }
+  // matStore 嵌套对象 → contractMaterials 行数组（PUT 提交形状）
+  function matsToRows() {
+    const rows = [];
+    Object.keys(matStore).forEach(cid => {
+      MATERIALS.forEach(t => {
+        const m = matStore[cid] && matStore[cid][t];
+        if (m && m.dataUrl) rows.push({ contractId: cid, matType: t, filename: m.name, dataUrl: m.dataUrl });
+      });
+    });
+    return rows;
   }
 
+  // contractMaterials 行数组 → matStore 嵌套对象（GET 装载形状）
+  function rowsToMats(rows) {
+    const obj = {};
+    (Array.isArray(rows) ? rows : []).forEach(r => {
+      if (!r || !r.contractId || !r.dataUrl) return;
+      if (!obj[r.contractId]) {
+        const item = {};
+        MATERIALS.forEach(t => { item[t] = null; });
+        obj[r.contractId] = item;
+      }
+      obj[r.contractId][r.matType] = { name: r.filename || '', dataUrl: r.dataUrl };
+    });
+    return obj;
+  }
+
+  // 保存合同列表：全量写回数据库（PUT /api/contracts）；失败由 HZDB toast 提示，
+  // 页面内存保留供重试，调用方按返回值决定是否回滚
+  function save() {
+    return store.save(contracts);
+  }
+
+  // 保存材料库：全量替换 contractMaterials 行；失败由 HZDB toast 提示
   function saveMaterials() {
-    try {
-      localStorage.setItem(LS_MATERIALS, JSON.stringify(matStore));
-      return true;
-    } catch (e) {
-      alert('材料文件过大，本地存储空间不足：本次上传仅本次浏览有效，刷新后将丢失');
-      return false;
-    }
+    return HZDB.put('contractMaterials', matsToRows());
   }
 
   function genId() {
@@ -102,7 +115,9 @@
     const endInput = document.getElementById('searchDateEnd');
 
     // 按当前检索条件过滤表格行；无匹配时显示空状态行
-    applyFilter = function () {
+    // resetPage：筛选控件触发时传 true 回到第 1 页；增删改后的内部调用不传，保持浏览位置
+    applyFilter = function (resetPage) {
+      if (resetPage === true) curPage = 1;
       const type = typeSelect.value;
       const status = statusSelect.value;
       const start = startInput.value;
@@ -113,6 +128,7 @@
       let visible = 0;
       document.querySelectorAll('.ledger-table tbody tr').forEach(row => {
         if (row.classList.contains('empty-row')) return;
+        if (row.classList.contains('edit-row')) return; // 编辑行不参与检索过滤，避免编辑中内容被隐藏
 
         const date = row.dataset.date || '';
         // 行全文 = 所有单元格文本 + data 属性，作为关键词匹配范围
@@ -136,16 +152,16 @@
       renderPage();
     };
 
-    // 查询：阻止表单默认提交，执行过滤
+    // 查询：阻止表单默认提交，执行过滤（回到第 1 页）
     form.addEventListener('submit', e => {
       e.preventDefault();
-      applyFilter();
+      applyFilter(true);
     });
 
-    // 重置：清空条件后恢复显示全部行
+    // 重置：清空条件后恢复显示全部行（回到第 1 页）
     form.addEventListener('reset', () => {
       // 等浏览器完成原生 reset 后再过滤
-      requestAnimationFrame(() => applyFilter());
+      requestAnimationFrame(() => applyFilter(true));
     });
   }
 
@@ -192,8 +208,9 @@
     if (curPage < 1) curPage = 1;
 
     const start = (curPage - 1) * pageSize;
+    // 切片改用 style.display，与筛选用 hidden 正交，避免 total 级联收缩（跳页失效根因）
     rows.forEach((r, i) => {
-      r.hidden = i < start || i >= start + pageSize;
+      r.style.display = (i < start || i >= start + pageSize) ? 'none' : '';
     });
 
     // 同步分页控件状态
@@ -205,6 +222,20 @@
     $('pgPrev').disabled = curPage <= 1;
     $('pgNext').disabled = curPage >= pages;
     $('pgLast').disabled = curPage >= pages;
+  }
+
+  // 定位指定合同行所在页码并跳转（新增保存后确保新行立即进入视野）
+  // 未找到（如被检索过滤隐藏）时保持当前页不变
+  function locateRowPage(id) {
+    if (!id) return;
+    const rows = Array.from(
+      tbody.querySelectorAll('tr:not(.empty-row):not(.edit-row)')
+    ).filter(r => !r.hidden);
+    const idx = rows.findIndex(r => r.dataset.id === id);
+    if (idx >= 0) {
+      curPage = Math.floor(idx / pageSize) + 1;
+      renderPage();
+    }
   }
 
   function bindPager() {
@@ -369,7 +400,7 @@
   }
 
   // 结束编辑：保存或取消
-  function endEdit(editRow, isSave) {
+  async function endEdit(editRow, isSave) {
     if (!isSave) {
       renderAll(); // 取消：恢复原状态
       return;
@@ -386,21 +417,27 @@
     c.received = Number(c.received) || 0;
     c.paid = Number(c.paid) || 0;
 
+    let addedId = '';
     if (editingId) {
-      // 编辑：更新已有合同
+      // 编辑：更新已有合同（失败回滚快照）
       const old = byId(editingId);
-      if (old) Object.assign(old, c);
+      if (!old) return;
+      const prev = Object.assign({}, old);
+      Object.assign(old, c);
+      if (!await save()) { Object.assign(old, prev); return; }
     } else {
-      // 新增：id 生成后 push
+      // 新增：id 生成后 push（失败回滚弹出）
       c.id = genId();
       c.received = c.received || 0;
       c.paid = c.paid || 0;
       contracts.push(c);
+      if (!await save()) { contracts.pop(); return; }
+      addedId = c.id;
     }
 
     editingId = null;
-    save();
     renderAll();
+    locateRowPage(addedId); // 新增行可能落在其他页，跳转到位
   }
 
   function initAdd() {
@@ -441,7 +478,7 @@
 
   // ----- 表格操作：保存 / 取消 / 编辑 / 删除 / 详情（事件委托） -----
   function initTableActions() {
-    tbody.addEventListener('click', e => {
+    tbody.addEventListener('click', async e => {
       // 编辑行内：保存 / 取消
       const mini = e.target.closest('.btn-mini');
       if (mini) {
@@ -476,10 +513,13 @@
         if (!confirm('确定删除合同「' + (c.name || c.code) + '」吗？')) return;
 
         if (typeof closeDrawer === 'function' && currentRow && currentRow.dataset.id === c.id) closeDrawer();
+        const prevList = contracts.slice();
+        const prevMats = matStore[c.id];
         contracts = contracts.filter(x => x.id !== c.id);
         delete matStore[c.id];
-        save();
-        saveMaterials();
+        // 合同与材料分别落库；任一失败回滚对应内存现场
+        if (!await save()) { contracts = prevList; return; }
+        if (!await saveMaterials()) { matStore[c.id] = prevMats; return; }
         renderAll();
         return;
       }
@@ -495,7 +535,7 @@
 
   // ----- 合同详情抽屉 -----
   // 已收/已付金额在抽屉中查看并编辑，保存后写回合同数据并持久化；
-  // 材料 PDF 以 dataURL 存入 localStorage，刷新页面后仍可查看 / 下载
+  // 材料 PDF 以 dataURL 存入数据库（contract_material 表），刷新页面后仍可查看 / 下载
   let currentRow = null; // 当前抽屉对应的表格行（数据行）
 
   function openDrawer(row) {
@@ -573,18 +613,24 @@
 
     // 保存：写回收付金额与货量并持久化
     const saveBtn = document.getElementById('drawerSave');
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
       if (!currentRow) return;
       const c = byId(currentRow.dataset.id);
       if (!c) return;
 
+      const prev = { received: c.received, paid: c.paid, quantity: c.quantity, executed: c.executed };
       c.received = Number(document.getElementById('dReceived').value) || 0;
       c.paid = Number(document.getElementById('dPaid').value) || 0;
       c.quantity = Number(document.getElementById('dQuantity').value) || 0;
       c.executed = Number(document.getElementById('dExecuted').value) || 0;
+      if (!await save()) {
+        Object.assign(c, prev);
+        currentRow.dataset.received = c.received;
+        currentRow.dataset.paid = c.paid;
+        return;
+      }
       currentRow.dataset.received = c.received;
       currentRow.dataset.paid = c.paid;
-      save();
 
       saveBtn.textContent = '已保存 ✓';
       setTimeout(() => { saveBtn.textContent = '保存'; }, 1200);
@@ -608,26 +654,36 @@
         }
 
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
           if (!currentRow) return;
-          getMats(currentRow.dataset.id)[type] = { name: file.name, dataUrl: reader.result };
-          if (saveMaterials()) renderMaterials(currentRow.dataset.id);
+          const mats = getMats(currentRow.dataset.id);
+          const prevFile = mats[type];
+          mats[type] = { name: file.name, dataUrl: reader.result };
+          if (await saveMaterials()) {
+            renderMaterials(currentRow.dataset.id);
+          } else {
+            mats[type] = prevFile; // 落库失败回滚，内存保留原状
+          }
         };
         reader.readAsDataURL(file);
       });
     });
 
     // 材料删除：事件委托（删除仅清空该类材料）
-    mask.addEventListener('click', e => {
+    mask.addEventListener('click', async e => {
       const del = e.target.closest('[data-mat-del]');
       if (!del || !currentRow) return;
 
       const mats = getMats(currentRow.dataset.id);
       const type = del.dataset.matDel;
       if (mats[type]) {
+        const prevFile = mats[type];
         mats[type] = null;
-        saveMaterials();
-        renderMaterials(currentRow.dataset.id);
+        if (await saveMaterials()) {
+          renderMaterials(currentRow.dataset.id);
+        } else {
+          mats[type] = prevFile; // 落库失败回滚
+        }
       }
     });
   }
@@ -734,12 +790,21 @@
     });
   }
 
-  initSearch();
-  initAdd();
-  initTableActions();
-  initDrawer();
-  initExport();
-  initCheckAll();
-  bindPager();
-  renderAll(); // 启动时从 localStorage 恢复已添加的数据
+  // 启动：等 HZDB 缓存基座就绪后从数据库装载合同与材料，再初始化交互与渲染
+  async function boot() {
+    await HZDB.ready();
+    contracts = store.load();
+    matStore = rowsToMats(HZDB.get('contractMaterials'));
+    if (!matStore || typeof matStore !== 'object') matStore = {};
+
+    initSearch();
+    initAdd();
+    initTableActions();
+    initDrawer();
+    initExport();
+    initCheckAll();
+    bindPager();
+    renderAll();
+  }
+  boot();
 })();

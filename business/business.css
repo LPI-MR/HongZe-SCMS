@@ -1291,7 +1291,7 @@ body.lock-view .ledger-table .flow-del:hover { background: rgba(255, 59, 48, 0.0
    作用域 body.lock-view（订单台账 / 执行跟踪 / 结算管理），不回写 common.css
    ============================================================ */
 
-/* --- 页头 Apple 化：大标题 + 弱化描述（对齐业务总览 wb-title 规范） --- */
+/* --- 页头 Apple 化：大标题 + 弱化描述（对齐工作台页头规范） --- */
 body.lock-view .ledger-header .page-title {
   font-size: 28px;
   font-weight: 700;
